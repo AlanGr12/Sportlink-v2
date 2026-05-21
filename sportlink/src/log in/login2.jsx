@@ -1,5 +1,7 @@
 import { supabase } from './utils/supabase.js'
 import { useState, useEffect } from 'react'
+import Login from './log in/Login.jsx'
+
 
 //const [productos, setProductos] = useState([])
 
@@ -27,7 +29,7 @@ async function buscarUser(mail,contraseña) {
     const { data, error} = await supabase
     .from('usuarios')
     .select('*')
-    eq('email', mail)
+    .eq('email', mail)
     .eq('contraseña', contraseña);
 
     if(error){

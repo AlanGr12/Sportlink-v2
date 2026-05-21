@@ -1,34 +1,24 @@
-import { supabase } from './utils/supabase.js'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import Login from './log in/Login.jsx'
+import Registrar from './registrar/registrar.jsx'
 
 function App() {
+  const [usuario, setUsuario] = useState(null)
+  const [vista, setVista] = useState('login') // 'login' o 'registro'
 
-const [productos, setProductos] = useState([])
-
-  useEffect(() => {
-    async function getProductos() {
-      const { data, error } = await supabase
-        .from('entrenadores')
-        .select('*')
-        
-      if (data) {
-        setProductos(data)
-        console.log(data)
-      }
-
-      if (error) {
-        console.log(error)
-      }
+  if (!usuario) {
+    if (vista === 'registro') {
+      return <Registrar onRegistro={setUsuario} />
     }
+    return (
+      <div>
+        <Login onLogin={setUsuario} />
+        <button onClick={() => setVista('registro')}>¿No tenés cuenta? Registrate</button>
+      </div>
+    )
+  }
 
-    getProductos()
-  }, [])
-
- 
-
-  return (
-  <h1>-</h1>
-  )
+  return <h1>Bienvenido {usuario.email}</h1>
 }
 
 export default App
