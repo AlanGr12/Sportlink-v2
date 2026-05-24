@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../utils/supabase.js'
 
 function RegistroJugador({ onRegistro }) {
@@ -15,6 +15,8 @@ function RegistroJugador({ onRegistro }) {
     genero: '',
     fotoperfil: null
   })
+
+  
 
   function handleChange(e) {
     setForm({
@@ -43,7 +45,6 @@ function RegistroJugador({ onRegistro }) {
       return
     }
 
-    // INSERT USUARIO
     const { data: usuario, error: errorUsuario } = await supabase
       .from('usuarios')
       .insert({
@@ -60,20 +61,14 @@ function RegistroJugador({ onRegistro }) {
       return
     }
 
-    // SUBIR FOTO
     let fotoUrl = null
 
     if (form.fotoperfil) {
-
-      // SACAR EXTENSION
       const extension = form.fotoperfil.name.split('.').pop()
-
-      // NOMBRE SIMPLE SIN ESPACIOS
       const nombreArchivo = `${Date.now()}.${extension}`
 
-      // SUBIR A STORAGE
       const { error: errorUpload } = await supabase.storage
-        .from('fotoperfiles')
+        .from('fotoPerfiles')
         .upload(nombreArchivo, form.fotoperfil, {
           cacheControl: '3600',
           upsert: false
@@ -85,15 +80,13 @@ function RegistroJugador({ onRegistro }) {
         return
       }
 
-      // OBTENER URL PUBLICA
       const { data } = supabase.storage
-        .from('fotoperfiles')
+        .from('fotoPerfiles')
         .getPublicUrl(nombreArchivo)
 
       fotoUrl = data.publicUrl
     }
 
-    // INSERT JUGADOR
     const { error: errorJugador } = await supabase
       .from('jugadores')
       .insert({
@@ -115,96 +108,60 @@ function RegistroJugador({ onRegistro }) {
     }
 
     alert('Registro exitoso')
-
     onRegistro(usuario)
   }
 
   return (
     <div>
+      <h1>Registro Jugador</h1>
 
-      <h2>Registro Jugador</h2>
+      <h3>Email:</h3>
+      <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} />
+      <h3>Contraseña:</h3>
+      <input name="contraseña" type="password" placeholder="Contraseña" value={form.contraseña} onChange={handleChange} />
+      <h3>Nombre:</h3>
+      <input name="nombre" type="text" placeholder="Nombre" value={form.nombre} onChange={handleChange} />
+      <h3>Apellido:</h3>
+      <input name="apellido" type="text" placeholder="Apellido" value={form.apellido} onChange={handleChange} />
 
-      <input
-        name="email"
-        type="email"
-        placeholder="Email"
-        value={form.email}
-        onChange={handleChange}
-      />
+      <h3>Deporte:</h3>
+<select name="iddeporte" value={form.iddeporte} onChange={handleChange}>
+  <option value="">Seleccioná un deporte</option>
+  <option value="1">Fútbol</option>
+  <option value="2">Basket</option>
+  <option value="3">Tenis</option>
+  <option value="4">Voley</option>
+  <option value="5">Pádel</option>
+  <option value="6">Rugby</option>
+  <option value="7">Hockey</option>
+  <option value="8">Natación</option>
+  <option value="9">Atletismo</option>
+  <option value="10">Ciclismo</option>
+  <option value="11">Boxeo</option>
+  <option value="12">Artes Marciales</option>
+  <option value="13">Handball</option>
+  <option value="14">Béisbol</option>
+  <option value="15">Golf</option>
+</select>
 
-      <input
-        name="contraseña"
-        type="password"
-        placeholder="Contraseña"
-        value={form.contraseña}
-        onChange={handleChange}
-      />
+      <h3>Numero de telefono:</h3>
+      <input name="telefono" type="text" placeholder="Telefono" value={form.telefono} onChange={handleChange} />
+      <h3>Fecha de nacimiento:</h3>
+      <input name="fechanacimiento" type="date" value={form.fechanacimiento} onChange={handleChange} />
+      <h3>Ubicacion:</h3>
+      <input name="ubicacion" type="text" placeholder="Ubicacion" value={form.ubicacion} onChange={handleChange} />
 
-      <input
-        name="nombre"
-        type="text"
-        placeholder="Nombre"
-        value={form.nombre}
-        onChange={handleChange}
-      />
+      <h3>Genero:</h3>
+      <select name="genero" value={form.genero} onChange={handleChange}>
+        <option value="">Seleccione un genero</option>
+        <option value="Masculino">Masculino</option>
+        <option value="Femenino">Femenino</option>
+      </select>
+      
+      <h3>Foto de perfil</h3>
+      <input type="file" accept="image/*" onChange={handleFileChange} />
 
-      <input
-        name="apellido"
-        type="text"
-        placeholder="Apellido"
-        value={form.apellido}
-        onChange={handleChange}
-      />
-
-      <input
-        name="iddeporte"
-        type="number"
-        placeholder="ID deporte"
-        value={form.iddeporte}
-        onChange={handleChange}
-      />
-
-      <input
-        name="telefono"
-        type="text"
-        placeholder="Telefono"
-        value={form.telefono}
-        onChange={handleChange}
-      />
-
-      <input
-        name="fechanacimiento"
-        type="date"
-        value={form.fechanacimiento}
-        onChange={handleChange}
-      />
-
-      <input
-        name="ubicacion"
-        type="text"
-        placeholder="Ubicacion"
-        value={form.ubicacion}
-        onChange={handleChange}
-      />
-
-      <input
-        name="genero"
-        type="text"
-        placeholder="Genero"
-        value={form.genero}
-        onChange={handleChange}
-      />
-
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-      />
-
-      <button onClick={handleRegistro}>
-        Registrarse
-      </button>
-
+      <button onClick={handleRegistro}>Registrarse</button>
     </div>
   )
 }
