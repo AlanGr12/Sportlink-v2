@@ -2,6 +2,9 @@ import { useState } from 'react'
 import RegistroJugador from './registrarUser/RegistroJugador.jsx'
 import RegistroEntrenador from './registrarUser/RegistroEntrenador.jsx'
 import RegistroClub from './registrarUser/RegistroClub.jsx'
+import Header from '../header/header.jsx'
+import './registrar.css'
+
 
 function Registrar({ onRegistro }) {
   const [tipo, setTipo] = useState(null)
@@ -11,12 +14,15 @@ function Registrar({ onRegistro }) {
   if (tipo === 'club') return <RegistroClub onRegistro={onRegistro} />
 
   return (
-    <div>
+    <>
+    
+    <div className='registrarUser'>
       <h2>¿Cómo querés registrarte?</h2>
       <button onClick={() => setTipo('jugador')}>Jugador</button>
       <button onClick={() => setTipo('entrenador')}>Entrenador</button>
       <button onClick={() => setTipo('club')}>Club</button>
     </div>
+  </>
   )
 }
 

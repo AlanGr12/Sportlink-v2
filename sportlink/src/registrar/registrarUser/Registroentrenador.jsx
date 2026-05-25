@@ -222,7 +222,7 @@ function RegistroEntrenador({ onRegistro }) {
       <h3>Foto de perfil:</h3>
       <input type="file" accept="image/*" onChange={guardarFotoPerfil} />
 
-      <h3>CV (PDF):</h3>
+      <h3>CV:</h3>
       <input type="file" accept=".pdf" onChange={guardarCV} />
 
       <button onClick={registro}>Registrarse</button>

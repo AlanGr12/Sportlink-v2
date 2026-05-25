@@ -1,0 +1,130 @@
+/* Importar fuente Space Grotesk (Bold 700 para hover) */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap');
+
+/* Variables de color */
+:root {
+  --header-bg-opaco: rgba(0, 0, 0, 0.7); /* Negro opaco */
+  --header-text-color: #ffffff; /* Blanco por defecto */
+  --header-accent-color: #2DEFF2; /* Celeste para hover */
+  --header-blur-amount: 10px; /* Cantidad de desenfoque */
+}
+
+/* Reset básico para el header */
+.header {
+  position: fixed; /* O fixed si quieres que se quede arriba al hacer scroll */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80px; /* Altura sugerida, ajusta según necesites */
+  background-color: var(--header-bg-opaco);
+  
+  /* EFECTO BLUR AL FONDO (lo que está detrás del header) */
+  -webkit-backdrop-filter: blur(var(--header-blur-amount));
+  backdrop-filter: blur(var(--header-blur-amount));
+  
+  color: var(--header-text-color);
+  z-index: 1000; /* Asegura que esté por encima del contenido */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Línea sutil abajo */
+  font-family: 'Space Grotesk', sans-serif;
+  
+  /* Flexbox para centrado vertical y horizontal del contenedor */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Contenedor interno para limitar el ancho y padding */
+.header-container {
+  width: 100%;
+  max-width: 1280px; /* Ancho máximo igual al footer */
+  padding: 0px; /* Padding lateral igual al footer */
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Logo a la izquierda, nav a la derecha */
+}
+
+/* LOGO */
+.header-logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.header-logo-img {
+  display: block;
+  height: 27px; /* Altura sugerida para el logo, ajusta según necesites */
+  width: auto;
+}
+
+/* NAVIGATION */
+.header-nav {
+  display: flex;
+}
+
+.header-nav-list {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 30px; /* Espaciado entre elementos del menú */
+  margin: 0;
+  padding: 0;
+}
+
+/* Estilo base de los enlaces y el botón dropdown */
+.header-nav-link,
+.header-nav-dropdown-btn {
+  background: none;
+  border: none;
+  text-decoration: none;
+  color: inherit; /* Hereda el color blanco base */
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px; /* Tamaño de fuente sugerido */
+  font-weight: 400; /* Regular por defecto */
+  cursor: pointer;
+  transition: color 0.3s ease, font-weight 0.1s ease; /* Transición para color y peso */
+  padding: 10px 0; /* Padding vertical sutil */
+  position: relative; /* Para posibles efectos de línea abajo */
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Espacio entre texto y flecha */
+}
+
+/* EFECTO HOVER: Color celeste y peso de fuente a Bold (700) */
+.header-nav-link:hover,
+.header-nav-dropdown-btn:hover,
+.header-nav-dropdown-btn.active {
+  color: var(--header-accent-color);
+  font-weight: 700; /* Bold en hover */
+}
+
+/* FLECHITA DE OPORTUNIDADES */
+.header-nav-arrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s ease; /* Transición para rotación */
+  stroke: inherit; /* Hereda el color del texto */
+}
+
+/* Estado de la flecha: Abajo por defecto */
+.header-nav-arrow.down {
+  transform: translateY(1px); /* Ajuste sutil de posición */
+}
+
+/* Estado de la flecha: Arriba al hacer clic */
+.header-nav-arrow.up {
+  transform: rotate(-180deg) translateY(-1px); /* Rotar y ajustar posición */
+}
+
+/* Responsive básico para pantallas pequeñas */
+@media (max-width: 768px) {
+  .header-container {
+    padding: 0 24px;
+  }
+  .header-nav-list {
+    gap: 20px;
+    font-size: 14px;
+  }
+  .header-nav-arrow {
+    width: 14px;
+    height: 14px;
+  }
+}

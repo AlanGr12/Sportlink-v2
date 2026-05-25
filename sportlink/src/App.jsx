@@ -4,18 +4,13 @@ import Registrar from './registrar/registrar.jsx'
 
 function App() {
   const [usuario, setUsuario] = useState(null)
-  const [vista, setVista] = useState('login') // 'login' o 'registro'
+  const [vista, setVista] = useState('login')
 
   if (!usuario) {
     if (vista === 'registro') {
       return <Registrar onRegistro={setUsuario} />
     }
-    return (
-      <div>
-        <Login onLogin={setUsuario} />
-        <button onClick={() => setVista('registro')}>¿No tenés cuenta? Registrate</button>
-      </div>
-    )
+    return <Login onLogin={setUsuario} onRegistro={() => setVista('registro')} />
   }
 
   return <h1>Bienvenido {usuario.email}</h1>

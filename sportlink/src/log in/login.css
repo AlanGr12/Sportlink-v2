@@ -1,0 +1,137 @@
+.pagina {
+  min-height: 100vh;
+  background-color: #0d0d0d; /* Negro más profundo como en la imagen */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif; /* O la que estés usando */
+}
+
+
+.logo {
+  width: 220px;
+  margin-bottom: 40px;
+  /* Un ligero brillo para que resalte contra el fondo */
+  filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.2));
+}
+
+
+.tarjeta {
+  background-color: #151515; /* Fondo gris muy oscuro */
+  border: 1px solid #222;
+  border-radius: 4px; /* Bordes menos redondeados, más rectos */
+  padding: 50px 60px;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+
+.titulo {
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+
+
+.subtitulo {
+  color: #666;
+  font-size: 14px;
+  margin: 0 0 35px;
+}
+
+
+.etiqueta {
+  color: #999;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+}
+
+
+.campo {
+  background-color: #222; /* Inputs más oscuros */
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 14px;
+  padding: 14px 16px;
+  margin-bottom: 25px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+
+.campo:focus {
+  border-color: #00e5ff;
+  background-color: #282828;
+}
+
+
+.campo::placeholder {
+  color: #444;
+}
+
+
+.boton {
+  background-color: #38efff; /* Cian vibrante */
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  padding: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+  margin-bottom: 30px;
+  transition: all 0.3s ease;
+  /* El efecto de resplandor de la imagen */
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+}
+
+
+.boton:hover {
+  background-color: #00e5ff;
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+
+.pie {
+  color: #555;
+  font-size: 12px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+
+.enlace {
+  color: #00e5ff;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+
+.enlace-secundario {
+  color: #00e5ff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-decoration: none;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+
+.enlace-secundario:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
