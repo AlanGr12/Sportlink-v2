@@ -1,0 +1,17 @@
+.contenedor-jugadores {
+  padding: 30px;
+}
+
+.card-jugador {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  max-width: 400px;
+}
+
+.foto-jugador {
+  width: 150px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
