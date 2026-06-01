@@ -1,0 +1,166 @@
+.registro-bg {
+  min-height: 100vh;
+  background-color: #0d0d0d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.registro-container {
+  width: 100%;
+  max-width: 780px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+/* Header */
+.registro-logo {
+  font-size: 22px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 2px;
+  border: 2px solid #ffffff;
+  padding: 4px 14px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.registro-logo span {
+  color: #2DEFF2;
+}
+
+.registro-titulo {
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffffff;
+  text-align: center;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.registro-titulo-color {
+  color: #2DEFF2;
+}
+
+.registro-subtitulo {
+  color: #888;
+  font-size: 13px;
+  text-align: center;
+  margin: 6px 0 0;
+}
+
+/* Card */
+.registro-card {
+  width: 100%;
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+/* Sección */
+.registro-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.registro-seccion-titulo {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2DEFF2;
+  letter-spacing: 1.5px;
+  margin: 0 0 12px;
+}
+
+/* Inputs */
+.registro-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #aaaaaa;
+  letter-spacing: 1px;
+  margin-top: 12px;
+}
+
+.registro-input {
+  background-color: #111111;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 13px;
+  padding: 10px 12px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.registro-input::placeholder {
+  color: #444;
+}
+
+.registro-input:focus {
+  border-color: #2DEFF2;
+}
+
+.registro-error-hint {
+  font-size: 10px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+/* Deportes */
+.registro-deportes-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.registro-deporte-btn {
+  background-color: #111111;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  color: #aaaaaa;
+  font-size: 12px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.registro-deporte-btn:hover {
+  border-color: #2DEFF2;
+  color: #ffffff;
+}
+
+.registro-deporte-btn.activo {
+  background-color: #2DEFF2;
+  border-color: #2DEFF2;
+  color: #000000;
+  font-weight: 700;
+}
+
+/* Botón registrar */
+.registro-btn-siguiente {
+  background-color: #2DEFF2;
+  color: #000000;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 48px;
+  cursor: pointer;
+  width: 100%;
+  max-width: 300px;
+  transition: background-color 0.2s;
+}
+
+.registro-btn-siguiente:hover {
+  background-color: #2DEFF2;
+}

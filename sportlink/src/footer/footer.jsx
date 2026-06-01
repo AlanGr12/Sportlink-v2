@@ -28,7 +28,7 @@ const Footer = () => {
           <ul className="footer-nav-list">
             <li><a href="#entrenadores">Entrenadores</a></li>
             <li><a href="#clubes">Clubes</a></li>
-            <li><a href="#pruebas">Pruebas</a></li>
+            <li><a href="#jugadores">Jugadores</a></li>
             <li><a href="#dashboard">Calendario</a></li>
           </ul>
         </nav>

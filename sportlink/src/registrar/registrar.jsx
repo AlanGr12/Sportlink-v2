@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import RegistroJugador from './registrarUser/RegistroJugador.jsx'
 import RegistroEntrenador from './registrarUser/RegistroEntrenador.jsx'
-import RegistroClub from './registrarUser/RegistroClub.jsx'
+import RegistroClub from './registrarUser/Registroclub.jsx'
 import Header from '../header/header.jsx'
 import './registrar.css'
 
