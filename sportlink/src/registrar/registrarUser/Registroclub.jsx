@@ -23,11 +23,12 @@ const deportesDisponibles = [
 function RegistroClub({ onRegistro }) {
   const [form, setForm] = useState({
     email: '',
-    contraseña: '',
+    contrasenia: '',
     nombre: '',
     ubicacion: '',
     deportes: []
   })
+  const [fotoperfil, setFotoperfil] = useState(null)
 
   function cambiarForm(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -44,7 +45,7 @@ function RegistroClub({ onRegistro }) {
   async function registro() {
     if (
       !form.email ||
-      !form.contraseña ||
+      !form.contrasenia ||
       !form.nombre ||
       !form.ubicacion ||
       form.deportes.length === 0
@@ -54,15 +55,17 @@ function RegistroClub({ onRegistro }) {
     }
 
     try {
-      const response = await axios.post('http://localhost:3000/api/clubes/registro', {
-        email: form.email,
-        contraseña: form.contraseña,
-        nombre: form.nombre,
-        ubicacion: form.ubicacion,
-        fotoperfil: null,
-        deportes: form.deportes
-      })
+      const formData = new FormData()
+      formData.append('email', form.email)
+      formData.append('contrasenia', form.contrasenia)
+      formData.append('nombre', form.nombre)
+      formData.append('ubicacion', form.ubicacion)
+      formData.append('deportes', JSON.stringify(form.deportes))
+      if (fotoperfil) {
+        formData.append('fotoperfil', fotoperfil)
+      }
 
+      const response = await axios.post('http://localhost:3000/api/clubes/registro', formData)
       alert('Club registrado correctamente')
       if (onRegistro) onRegistro(response.data)
     } catch (error) {
@@ -75,9 +78,6 @@ function RegistroClub({ onRegistro }) {
     <div className="registro-bg">
       <div className="registro-container">
 
-
-        //falta poner el logo de sportlink en vez del texto
-        
         <div className="registro-header">
           <div className="registro-logo">SPORT<span>LINK</span></div>
           <h1 className="registro-titulo">
@@ -132,7 +132,7 @@ function RegistroClub({ onRegistro }) {
           </div>
 
           <div className="registro-seccion">
-            <p className="registro-seccion-titulo">CREDENCIALES</p>
+            <p className="registro-seccion-titulo">CREDENCIALES Y PERFIL</p>
 
             <label className="registro-label">EMAIL</label>
             <input
@@ -148,13 +148,28 @@ function RegistroClub({ onRegistro }) {
             <label className="registro-label">CONTRASEÑA</label>
             <input
               className="registro-input"
-              name="contraseña"
+              name="contrasenia"
               type="password"
-              placeholder="Contraseña"
-              value={form.contraseña}
+              placeholder="••••••••"
+              value={form.contrasenia}
               onChange={cambiarForm}
             />
             <span className="registro-error-hint">Este campo es obligatorio</span>
+
+            <label className="registro-label">FOTO DE PERFIL</label>
+            <input
+              className="registro-input-file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => setFotoperfil(e.target.files[0])}
+            />
+            {fotoperfil && (
+              <img
+                className="registro-foto-preview"
+                src={URL.createObjectURL(fotoperfil)}
+                alt="Preview"
+              />
+            )}
           </div>
 
         </div>

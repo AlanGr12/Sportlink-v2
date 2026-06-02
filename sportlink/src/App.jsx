@@ -2,9 +2,6 @@ import { useState } from 'react'
 import Login from './log in/Login.jsx'
 import Registrar from './registrar/registrar.jsx'
 
-
-
-
 function App() {
   const [usuario, setUsuario] = useState(null)
   const [vista, setVista] = useState('login')
