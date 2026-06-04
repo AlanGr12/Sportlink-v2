@@ -1,0 +1,727 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Space+Grotesk:wght@300..700&display=swap');
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+
+body{
+  background-color: black;
+  color: white;
+  font-family: 'Manrope', sans-serif;
+}
+/* =========================
+   TIPOGRAFÍAS
+========================= */
+
+
+/* Todos los títulos */
+
+
+h1,
+h2,
+h3,
+button{
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+
+/* Todo el texto normal */
+
+
+p,
+a,
+span{
+  font-family: 'Manrope', sans-serif;
+}
+main{
+  display: flex;
+  flex-direction: column;
+  gap: 100px;
+}
+
+
+section{
+  padding: 40px 60px;
+}
+
+
+img{
+  max-width: 100%;
+}
+
+
+button{
+  background-color: #3BFFEF;
+  color: black;
+  border: none;
+  padding: 14px 24px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+
+span{
+  color: #3BFFEF;
+}
+
+
+h1{
+  font-size: 80px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: -3px;
+}
+
+
+h2{
+  font-size: 55px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: -2px;
+}
+
+
+h3{
+  font-size: 24px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+}
+
+
+p{
+  color: rgb(180,180,180);
+  line-height: 1.5;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 400;
+}
+/* BANNER */
+
+
+.banner{
+  width: 100%;
+  min-height: 82vh;
+  display: flex;
+  align-items: center;
+  padding: 0 8%;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+
+.banner-texto button{
+  margin-top: 30px;
+  width: 320px;
+  height: 80px;
+  border: none;
+  border-radius: 30px;
+  background: linear-gradient(90deg,#C8FFFF 0%,#2DEFF2 100%);
+  color: #001f24;
+  font-size: small;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: .3s ease;
+}
+
+
+.banner-texto h1{
+  font-size: 5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: white;
+}
+
+
+.banner-texto span{
+  color: #2DEFF2;
+}
+
+
+.banner-texto p{
+  margin-top: 25px;
+  max-width: 600px;
+  color: #d4d4d4;
+  font-size: 1.3rem;
+  line-height: 1.5;
+}
+
+
+.banner-texto button{
+  margin-top: 30px;
+  width: 250px;
+  height: 60px;
+  border: none;
+  border-radius: 10px;
+  background-color: #3cfbdd;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+
+.banner img{
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+
+/* ENTRENADORES */
+/* SECCIÓN */
+
+
+.entrenadoresLanding{
+  background: #000;
+  padding: 80px 40px;
+}
+
+
+/* TÍTULO */
+
+
+.tituloLanding{
+  margin-bottom: 60px;
+}
+
+
+.tituloLanding h2{
+  color: white;
+  font-size: 4rem;
+  font-weight: 800;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+
+.tituloLanding span{
+  color: #23e7f5;
+}
+
+
+/* CONTENEDOR CARDS */
+
+
+.cardsEntrenadores{
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: 80px;
+}
+
+
+/* CARD */
+
+
+.cardsEntrenadores article{
+  position: relative;
+  width: 285px;
+}
+
+
+/* IMAGEN */
+
+
+.cardsEntrenadores article img{
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+  display: block;
+  border-radius: 8px;
+}
+
+
+/* TARJETA DE TEXTO */
+
+
+.cardsEntrenadores article div{
+  position: absolute;
+  bottom: -25px;
+  left: 18px;
+  width: 250px;
+  background: #1d1d1d;
+  padding: 14px 16px;
+  border-left: 3px solid #23e7f5;
+  border-radius: 6px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.45);
+}
+
+
+/* NOMBRE */
+
+
+.cardsEntrenadores article h3{
+  margin: 0;
+  color: #23e7f5;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+
+/* DEPORTE */
+
+
+.cardsEntrenadores article p{
+  margin-top: 6px;
+  margin-bottom: 0;
+  color: #8e8e8e;
+  font-size: .7rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+
+/* =========================
+   CLUBES
+========================= */
+
+
+.clubesLanding{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 60px;
+}
+
+
+/* =========================
+   COLUMNA IZQUIERDA
+========================= */
+
+
+.izquierdaClubes{
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+
+.izquierdaClubes h2{
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+
+.izquierdaClubes span{
+  color: #23e7f5;
+}
+
+
+.izquierdaClubes > p{
+  max-width: 350px;
+  font-size: 1rem;
+  color: #bdbdbd;
+  line-height: 1.6;
+}
+
+
+/* =========================
+   LISTA DE CLUBES
+========================= */
+
+
+.listaClubes{
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+
+.listaClubes article{
+  background: #111;
+  padding: 18px 22px;
+
+
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+
+  border-left: 3px solid #23e7f5;
+  border-radius: 4px;
+}
+
+
+.listaClubes article img{
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+
+.listaClubes h3{
+  margin: 0;
+  font-size: 1.2rem;
+  color: white;
+}
+
+
+.listaClubes p{
+  margin: 0;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #8d8d8d;
+}
+
+
+/* =========================
+   COLUMNA DERECHA
+========================= */
+
+
+.derechaClubes{
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
+/* =========================
+   DEPORTES
+========================= */
+
+
+.deportesClubes{
+  display: flex;
+  gap: 18px;
+}
+
+
+.deportesClubes article{
+  flex: 1;
+  height: 150px;
+  background: #1d1d1d;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  margin-bottom: 8%;
+}
+
+
+.deportesClubes p{
+  color: #d4d4d4;
+  font-size: .8rem;
+  letter-spacing: 2px;
+  margin-top: 7%;
+  padding-bottom: 15%;
+}
+.deportesClubes img{
+    padding-top: 15%;
+}
+/* =========================
+   IMAGEN PRINCIPAL
+========================= */
+
+
+.imagenClubes{
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+
+.imagenClubes img{
+  width: 100%;
+  display: block;
+}
+
+
+.imagenClubes div{
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+}
+
+
+.imagenClubes h3{
+  margin-bottom: 5px;
+  color: white;
+}
+
+
+.imagenClubes p{
+  color: #d4d4d4;
+  font-size: .85rem;
+}
+
+
+/* =========================
+   PRUEBAS
+========================= */
+
+
+.pruebasLanding{
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+}
+
+
+/* =========================
+   CABECERA
+========================= */
+
+
+.tituloPruebas{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+
+.tituloPruebas h2{
+  font-size: 3.5rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+
+.tituloPruebas span{
+  color: #2DEFF2;
+}
+
+
+.tituloPruebas p{
+  font-size: .9rem;
+  max-width: 700px;
+  text-transform: uppercase;
+  color: #d0d0d0;
+}
+
+
+.tituloPruebas a{
+  color: white;
+  text-decoration: none;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+}
+
+
+/* =========================
+   CARDS
+========================= */
+
+
+.cardsPruebas{
+  display: flex;
+  justify-content: space-between;
+  gap: 80px;
+}
+
+
+.cardsPruebas article{
+  width: 310px;
+
+
+  background: linear-gradient(
+    180deg,
+    #1b1b1b 0%,
+    #111 100%
+  );
+
+
+  border-radius: 8px;
+  overflow: hidden;
+
+
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* =========================
+   IMAGEN
+========================= */
+
+
+.cardsPruebas article img{
+  width: 100%;
+  height: 230px;
+  object-fit: cover;
+  display: block;
+}
+
+
+/* =========================
+   CONTENIDO
+========================= */
+
+
+.cardsPruebas article div{
+  padding: 25px 18px;
+
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+
+.cardsPruebas h3{
+  color: #2DEFF2;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+
+.cardsPruebas p{
+  color: #bdbdbd;
+  font-size: .9rem;
+  margin: 0;
+}
+
+
+/* =========================
+   BOTÓN
+========================= */
+
+
+.cardsPruebas button{
+  margin: auto 18px 20px;
+
+
+  height: 55px;
+
+
+  border: 2px solid #2DEFF2;
+  background: transparent;
+
+
+  color: #2DEFF2;
+  font-weight: 700;
+  letter-spacing: 1px;
+
+
+  transition: .3s;
+}
+
+
+.cardsPruebas button:hover{
+  background: #2DEFF2;
+  color: black;
+}
+
+
+/* DASHBOARD */
+
+
+.dashboardLanding{
+  background-color: rgb(20,20,20);
+  border-radius: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 40px;
+  margin-bottom: 2%;
+}
+
+
+.textoDashboard{
+  width: 45%;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+
+.listaDashboard{
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+
+.dashboardLanding img{
+  width: 580px;
+}
+
+
+/* RESPONSIVE */
+
+
+@media(max-width: 1000px){
+
+
+  section{
+    padding: 30px;
+  }
+
+
+  h1{
+    font-size: 50px;
+  }
+
+
+  h2{
+    font-size: 35px;
+  }
+
+
+  .clubesLanding,
+  .dashboardLanding,
+  .cardsEntrenadores,
+  .cardsPruebas{
+    flex-direction: column;
+  }
+
+
+  .izquierdaClubes,
+  .derechaClubes,
+  .textoDashboard,
+  .textoBanner{
+    width: 100%;
+  }
+
+
+  .cardsEntrenadores article,
+  .cardsPruebas article{
+    width: 100%;
+  }
+
+
+  .dashboardLanding img{
+    width: 100%;
+  }
+
+
+}
+.banner-texto h1{
+  font-weight: 700;
+  letter-spacing: -4px;
+}
+
+
+.tituloLanding h2,
+.izquierdaClubes h2,
+.tituloPruebas h2,
+.textoDashboard h2{
+  font-weight: 700;
+  letter-spacing: -2px;
+}
+
+
+.cardsEntrenadores h3,
+.listaClubes h3,
+.cardsPruebas h3{
+  font-weight: 700;
+}
+
+
+button{
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
