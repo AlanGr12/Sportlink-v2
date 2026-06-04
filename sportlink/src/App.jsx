@@ -13,7 +13,9 @@ function App() {
     return <Login onLogin={setUsuario} onRegistro={() => setVista('registro')} />
   }
 
-  //si el usuario se registra que lo mande a la landing
+  //si el usuario se registra que lo mande a la landing y ver si primera view al entrar es la landing o log in, ya lo devuelve en caso de registrarse
+  //ojo pq el cuando se logea lo trae a este return y lo mismo pasa con el registrar pq lo que habria que hacer un if si esta registrado que lo mande a la landing y sino al log in
+  
   return <h1>Bienvenido {usuario.email}</h1>
 }
 

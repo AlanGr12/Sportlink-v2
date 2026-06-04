@@ -1,181 +1,341 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap');
+
+:root {
+  --sl-bg: #0d0d0d;
+  --sl-card-bg: #151515;
+  --sl-border: #222222;
+  --sl-input-bg: #222222;
+  --sl-input-border: #333333;
+  --sl-cyan: #00e5ff;
+  --sl-cyan-btn: #38efff;
+  --sl-white: #ffffff;
+  --sl-grey-label: #999999;
+  --sl-placeholder: #444444;
+  --sl-text-muted: #666666;
+}
+
 .registro-bg {
+  background-color: var(--sl-bg);
   min-height: 100vh;
-  background-color: #0d0d0d;
+  padding: 140px 20px 80px;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 40px 16px;
+  box-sizing: border-box;
 }
 
 .registro-container {
   width: 100%;
-  max-width: 780px;
+  max-width: 900px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
 }
 
-/* Header */
+/* HEADER */
+
+.registro-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
 .registro-logo {
   font-size: 22px;
   font-weight: 900;
-  color: #ffffff;
+  color: white;
   letter-spacing: 2px;
-  border: 2px solid #ffffff;
+  border: 2px solid white;
   padding: 4px 14px;
   display: inline-block;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 
 .registro-logo span {
-  color: #2DEFF2;
+  color: var(--sl-cyan);
 }
 
 .registro-titulo {
-  font-size: 28px;
-  font-weight: 800;
-  color: #ffffff;
-  text-align: center;
-  margin: 0;
-  letter-spacing: 1px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 10px;
 }
 
 .registro-titulo-color {
-  color: #2DEFF2;
+  color: var(--sl-cyan);
 }
 
 .registro-subtitulo {
-  color: #888;
-  font-size: 13px;
-  text-align: center;
-  margin: 6px 0 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: var(--sl-text-muted);
+  max-width: 500px;
+  margin: 0 auto;
 }
 
-/* Card */
+/* CARD */
+
 .registro-card {
   width: 100%;
-  background-color: #1a1a1a;
-  border-radius: 12px;
-  padding: 32px;
+  background-color: var(--sl-card-bg);
+  border: 1px solid var(--sl-border);
+  border-radius: 4px;
+  padding: 50px 60px;
+  box-sizing: border-box;
+  box-shadow: 0 20px 50px rgba(0,0,0,.5);
+
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 32px;
+  gap: 50px;
 }
 
-/* Sección */
+@media (max-width: 768px) {
+  .registro-card {
+    grid-template-columns: 1fr;
+    padding: 40px 25px;
+  }
+}
+
 .registro-seccion {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
 .registro-seccion-titulo {
-  font-size: 11px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
   font-weight: 700;
-  color: #2DEFF2;
-  letter-spacing: 1.5px;
-  margin: 0 0 12px;
+  letter-spacing: .12em;
+  color: var(--sl-cyan);
+  margin-bottom: 10px;
 }
 
-/* Inputs */
+.registro-divider {
+  height: 1px;
+  background-color: var(--sl-border);
+  margin-bottom: 25px;
+}
+
+/* LABELS */
+
 .registro-label {
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 10px;
-  font-weight: 600;
-  color: #aaaaaa;
-  letter-spacing: 1px;
-  margin-top: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  color: var(--sl-grey-label);
+  margin-bottom: 10px;
+  margin-top: 18px;
 }
 
-.registro-input {
-  background-color: #111111;
-  border: 1px solid #2a2a2a;
-  border-radius: 6px;
-  color: #ffffff;
-  font-size: 13px;
-  padding: 10px 12px;
-  outline: none;
+/* INPUTS */
+
+.registro-input,
+.registro-select,
+.registro-textarea {
+  background-color: var(--sl-input-bg);
+  border: 1px solid var(--sl-input-border);
+  border-radius: 4px;
+  color: white;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  padding: 14px 16px;
   width: 100%;
   box-sizing: border-box;
-  transition: border-color 0.2s;
+  outline: none;
+  transition: .2s;
 }
 
-.registro-input::placeholder {
-  color: #444;
+.registro-input::placeholder,
+.registro-textarea::placeholder {
+  color: var(--sl-placeholder);
 }
 
-.registro-input:focus {
-  border-color: #2DEFF2;
+.registro-input:focus,
+.registro-select:focus,
+.registro-textarea:focus {
+  border-color: var(--sl-cyan);
+  background-color: #282828;
 }
 
-.registro-error-hint {
-  font-size: 10px;
-  color: #555;
-  margin-bottom: 4px;
+/* SELECT */
+
+.registro-select-wrapper {
+  position: relative;
 }
 
-/* Deportes */
+.registro-select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 40px;
+}
+
+.registro-select option {
+  background: var(--sl-card-bg);
+  color: white;
+}
+
+.registro-select-arrow {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--sl-text-muted);
+  pointer-events: none;
+}
+
+/* DEPORTES */
+
 .registro-deportes-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 5px;
 }
 
 .registro-deporte-btn {
-  background-color: #111111;
-  border: 1px solid #2a2a2a;
-  border-radius: 6px;
-  color: #aaaaaa;
-  font-size: 12px;
-  padding: 7px 12px;
+  background: var(--sl-input-bg);
+  border: 1px solid var(--sl-input-border);
+  border-radius: 4px;
+  color: white;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 10px 14px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: .2s;
 }
 
 .registro-deporte-btn:hover {
-  border-color: #2DEFF2;
-  color: #ffffff;
+  border-color: var(--sl-cyan);
 }
 
 .registro-deporte-btn.activo {
-  background-color: #2DEFF2;
-  border-color: #2DEFF2;
-  color: #000000;
-  font-weight: 700;
+  background: #282828;
+  border-color: var(--sl-cyan);
+  color: var(--sl-cyan);
 }
 
-/* Botón registrar */
-.registro-btn-siguiente {
-  background-color: #2DEFF2;
-  color: #000000;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  border: none;
-  border-radius: 8px;
-  padding: 14px 48px;
+/* TEXTAREA */
+
+.registro-textarea {
+  height: 120px;
+  resize: none;
+}
+
+.registro-char-count {
+  text-align: right;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--sl-text-muted);
+  font-family: 'Manrope', sans-serif;
+}
+
+/* UPLOAD */
+
+.registro-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  background-color: var(--sl-input-bg);
+  border: 1px dashed var(--sl-input-border);
+  border-radius: 4px;
+
+  height: 140px;
   cursor: pointer;
+
+  transition: .2s;
+  overflow: hidden;
+  gap: 10px;
+}
+
+.registro-upload-area:hover {
+  border-color: var(--sl-cyan);
+  background-color: #282828;
+}
+
+.registro-upload-icon {
+  color: var(--sl-cyan);
+}
+
+.registro-upload-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  color: var(--sl-grey-label);
+}
+
+.registro-upload-preview {
   width: 100%;
-  max-width: 300px;
-  transition: background-color 0.2s;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ERRORES */
+
+.registro-error {
+  color: #ff5252;
+  font-size: 11px;
+  margin-top: 6px;
+  font-family: 'Manrope', sans-serif;
+}
+
+/* BOTON */
+
+.registro-btn-siguiente {
+  margin-top: 35px;
+
+  background-color: var(--sl-cyan-btn);
+  color: black;
+
+  border: none;
+  border-radius: 4px;
+
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .15em;
+
+  padding: 16px 100px;
+  cursor: pointer;
+
+  transition: .3s;
+  box-shadow: 0 0 20px rgba(0,229,255,.4);
 }
 
 .registro-btn-siguiente:hover {
-  background-color: #2DEFF2;
+  background-color: var(--sl-cyan);
+  box-shadow: 0 0 30px rgba(0,229,255,.6);
+  transform: translateY(-1px);
 }
 
-.registro-input-file {
-  color: #aaaaaa;
-  font-size: 12px;
-  margin-top: 4px;
+/* ANIMACION */
+
+@keyframes introFadeBlur {
+  from {
+    opacity: 0;
+    filter: blur(15px);
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
 }
 
-.registro-foto-preview {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 50%;
-  margin-top: 8px;
-  border: 2px solid #00aaff;
+.registro-header {
+  animation: introFadeBlur .8s cubic-bezier(.25,1,.5,1);
+}
+
+.registro-card,
+.registro-btn-siguiente {
+  opacity: 0;
+  animation: introFadeBlur .8s cubic-bezier(.25,1,.5,1) forwards;
+  animation-delay: .3s;
 }

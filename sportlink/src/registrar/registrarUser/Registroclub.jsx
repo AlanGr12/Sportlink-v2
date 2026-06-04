@@ -1,6 +1,21 @@
 import { useState } from 'react'
 import axios from 'axios'
 import './RegistroClub.css'
+import Header from "../../header/header.jsx"
+import Footer from "../../footer/footer.jsx"
+import logoSportlink from "../../assets/logoSportlink.png"
+
+const barriosArgentina = [
+  "Agronomía", "Almagro", "Balvanera", "Barracas", "Belgrano", "Boedo",
+  "Caballito", "Chacarita", "Coghlan", "Colegiales", "Constitución",
+  "Flores", "Floresta", "La Boca", "La Paternal", "Liniers",
+  "Mataderos", "Monte Castro", "Monserrat", "Nueva Pompeya", "Núñez",
+  "Palermo", "Parque Avellaneda", "Parque Chacabuco", "Parque Chas",
+  "Parque Patricios", "Puerto Madero", "Recoleta", "Retiro",
+  "Saavedra", "San Cristóbal", "San Telmo", "Vélez Sarsfield",
+  "Versalles", "Villa Crespo", "Villa del Parque", "Villa Devoto",
+  "Villa Luro", "Villa Urquiza", "Zonas Norte GBA", "Zona Sur GBA", "Zona Oeste GBA"
+]
 
 const deportesDisponibles = [
   { id: 1, nombre: 'Fútbol' },
@@ -26,12 +41,16 @@ function RegistroClub({ onRegistro }) {
     contrasenia: '',
     nombre: '',
     ubicacion: '',
-    deportes: []
+    deportes: [],
+    descripcion: ''
   })
   const [fotoperfil, setFotoperfil] = useState(null)
+  const [errors, setErrors] = useState({})
 
   function cambiarForm(e) {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+    setErrors((prev) => ({ ...prev, [name]: '' }))
   }
 
   function cambiarDeporte(idDeporte) {
@@ -40,19 +59,19 @@ function RegistroClub({ onRegistro }) {
     } else {
       setForm({ ...form, deportes: [...form.deportes, idDeporte] })
     }
+    setErrors((prev) => ({ ...prev, deportes: '' }))
   }
 
   async function registro() {
-    if (
-      !form.email ||
-      !form.contrasenia ||
-      !form.nombre ||
-      !form.ubicacion ||
-      form.deportes.length === 0
-    ) {
-      alert('Completá todos los campos obligatorios')
-      return
-    }
+    const newErrors = {}
+    if (!form.email) newErrors.email = 'Este campo es obligatorio'
+    if (!form.contrasenia) newErrors.contrasenia = 'Este campo es obligatorio'
+    if (!form.nombre) newErrors.nombre = 'Este campo es obligatorio'
+    if (!form.ubicacion) newErrors.ubicacion = 'Este campo es obligatorio'
+    if (form.deportes.length === 0) newErrors.deportes = 'Seleccioná al menos un deporte'
+
+    setErrors(newErrors)
+    if (Object.keys(newErrors).length > 0) return
 
     try {
       const formData = new FormData()
@@ -61,6 +80,7 @@ function RegistroClub({ onRegistro }) {
       formData.append('nombre', form.nombre)
       formData.append('ubicacion', form.ubicacion)
       formData.append('deportes', JSON.stringify(form.deportes))
+      formData.append('descripcion', form.descripcion)
       if (fotoperfil) {
         formData.append('fotoperfil', fotoperfil)
       }
@@ -75,112 +95,242 @@ function RegistroClub({ onRegistro }) {
   }
 
   return (
-    <div className="registro-bg">
-      <div className="registro-container">
+    <>
+     <Header />
+  <div className="registro-bg">
+    <div className="registro-container">
 
-        <div className="registro-header">
-          <div className="registro-logo">SPORT<span>LINK</span></div>
-          <h1 className="registro-titulo">
-            REGISTRATE COMO <span className="registro-titulo-color">CLUB</span>
-          </h1>
-          <p className="registro-subtitulo">
-            Unite al ecosistema deportivo de rendimiento más avanzado del mundo.
+      <div className="registro-header">
+
+         <img src={logoSportlink} alt="Sportlink Logo" className="rj-logo" />
+
+        <h1 className="registro-titulo">
+          REGISTRATE COMO <span className="registro-titulo-color">CLUB</span>
+        </h1>
+
+        <p className="registro-subtitulo">
+          Unite al ecosistema deportivo de rendimiento más avanzado del mundo.
+        </p>
+
+      </div>
+
+      <div className="registro-card">
+
+        {/* COLUMNA IZQUIERDA */}
+        <div className="registro-seccion">
+
+          <p className="registro-seccion-titulo">
+            INFORMACIÓN DEL CLUB
           </p>
-        </div>
 
-        <div className="registro-card">
+          <div className="registro-divider"></div>
 
-          <div className="registro-seccion">
-            <p className="registro-seccion-titulo">INFORMACIÓN DEL CLUB</p>
+          <label className="registro-label">NOMBRE DEL CLUB</label>
+          <input
+            className="registro-input"
+            name="nombre"
+            type="text"
+            placeholder="Tu club"
+            value={form.nombre}
+            onChange={cambiarForm}
+          />
+          {errors.nombre && (
+            <span className="registro-error">{errors.nombre}</span>
+          )}
 
-            <label className="registro-label">NOMBRE DEL CLUB</label>
-            <input
-              className="registro-input"
-              name="nombre"
-              type="text"
-              placeholder="Tu club"
-              value={form.nombre}
-              onChange={cambiarForm}
-            />
-            <span className="registro-error-hint">Este campo es obligatorio</span>
+          <label className="registro-label">
+            UBICACIÓN (BARRIO / ZONA)
+          </label>
 
-            <label className="registro-label">UBICACIÓN</label>
-            <input
-              className="registro-input"
+          <div className="registro-select-wrapper">
+            <select
+              className="registro-select"
               name="ubicacion"
-              type="text"
-              placeholder="Ciudad, Provincia"
               value={form.ubicacion}
               onChange={cambiarForm}
-            />
-            <span className="registro-error-hint">Este campo es obligatorio</span>
+            >
+              <option value="" disabled hidden>
+                Seleccioná tu barrio
+              </option>
 
-            <label className="registro-label">DEPORTES QUE OFRECE</label>
-            <div className="registro-deportes-grid">
-              {deportesDisponibles.map(deporte => (
-                <button
-                  key={deporte.id}
-                  type="button"
-                  className={`registro-deporte-btn ${form.deportes.includes(deporte.id) ? 'activo' : ''}`}
-                  onClick={() => cambiarDeporte(deporte.id)}
-                >
-                  {deporte.nombre}
-                </button>
+              {barriosArgentina.map((barrio, index) => (
+                <option key={index} value={barrio}>
+                  {barrio}
+                </option>
               ))}
-            </div>
-            <span className="registro-error-hint">Seleccioná al menos un deporte</span>
+            </select>
+
+            <span className="registro-select-arrow">▼</span>
           </div>
 
-          <div className="registro-seccion">
-            <p className="registro-seccion-titulo">CREDENCIALES Y PERFIL</p>
+          {errors.ubicacion && (
+            <span className="registro-error">
+              {errors.ubicacion}
+            </span>
+          )}
 
-            <label className="registro-label">EMAIL</label>
-            <input
-              className="registro-input"
-              name="email"
-              type="email"
-              placeholder="club@email.com"
-              value={form.email}
-              onChange={cambiarForm}
-            />
-            <span className="registro-error-hint">Este campo es obligatorio</span>
+          <label className="registro-label">
+            DEPORTES QUE OFRECE
+          </label>
 
-            <label className="registro-label">CONTRASEÑA</label>
-            <input
-              className="registro-input"
-              name="contrasenia"
-              type="password"
-              placeholder="••••••••"
-              value={form.contrasenia}
-              onChange={cambiarForm}
-            />
-            <span className="registro-error-hint">Este campo es obligatorio</span>
-
-            <label className="registro-label">FOTO DE PERFIL</label>
-            <input
-              className="registro-input-file"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={(e) => setFotoperfil(e.target.files[0])}
-            />
-            {fotoperfil && (
-              <img
-                className="registro-foto-preview"
-                src={URL.createObjectURL(fotoperfil)}
-                alt="Preview"
-              />
-            )}
+          <div className="registro-deportes-grid">
+            {deportesDisponibles.map(deporte => (
+              <button
+                key={deporte.id}
+                type="button"
+                className={`registro-deporte-btn ${
+                  form.deportes.includes(deporte.id)
+                    ? 'activo'
+                    : ''
+                }`}
+                onClick={() => cambiarDeporte(deporte.id)}
+              >
+                {deporte.nombre}
+              </button>
+            ))}
           </div>
+
+          {errors.deportes && (
+            <span className="registro-error">
+              {errors.deportes}
+            </span>
+          )}
+
+          <label className="registro-label">
+            DESCRIPCIÓN
+          </label>
+
+          <textarea
+            className="registro-textarea"
+            name="descripcion"
+            placeholder="Contanos sobre las instalaciones y propuesta del club..."
+            value={form.descripcion}
+            onChange={cambiarForm}
+            maxLength={500}
+          />
+
+          <span className="registro-char-count">
+            {form.descripcion.length} / 500
+          </span>
 
         </div>
 
-        <button className="registro-btn-siguiente" onClick={registro}>
+        {/* COLUMNA DERECHA */}
+        <div className="registro-seccion">
+
+          <p className="registro-seccion-titulo">
+            CREDENCIALES Y PERFIL
+          </p>
+
+          <div className="registro-divider"></div>
+
+          <label className="registro-label">
+            EMAIL
+          </label>
+
+          <input
+            className="registro-input"
+            name="email"
+            type="email"
+            placeholder="club@email.com"
+            value={form.email}
+            onChange={cambiarForm}
+          />
+
+          {errors.email && (
+            <span className="registro-error">
+              {errors.email}
+            </span>
+          )}
+
+          <label className="registro-label">
+            CONTRASEÑA
+          </label>
+
+          <input
+            className="registro-input"
+            name="contrasenia"
+            type="password"
+            placeholder="••••••••"
+            value={form.contrasenia}
+            onChange={cambiarForm}
+          />
+
+          {errors.contrasenia && (
+            <span className="registro-error">
+              {errors.contrasenia}
+            </span>
+          )}
+
+          <label className="registro-label">
+            FOTO DE PERFIL
+          </label>
+
+          <label
+            className="registro-upload-area"
+            htmlFor="rc-file-upload"
+          >
+            {fotoperfil ? (
+              <img
+                src={URL.createObjectURL(fotoperfil)}
+                alt="Preview"
+                className="registro-upload-preview"
+              />
+            ) : (
+              <>
+                <span className="registro-upload-icon">
+                  <svg
+                    width="28"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                </span>
+
+                <span className="registro-upload-text">
+                  SUBIR IMAGEN (JPG, PNG)
+                </span>
+              </>
+            )}
+          </label>
+
+          <input
+            id="rc-file-upload"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) =>
+              setFotoperfil(e.target.files[0])
+            }
+            style={{ display: 'none' }}
+          />
+
+        </div>
+
+      </div>
+
+      <div className="registro-footer">
+
+        <button
+          className="registro-btn-siguiente"
+          onClick={registro}
+        >
           REGISTRAR CLUB
         </button>
 
       </div>
+
     </div>
-  )
+  </div>
+  <Footer />
+  </>
+)
 }
 
 export default RegistroClub
