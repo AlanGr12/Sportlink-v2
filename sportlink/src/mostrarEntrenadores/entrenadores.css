@@ -1,12 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Space+Grotesk:wght@300..700&display=swap');
 
-.contenedor-jugadores {
+.contenedor-Entrenadores {
   padding: 80px 60px;
   background: #000;
   min-height: 100vh;
 }
 
-.contenedor-jugadores h1 {
+.contenedor-Entrenadores h1 {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 4rem;
   font-weight: 800;
@@ -16,13 +16,13 @@
   margin-bottom: 60px;
 }
 
-.cards-grid-jugadores {
+.cards-grid-Entrenadores {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
 }
 
-.card-jugador {
+.card-Entrenador {
   background: #1d1d1d;
   border-radius: 8px;
   border-left: 3px solid #23e7f5;
@@ -34,12 +34,12 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.card-jugador:hover {
+.card-Entrenador:hover {
   transform: translateY(-4px);
   box-shadow: 0 16px 35px rgba(35, 231, 245, 0.15);
 }
 
-.foto-jugador {
+.foto-Entrenador {
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -49,7 +49,7 @@
   margin-bottom: 8px;
 }
 
-.card-jugador h2 {
+.card-Entrenador h2 {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1.2rem;
   font-weight: 700;
@@ -57,7 +57,16 @@
   margin: 0;
 }
 
-.card-jugador p {
+.card-Entrenador .titulo-entrenador {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #8e8e8e;
+  margin: 0 0 6px 0;
+}
+
+.card-Entrenador p {
   font-family: 'Manrope', sans-serif;
   font-size: 0.85rem;
   color: #bdbdbd;
@@ -66,15 +75,15 @@
 }
 
 @media (max-width: 768px) {
-  .contenedor-jugadores {
+  .contenedor-Entrenadores {
     padding: 40px 24px;
   }
 
-  .contenedor-jugadores h1 {
+  .contenedor-Entrenadores h1 {
     font-size: 2.5rem;
   }
 
-  .cards-grid-jugadores {
+  .cards-grid-Entrenadores {
     grid-template-columns: 1fr;
   }
 }
