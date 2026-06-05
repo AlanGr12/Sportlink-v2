@@ -516,7 +516,7 @@ p{
 
 .cardsPruebas{
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   gap: 80px;
 }
 

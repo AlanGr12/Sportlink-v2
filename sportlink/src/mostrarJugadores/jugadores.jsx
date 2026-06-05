@@ -10,10 +10,7 @@ function JugadoresView() {
   useEffect(() => {
     async function obtenerJugadores() {
       try {
-        const response = await axios.get(
-          'http://localhost:3000/api/jugadores'
-        )
-
+        const response = await axios.get('http://localhost:3000/api/jugadores')
         setJugadores(response.data)
       } catch (err) {
         console.error(err)
@@ -22,49 +19,40 @@ function JugadoresView() {
         setLoading(false)
       }
     }
-
     obtenerJugadores()
   }, [])
 
-  if (loading) {
-    return <h1>Cargando...</h1>
-  }
-
-  if (error) {
-    return <h1>{error}</h1>
-  }
+  if (loading) return <h1>Cargando...</h1>
+  if (error) return <h1>{error}</h1>
 
   return (
     <div className="contenedor-jugadores">
       <h1>Jugadores</h1>
 
-      {jugadores.map((jugador) => (
-        <div
-          key={jugador.idjugador}
-          className="card-jugador"
-        >
-          <h2>
-            {jugador.nombre} {jugador.apellido}
-          </h2>
+      <div className="cards-grid-jugadores">
+        {jugadores.map((jugador) => (
+          <div key={jugador.idjugador} className="card-jugador">
 
-          <p>Ubicación: {jugador.ubicacion}</p>
+            {jugador.fotoperfil && (
+              <img
+                src={jugador.fotoperfil}
+                alt={jugador.nombre}
+                className="foto-jugador"
+              />
+            )}
 
-          <p>Género: {jugador.genero}</p>
+            <h2>{jugador.nombre} {jugador.apellido}</h2>
 
-          <p>
-            Deporte:{' '}
-            {jugador.deportes?.deporte || jugador.iddeporte}
-          </p>
+            {jugador.descripcion && <p>{jugador.descripcion}</p>}
 
-          {jugador.fotoperfil && (
-            <img
-              src={jugador.fotoperfil}
-              alt={jugador.nombre}
-              className="foto-jugador"
-            />
-          )}
-        </div>
-      ))}
+            <p>🏅 Deporte: {jugador.deportes?.deporte || 'Sin deporte'}</p>
+            <p>📍 Ubicación: {jugador.ubicacion}</p>
+            <p>📞 Teléfono: {jugador.telefono}</p>
+            <p>⚧ Género: {jugador.genero}</p>
+
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
