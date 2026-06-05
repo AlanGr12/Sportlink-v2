@@ -5,19 +5,26 @@ import Landing from './landing/landing.jsx'
 
 function App() {
   const [usuario, setUsuario] = useState(null)
-  const [vista, setVista] = useState('login')
+  
+  // Cambiamos la vista inicial a 'landing' para que sea pública
+  const [vista, setVista] = useState('landing') 
 
-  if (!usuario) {
-    if (vista === 'registro') {
-      return <Registrar onRegistro={setUsuario} />
-    }
-    return <Login onLogin={setUsuario} onRegistro={() => setVista('registro')} />
+  // 1. CONDICIONALES PARA LOGIN Y REGISTRO (Manejados por el estado 'vista')
+  if (vista === 'login' && !usuario) {
+    return <Login onLogin={(user) => {
+      setUsuario(user);
+      setVista('landing'); // Al loguearse con éxito, vuelve a la landing ya autenticado
+    }} onRegistro={() => setVista('registro')} />
   }
 
-  //si el usuario se registra que lo mande a la landing y ver si primera view al entrar es la landing o log in, ya lo devuelve en caso de registrarse
-  //ojo pq el cuando se logea lo trae a este return y lo mismo pasa con el registrar pq lo que habria que hacer un if si esta registrado que lo mande a la landing y sino al log in
-  
-  return <Landing />
+  if (vista === 'registro' && !usuario) {
+    return <Registrar onRegistro={(user) => {
+      setUsuario(user);
+      setVista('landing'); // Al registrarse con éxito, vuelve a la landing ya autenticado
+    }} />
+  }
+
+  return <Landing usuario={usuario} cambiarVista={setVista} />
 }
 
 export default App

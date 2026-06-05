@@ -1,130 +1,206 @@
-/* Importar fuente Space Grotesk (Bold 700 para hover) */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap');
 
-/* Variables de color */
 :root {
-  --header-bg-opaco: rgba(0, 0, 0, 0.7); /* Negro opaco */
-  --header-text-color: #ffffff; /* Blanco por defecto */
-  --header-accent-color: #2DEFF2; /* Celeste para hover */
-  --header-blur-amount: 10px; /* Cantidad de desenfoque */
+  --header-bg-opaco: rgba(0, 0, 0, 0.7);
+  --header-text-color: #ffffff;
+  --header-accent-color: #2DEFF2;
+  --header-blur-amount: 10px;
+  --dropdown-bg: rgba(18, 18, 18, 0.95);
+  --dropdown-border: rgba(255, 255, 255, 0.08);
 }
 
-/* Reset básico para el header */
 .header {
-  position: fixed; /* O fixed si quieres que se quede arriba al hacer scroll */
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 80px; /* Altura sugerida, ajusta según necesites */
+  height: 80px;
   background-color: var(--header-bg-opaco);
-  
-  /* EFECTO BLUR AL FONDO (lo que está detrás del header) */
   -webkit-backdrop-filter: blur(var(--header-blur-amount));
   backdrop-filter: blur(var(--header-blur-amount));
-  
   color: var(--header-text-color);
-  z-index: 1000; /* Asegura que esté por encima del contenido */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Línea sutil abajo */
+  z-index: 1000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   font-family: 'Space Grotesk', sans-serif;
-  
-  /* Flexbox para centrado vertical y horizontal del contenedor */
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Contenedor interno para limitar el ancho y padding */
 .header-container {
   width: 100%;
-  max-width: 1280px; /* Ancho máximo igual al footer */
-  padding: 0px; /* Padding lateral igual al footer */
+  max-width: 1280px;
+  padding: 0 40px;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Logo a la izquierda, nav a la derecha */
+  justify-content: space-between;
 }
 
-/* LOGO */
 .header-logo-container {
   display: flex;
   align-items: center;
+  flex: 1; /* Distribuye el espacio a la izquierda equitativamente */
 }
 
 .header-logo-img {
   display: block;
-  height: 27px; /* Altura sugerida para el logo, ajusta según necesites */
+  height: 27px;
   width: auto;
 }
 
 /* NAVIGATION */
 .header-nav {
   display: flex;
+  justify-content: center;
+  flex: 2; /* Centra el menú en el espacio disponible */
 }
 
 .header-nav-list {
   list-style: none;
   display: flex;
   align-items: center;
-  gap: 30px; /* Espaciado entre elementos del menú */
+  gap: 35px;
   margin: 0;
   padding: 0;
 }
 
-/* Estilo base de los enlaces y el botón dropdown */
+.header-nav-item-relative {
+  position: relative; /* Permite posicionar el dropdown flotando justo debajo */
+}
+
 .header-nav-link,
 .header-nav-dropdown-btn {
   background: none;
   border: none;
   text-decoration: none;
-  color: inherit; /* Hereda el color blanco base */
+  color: inherit;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 15px; /* Tamaño de fuente sugerido */
-  font-weight: 400; /* Regular por defecto */
+  font-size: 15px;
+  font-weight: 400;
   cursor: pointer;
-  transition: color 0.3s ease, font-weight 0.1s ease; /* Transición para color y peso */
-  padding: 10px 0; /* Padding vertical sutil */
-  position: relative; /* Para posibles efectos de línea abajo */
+  transition: color 0.2s ease, font-weight 0.1s ease;
+  padding: 10px 0;
   display: flex;
   align-items: center;
-  gap: 8px; /* Espacio entre texto y flecha */
+  gap: 6px;
 }
 
-/* EFECTO HOVER: Color celeste y peso de fuente a Bold (700) */
 .header-nav-link:hover,
 .header-nav-dropdown-btn:hover,
 .header-nav-dropdown-btn.active {
   color: var(--header-accent-color);
-  font-weight: 700; /* Bold en hover */
+  font-weight: 700;
 }
 
-/* FLECHITA DE OPORTUNIDADES */
 .header-nav-arrow {
-  width: 16px;
-  height: 16px;
-  transition: transform 0.3s ease; /* Transición para rotación */
-  stroke: inherit; /* Hereda el color del texto */
+  width: 14px;
+  height: 14px;
+  transition: transform 0.3s ease;
 }
 
-/* Estado de la flecha: Abajo por defecto */
-.header-nav-arrow.down {
-  transform: translateY(1px); /* Ajuste sutil de posición */
-}
-
-/* Estado de la flecha: Arriba al hacer clic */
 .header-nav-arrow.up {
-  transform: rotate(-180deg) translateY(-1px); /* Rotar y ajustar posición */
+  transform: rotate(-180deg);
 }
 
-/* Responsive básico para pantallas pequeñas */
+/* NUEVAS ACCIONES DERECHAS (BASE.png) */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: flex-end;
+  flex: 1; /* Empuja las interacciones al extremo derecho */
+}
+
+.header-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.header-action-btn:hover {
+  transform: scale(1.05);
+}
+
+.header-action-icon {
+  height: 22px;
+  width: auto;
+}
+
+.header-avatar {
+  width: 35px;
+  height: 35px;
+  background-color: #D9D9D9; /* Color de relleno del círculo gris */
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* CAJA CONTENEDORA FLOTANTE DEL DROPDOWN */
+.header-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 12px;
+  width: 320px;
+  background: var(--dropdown-bg);
+  border: 1px solid var(--dropdown-border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  z-index: 1100;
+}
+
+.header-dropdown-item {
+  display: flex;
+  gap: 14px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.header-dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.header-dropdown-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: flex-start;
+  margin-top: 2px;
+}
+
+.header-dropdown-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.header-dropdown-desc {
+  font-size: 12px;
+  font-weight: 400;
+  color: #a0a0a0;
+  line-height: 1.4;
+}
+
 @media (max-width: 768px) {
   .header-container {
-    padding: 0 24px;
+    padding: 0 20px;
   }
   .header-nav-list {
-    gap: 20px;
-    font-size: 14px;
+    gap: 15px;
   }
-  .header-nav-arrow {
-    width: 14px;
-    height: 14px;
+  .header-actions {
+    gap: 10px;
   }
 }

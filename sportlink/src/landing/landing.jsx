@@ -20,10 +20,10 @@ import calendar from '../assets/calendar.png'
 
 
 
-const Landing = () => {
+const Landing = (props) => {
   return (
-<>
-      <Header />
+    <>
+      <Header cambiarVista={props.cambiarVista} />
     <main>
 <section
   className="banner"
