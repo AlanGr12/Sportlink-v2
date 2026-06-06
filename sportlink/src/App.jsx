@@ -2,6 +2,9 @@ import { useState } from 'react'
 import Login from './log in/Login.jsx'
 import Registrar from './registrar/registrar.jsx'
 import Landing from './landing/landing.jsx'
+import EntrenadoresView from './mostrarEntrenadores/entrenadores.jsx'
+import JugadoresView from './mostrarJugadores/jugadores.jsx'
+
 
 function App() {
   const [usuario, setUsuario] = useState(null)

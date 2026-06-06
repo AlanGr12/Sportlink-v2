@@ -23,7 +23,7 @@ import calendar from '../assets/calendar.png'
 const Landing = (props) => {
   return (
     <>
-      <Header cambiarVista={props.cambiarVista} />
+      <Header cambiarVista={props.cambiarVista} usuario={props.usuario} />
     <main>
 <section
   className="banner"

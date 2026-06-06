@@ -7,16 +7,62 @@ import iconNotis from '../assets/notis.png';
 const Header = (props) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // === INFRAESTRUCTURA PARA DESPUÉS DE LA DEMO ===
-  // Podés cambiar este valor por 'entrenador' o 'club' para ver cómo cambia dinámicamente.
-  // Ahora fijado en 'jugador' para la presentación.
-  const userRole = 'jugador'; 
+  // Si no llegó usuario por props, lo busca en localStorage
+  const usuario = props.usuario || JSON.parse(localStorage.getItem('usuario') || 'null');
+  // true si hay usuario, false si es null
+  const estaLogueado = !!usuario;
+   // Obtiene el tipo de usuario (jugador/entrenador/club) sin romper si usuario es null
+  const userRole = usuario?.tipousuario || null;
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
   };
 
-  // Contenido dinámico del Dropdown estructurado según el Rol
+    // Caso 1: no hay usuario → mostrar círculo gris
+  const renderAvatar = () => {
+    if (!estaLogueado) {
+      return (
+        <div
+          className="header-avatar"
+          title="Iniciar Sesión"
+          onClick={() => {
+            if (props.cambiarVista) props.cambiarVista('login');
+          }}
+        />
+      );
+    }
+
+      // Caso 2: hay usuario con foto → mostrar la imagen
+    if (usuario.fotoperfil) {
+      return (
+        <div
+          className="header-avatar header-avatar--logueado"
+          title={usuario.nombre || usuario.email}
+        >
+          <img
+            src={usuario.fotoperfil}
+            alt="Foto de perfil"
+            className="header-avatar-img"
+          />
+        </div>
+      );
+    }
+
+      // Caso 3: hay usuario pero sin foto → mostrar la inicial
+    const iniciales = usuario.nombre
+      ? usuario.nombre.charAt(0).toUpperCase()
+      : usuario.email.charAt(0).toUpperCase();
+
+    return (
+      <div
+        className="header-avatar header-avatar--logueado header-avatar--iniciales"
+        title={usuario.nombre || usuario.email}
+      >
+        {iniciales}
+      </div>
+    );
+  };
+
   const renderDropdownItems = () => {
     switch (userRole) {
       case 'jugador':
@@ -65,7 +111,6 @@ const Header = (props) => {
           </>
         );
       case 'club':
-        // Dejado independiente tal cual pediste para tus futuros cambios personalizados
         return (
           <>
             <div className="header-dropdown-item">
@@ -99,42 +144,40 @@ const Header = (props) => {
   return (
     <header className="header">
       <div className="header-container">
-        
-        {/* LADO IZQUIERDO: LOGO */}
-<div className="header-logo-container">
-  <a href="/">
-    <img
-      src={logoSportlink}
-      alt="SportLink Logo"
-      className="header-logo-img"
-      style={{ cursor: 'pointer' }}
-    />
-  </a>
-</div>
 
-        {/* CENTRO: NAVEGACIÓN PRINCIPAL */}
+        {/* LOGO */}
+        <div className="header-logo-container">
+          <a href="/">
+            <img
+              src={logoSportlink}
+              alt="SportLink Logo"
+              className="header-logo-img"
+            />
+          </a>
+        </div>
+
+        {/* NAVEGACIÓN */}
         <nav className="header-nav">
           <ul className="header-nav-list">
             <li className="header-nav-item-relative">
-              <button 
+              <button
                 className={`header-nav-link header-nav-dropdown-btn ${dropdownOpen ? 'active' : ''}`}
                 onClick={toggleDropdown}
               >
                 Oportunidades
-                <svg 
-                  className={`header-nav-arrow ${dropdownOpen ? 'up' : 'down'}`} 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2.5" 
-                  strokeLinecap="round" 
+                <svg
+                  className={`header-nav-arrow ${dropdownOpen ? 'up' : 'down'}`}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 >
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </button>
 
-              {/* DROPDOWN DINÁMICO */}
               {dropdownOpen && (
                 <div className="header-dropdown-menu">
                   {renderDropdownItems()}
@@ -147,7 +190,7 @@ const Header = (props) => {
           </ul>
         </nav>
 
-        {/* LADO DERECHO: INTERACCIONES Y AVATAR */}
+        {/* ACCIONES DERECHA */}
         <div className="header-actions">
           <button className="header-action-btn">
             <img src={iconMensajes} alt="Mensajes" className="header-action-icon" />
@@ -155,24 +198,10 @@ const Header = (props) => {
           <button className="header-action-btn">
             <img src={iconNotis} alt="Notificaciones" className="header-action-icon" />
           </button>
-          <div 
-            className="header-avatar" 
-            title="Iniciar Sesión"
-            style={{ cursor: 'pointer' }}
-            onClick={() => {
-              if (props.cambiarVista) {
-                props.cambiarVista('login');
-              }
-            }}
-          >
-            {/* Círculo gris idéntico al de la imagen BASE.png */}
-          </div>
+          {renderAvatar()}
         </div>
 
-        
-
       </div>
-      
     </header>
   );
 };

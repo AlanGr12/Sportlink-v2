@@ -19,6 +19,14 @@ function Login({ onLogin, onRegistro }) {
         }
       )
 
+      console.log(response.data)
+
+      localStorage.setItem(
+     'usuario',
+     JSON.stringify(response.data)
+  )
+
+
       onLogin(response.data)
 
     } catch (error) {

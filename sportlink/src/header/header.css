@@ -39,7 +39,7 @@
 .header-logo-container {
   display: flex;
   align-items: center;
-  flex: 1; /* Distribuye el espacio a la izquierda equitativamente */
+  flex: 1;
 }
 
 .header-logo-img {
@@ -52,7 +52,7 @@
 .header-nav {
   display: flex;
   justify-content: center;
-  flex: 2; /* Centra el menú en el espacio disponible */
+  flex: 2;
 }
 
 .header-nav-list {
@@ -65,7 +65,7 @@
 }
 
 .header-nav-item-relative {
-  position: relative; /* Permite posicionar el dropdown flotando justo debajo */
+  position: relative;
 }
 
 .header-nav-link,
@@ -102,13 +102,13 @@
   transform: rotate(-180deg);
 }
 
-/* NUEVAS ACCIONES DERECHAS (BASE.png) */
+/* ACCIONES DERECHA */
 .header-actions {
   display: flex;
   align-items: center;
   gap: 20px;
   justify-content: flex-end;
-  flex: 1; /* Empuja las interacciones al extremo derecho */
+  flex: 1;
 }
 
 .header-action-btn {
@@ -131,15 +131,48 @@
   width: auto;
 }
 
+/* AVATAR BASE — círculo gris cuando no hay usuario */
 .header-avatar {
-  width: 35px;
-  height: 35px;
-  background-color: #D9D9D9; /* Color de relleno del círculo gris */
+  width: 38px;
+  height: 38px;
+  background-color: #D9D9D9;
   border-radius: 50%;
   cursor: pointer;
+  flex-shrink: 0;
+  transition: box-shadow 0.2s ease;
 }
 
-/* CAJA CONTENEDORA FLOTANTE DEL DROPDOWN */
+/* AVATAR LOGUEADO — borde accent */
+.header-avatar--logueado {
+  background-color: #2DEFF2;
+  box-shadow: 0 0 0 2px #2DEFF2;
+}
+
+.header-avatar--logueado:hover {
+  box-shadow: 0 0 0 3px #2DEFF2, 0 0 12px rgba(45, 239, 242, 0.4);
+}
+
+/* Foto de perfil dentro del avatar */
+.header-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+/* Iniciales dentro del avatar */
+.header-avatar--iniciales {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: #000;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* DROPDOWN */
 .header-dropdown-menu {
   position: absolute;
   top: 100%;
