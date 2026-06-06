@@ -37,6 +37,11 @@ const Header = (props) => {
     window.location.reload();
   };
 
+  const openMiPerfilView = () => {
+    setAvatarDropdownOpen(false);
+    if (props.cambiarVista) props.cambiarVista('miperfil');
+  };
+
   // Cerrar dropdown del avatar al hacer click fuera
   useEffect(() => {
     const handleDocumentClick = (event) => {
@@ -87,10 +92,7 @@ const Header = (props) => {
             <div className="header-dropdown-menu header-dropdown-menu--avatar">
               <div
                 className="header-dropdown-item"
-                onClick={() => {
-                  setAvatarDropdownOpen(false);
-                  // Acción preparada para navegar al perfil en el futuro
-                }}
+                onClick={openMiPerfilView}
               >
                 <div className="header-dropdown-icon">
                   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
@@ -138,18 +140,12 @@ const Header = (props) => {
 
         {avatarDropdownOpen && (
           <div className="header-dropdown-menu header-dropdown-menu--avatar">
-            <div
-              className="header-dropdown-item"
-              onClick={() => {
-                setAvatarDropdownOpen(false);
-                // Acción preparada para navegar al perfil en el futuro
-              }}
-            >
-                <div className="header-dropdown-icon">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
-                    <path fill="currentColor" d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.2c-3.3 0-9.8 1.7-9.8 5v2.2h19.6V19.2c0-3.3-6.5-5-9.8-5z" />
-                  </svg>
-                </div>
+            <div className="header-dropdown-item" onClick={openMiPerfilView}>
+              <div className="header-dropdown-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                  <path fill="currentColor" d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.2c-3.3 0-9.8 1.7-9.8 5v2.2h19.6V19.2c0-3.3-6.5-5-9.8-5z" />
+                </svg>
+              </div>
               <div>
                 <div className="header-dropdown-title">Ver mi perfil</div>
               </div>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Login from './log in/Login.jsx'
 import Registrar from './registrar/registrar.jsx'
 import Landing from './landing/landing.jsx'
+import MiPerfil from './mi perfil/miperfil.jsx'
 import EntrenadoresView from './mostrarEntrenadores/entrenadores.jsx'
 import JugadoresView from './mostrarJugadores/jugadores.jsx'
 
@@ -25,6 +26,10 @@ function App() {
       setUsuario(user);
       setVista('landing'); // Al registrarse con éxito, vuelve a la landing ya autenticado
     }} />
+  }
+
+  if (vista === 'miperfil') {
+    return <MiPerfil cambiarVista={setVista} usuario={usuario} />
   }
 
   return <Landing usuario={usuario} cambiarVista={setVista} />

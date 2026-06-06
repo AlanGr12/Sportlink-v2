@@ -1,0 +1,15 @@
+.perfil-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+}
+.perfil-header-left{display:flex;gap:16px;align-items:center}
+.perfil-photo{width:96px;height:96px;border-radius:12px;overflow:hidden;background:#111;display:flex;align-items:center;justify-content:center}
+.perfil-photo img{width:100%;height:100%;object-fit:cover}
+.perfil-initials{width:96px;height:96px;border-radius:12px;background:#2DEFF2;color:#000;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:32px}
+.perfil-names h1{margin:0;font-size:22px}
+.perfil-meta{display:flex;gap:10px;margin-top:6px}
+.perfil-meta-item{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px;font-size:13px}
+.perfil-header-actions .btn-editar{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:#2DEFF2;cursor:pointer}
+.perfil-header-actions .btn-editar:hover{transform:translateY(-1px)}

@@ -1,0 +1,45 @@
+@import url('../header/header.css');
+
+.miPerfil-root {
+  background: #0f0f10; /* oscuro */
+  color: #e8e8e8;
+  min-height: 100vh;
+  padding-top: 100px; /* dejar espacio para header fijo */
+}
+
+.miPerfil-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+.miPerfil-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 28px;
+}
+
+.miPerfil-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.miPerfil-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.miPerfil-loading, .miPerfil-error {
+  color: #cfcfcf;
+  background: rgba(255,255,255,0.02);
+  padding: 24px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .miPerfil-grid { grid-template-columns: 1fr; }
+  .miPerfil-aside { order: 2; }
+}
