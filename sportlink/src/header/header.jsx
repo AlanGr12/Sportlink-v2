@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './header.css';
 import logoSportlink from '../assets/logoSportlink.png';
 import iconMensajes from '../assets/mensajes.png';
@@ -6,6 +6,8 @@ import iconNotis from '../assets/notis.png';
 
 const Header = (props) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
+  const avatarRef = useRef(null);
 
   // Si no llegó usuario por props, lo busca en localStorage
   const usuario = props.usuario || JSON.parse(localStorage.getItem('usuario') || 'null');
@@ -17,6 +19,39 @@ const Header = (props) => {
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
   };
+
+  const toggleAvatarDropdown = (e) => {
+    // prevent nav dropdown toggle when clicking avatar
+    e && e.stopPropagation();
+    setAvatarDropdownOpen(!avatarDropdownOpen);
+  };
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('usuario');
+    } catch (err) {
+      // ignore
+    }
+    setAvatarDropdownOpen(false);
+    // recargar la app para volver al estado sin sesión iniciada
+    window.location.reload();
+  };
+
+  // Cerrar dropdown del avatar al hacer click fuera
+  useEffect(() => {
+    const handleDocumentClick = (event) => {
+      if (!avatarRef.current) return;
+      if (!avatarRef.current.contains(event.target)) {
+        setAvatarDropdownOpen(false);
+      }
+    };
+
+    if (avatarDropdownOpen) {
+      document.addEventListener('mousedown', handleDocumentClick);
+    }
+
+    return () => document.removeEventListener('mousedown', handleDocumentClick);
+  }, [avatarDropdownOpen]);
 
     // Caso 1: no hay usuario → mostrar círculo gris
   const renderAvatar = () => {
@@ -35,15 +70,53 @@ const Header = (props) => {
       // Caso 2: hay usuario con foto → mostrar la imagen
     if (usuario.fotoperfil) {
       return (
-        <div
-          className="header-avatar header-avatar--logueado"
-          title={usuario.nombre || usuario.email}
-        >
-          <img
-            src={usuario.fotoperfil}
-            alt="Foto de perfil"
-            className="header-avatar-img"
-          />
+        <div className="header-avatar-wrapper" ref={avatarRef}>
+          <div
+            className="header-avatar header-avatar--logueado"
+            title={usuario.nombre || usuario.email}
+            onClick={toggleAvatarDropdown}
+          >
+            <img
+              src={usuario.fotoperfil}
+              alt="Foto de perfil"
+              className="header-avatar-img"
+            />
+          </div>
+
+          {avatarDropdownOpen && (
+            <div className="header-dropdown-menu header-dropdown-menu--avatar">
+              <div
+                className="header-dropdown-item"
+                onClick={() => {
+                  setAvatarDropdownOpen(false);
+                  // Acción preparada para navegar al perfil en el futuro
+                }}
+              >
+                <div className="header-dropdown-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="currentColor" d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.2c-3.3 0-9.8 1.7-9.8 5v2.2h19.6V19.2c0-3.3-6.5-5-9.8-5z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="header-dropdown-title">Ver mi perfil</div>
+                </div>
+              </div>
+
+              <div
+                className="header-dropdown-item header-dropdown-item--logout"
+                onClick={handleLogout}
+              >
+                <div className="header-dropdown-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="currentColor" d="M10 17l5-5-5-5v3H3v4h7v3zM20 3h-8v2h8v14h-8v2h8c1.1 0 2-0.9 2-2V5c0-1.1-0.9-2-2-2z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="header-dropdown-title header-dropdown-title--logout">Cerrar sesión</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -54,11 +127,49 @@ const Header = (props) => {
       : usuario.email.charAt(0).toUpperCase();
 
     return (
-      <div
-        className="header-avatar header-avatar--logueado header-avatar--iniciales"
-        title={usuario.nombre || usuario.email}
-      >
-        {iniciales}
+      <div className="header-avatar-wrapper" ref={avatarRef}>
+        <div
+          className="header-avatar header-avatar--logueado header-avatar--iniciales"
+          title={usuario.nombre || usuario.email}
+          onClick={toggleAvatarDropdown}
+        >
+          {iniciales}
+        </div>
+
+        {avatarDropdownOpen && (
+          <div className="header-dropdown-menu header-dropdown-menu--avatar">
+            <div
+              className="header-dropdown-item"
+              onClick={() => {
+                setAvatarDropdownOpen(false);
+                // Acción preparada para navegar al perfil en el futuro
+              }}
+            >
+                <div className="header-dropdown-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="currentColor" d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.2c-3.3 0-9.8 1.7-9.8 5v2.2h19.6V19.2c0-3.3-6.5-5-9.8-5z" />
+                  </svg>
+                </div>
+              <div>
+                <div className="header-dropdown-title">Ver mi perfil</div>
+              </div>
+            </div>
+
+            <div
+              className="header-dropdown-item header-dropdown-item--logout"
+              onClick={handleLogout}
+            >
+              <div className="header-dropdown-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                  <path fill="currentColor" d="M10 17l5-5-5-5v3H3v4h7v3zM20 3h-8v2h8v14h-8v2h8c1.1 0 2-0.9 2-2V5c0-1.1-0.9-2-2-2z" />
+                </svg>
+              </div>
+              <div>
+                <div className="header-dropdown-title header-dropdown-title--logout">Cerrar sesión</div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
