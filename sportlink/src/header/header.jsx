@@ -291,8 +291,20 @@ const Header = (props) => {
                 </div>
               )}
             </li>
-            <li><a href="#entrenadores" className="header-nav-link">Entrenadores</a></li>
-            <li><a href="#clubes" className="header-nav-link">Clubes</a></li>
+            <li><button
+  className="header-nav-link"
+  onClick={() => props.cambiarVista('entrenadores')}
+>
+  Entrenadores
+</button></li>
+            <li>
+  <button
+    className="header-nav-link"
+    onClick={() => props.cambiarVista('jugadores')}
+  >
+    Jugadores
+  </button>
+</li>
             <li><a href="#calendario" className="header-nav-link">Calendario</a></li>
           </ul>
         </nav>

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import './entrenadores.css'
+import Header from '../header/header.jsx';
+import Footer from '../footer/footer.jsx';
 
 function EntrenadoresView() {
   const [Entrenadores, setEntrenadores] = useState([])
@@ -26,6 +28,8 @@ function EntrenadoresView() {
   if (error) return <h1>{error}</h1>
 
   return (
+    <>
+    <Header />
     <div className="contenedor-Entrenadores">
       <h1>Entrenadores</h1>
 
@@ -56,6 +60,8 @@ function EntrenadoresView() {
         ))}
       </div>
     </div>
+    <Footer />
+    </>
   )
 }
 

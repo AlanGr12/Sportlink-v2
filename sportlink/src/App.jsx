@@ -9,11 +9,31 @@ import JugadoresView from './mostrarJugadores/jugadores.jsx'
 
 function App() {
   const [usuario, setUsuario] = useState(null)
+
   
   // Cambiamos la vista inicial a 'landing' para que sea pública
   const [vista, setVista] = useState('landing') 
 
   // 1. CONDICIONALES PARA LOGIN Y REGISTRO (Manejados por el estado 'vista')
+
+  if (vista === 'jugadores') {
+  return (
+    <JugadoresView
+      cambiarVista={setVista}
+      usuario={usuario}
+    />
+  )
+}
+
+if (vista === 'entrenadores') {
+  return (
+    <EntrenadoresView
+      cambiarVista={setVista}
+      usuario={usuario}
+    />
+  )
+}
+
   if (vista === 'login' && !usuario) {
     return <Login onLogin={(user) => {
       setUsuario(user);
@@ -26,6 +46,8 @@ function App() {
       setUsuario(user);
       setVista('landing'); // Al registrarse con éxito, vuelve a la landing ya autenticado
     }} />
+
+    
   }
 
   if (vista === 'miperfil') {
