@@ -7,17 +7,21 @@ import iconNotis from '../assets/notis.png';
 const Header = (props) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
-
+  
+  // Referencias para controlar los clics externos de forma independiente
   const explorarRef = useRef(null);
   const avatarRef = useRef(null);
 
-  // FIX 3: ya no leemos localStorage acá, confiamos en la prop usuario que viene de App.jsx
-  // Esto garantiza que cuando App.jsx limpia el estado, el Header lo refleja al instante
-  const usuario = props.usuario || null;
+  // Mantenemos tu línea original intacta para que App.jsx controle la sesión perfectamente
+  const usuario = props.usuario || JSON.parse(localStorage.getItem('usuario') || 'null');
+  // true si hay usuario, false si es null
   const estaLogueado = !!usuario;
+   // Obtiene el tipo de usuario (jugador/entrenador/club) sin romper si usuario es null
   const userRole = usuario?.tipousuario || null;
 
-  const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
 
   const toggleAvatarDropdown = (e) => {
     e && e.stopPropagation();
@@ -25,14 +29,16 @@ const Header = (props) => {
   };
 
   const handleLogout = () => {
-    setAvatarDropdownOpen(false);
-    // FIX 3: llamamos al callback de App.jsx que limpia estado + localStorage juntos
-    if (props.onLogout) {
-      props.onLogout();
+    try {
+      localStorage.removeItem('usuario');
+    } catch (err) {
+      // ignore
     }
+    setAvatarDropdownOpen(false);
     props.cambiarVista('landing');
   };
 
+  // Cierra los dropdowns si clickeas afuera
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (explorarRef.current && !explorarRef.current.contains(event.target)) {
@@ -43,16 +49,19 @@ const Header = (props) => {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const renderDropdownItems = () => {
+    // SI NO ESTÁ LOGUEADO: Cartel informativo fijo
     if (!estaLogueado) {
       return (
         <div className="header-dropdown-item" style={{ cursor: 'default' }}>
           <div className="header-dropdown-icon">🔒</div>
           <div>
-            <div className="header-dropdown-title">Inicia sesión</div>
+            <div className="header-dropdown-title">Iniciar sesión</div>
             <div className="header-dropdown-desc">
               Debes iniciar sesión para desbloquear las demás funciones.
             </div>
@@ -61,6 +70,7 @@ const Header = (props) => {
       );
     }
 
+    // Opciones originales por rol
     switch (userRole) {
       case 'jugador':
         return (
@@ -141,11 +151,13 @@ const Header = (props) => {
   return (
     <header className="header">
       <div className="header-container">
-
+        
+        {/* LOGO DE SPORTLINK */}
         <div className="header-logo" onClick={() => props.cambiarVista('landing')} style={{ cursor: 'pointer' }}>
           <img src={logoSportlink} alt="Sportlink" className="header-logo-img" />
         </div>
 
+        {/* NAVEGACIÓN CENTRAL */}
         <nav className="header-nav">
           <ul className="header-nav-list">
             <li ref={explorarRef}>
@@ -170,19 +182,19 @@ const Header = (props) => {
                 </div>
               )}
             </li>
-
+            
             <li>
               <button className="header-nav-link" onClick={() => props.cambiarVista('entrenadores')}>
                 Entrenadores
               </button>
             </li>
-
+            
             <li>
               <button className="header-nav-link" onClick={() => props.cambiarVista('jugadores')}>
                 Jugadores
               </button>
             </li>
-
+            
             <li>
               <button className="header-nav-link" onClick={() => props.cambiarVista('calendario')}>
                 Calendario
@@ -191,24 +203,26 @@ const Header = (props) => {
           </ul>
         </nav>
 
+        {/* ACCIONES DERECHA */}
         <div className="header-actions">
           <button className="header-action-btn">
             <img src={iconMensajes} alt="Mensajes" className="header-action-icon" />
           </button>
-
+          
           <button className="header-action-btn">
             <img src={iconNotis} alt="Notificaciones" className="header-action-icon" />
           </button>
 
+          {/* PERFIL / AVATAR */}
           <div className="header-profile-container" ref={avatarRef}>
             <button className="header-avatar-toggle" onClick={toggleAvatarDropdown}>
               <div className="header-avatar" style={{ overflow: 'hidden', padding: 0 }}>
                 {estaLogueado ? (
                   usuario.fotoperfil ? (
-                    <img
-                      src={usuario.fotoperfil}
-                      alt={usuario.nombre || "Foto de perfil"}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }}
+                    <img 
+                      src={usuario.fotoperfil} 
+                      alt={usuario.nombre || "Foto de perfil"} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} 
                     />
                   ) : (
                     usuario.nombre?.charAt(0).toUpperCase()

@@ -87,3 +87,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Estilo adaptado del perfil para el cartel de carga */
+.entrenadores-loading-box {
+  color: #cfcfcf;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.2rem;
+  max-width: 400px;
+  margin: 40px auto 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}

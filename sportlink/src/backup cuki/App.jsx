@@ -5,54 +5,40 @@ import Landing from './landing/landing.jsx'
 import MiPerfil from './mi perfil/miperfil.jsx'
 import EntrenadoresView from './mostrarEntrenadores/entrenadores.jsx'
 import JugadoresView from './mostrarJugadores/jugadores.jsx'
-import Header from './header/header.jsx'
+import Header from './header/header.jsx' // Importamos el Header global acá
 import Footer from './footer/footer.jsx'
 
 function App() {
-  // FIX 1: inicializar desde localStorage para que la sesión sobreviva recargas
-  const [usuario, setUsuario] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('usuario') || 'null')
-    } catch {
-      return null
-    }
-  })
-  const [vista, setVista] = useState('landing')
+  const [usuario, setUsuario] = useState(null)
+  const [vista, setVista] = useState('landing') // Vista inicial pública
 
-  // FIX 3: wrapper que sincroniza el estado de React Y el localStorage
-  const actualizarUsuario = (user) => {
-    if (user) {
-      localStorage.setItem('usuario', JSON.stringify(user))
-    } else {
-      localStorage.removeItem('usuario')
-    }
-    setUsuario(user)
-  }
-
+  // Función interna para decidir qué cuerpo de página renderizar
   const renderContenido = () => {
+    // Vistas restringidas por Login/Registro si no hay usuario
     if (vista === 'login' && !usuario) {
       return (
-        <Login
+        <Login 
           onLogin={(user) => {
-            actualizarUsuario(user)
-            setVista('landing')
-          }}
-          onRegistro={() => setVista('registro')}
+            setUsuario(user);
+            setVista('landing'); 
+          }} 
+          onRegistro={() => setVista('registro')} 
         />
       )
     }
 
     if (vista === 'registro' && !usuario) {
       return (
-        <Registrar
+        <Registrar 
           onRegistro={(user) => {
-            actualizarUsuario(user)
-            setVista('landing')
-          }}
+            setUsuario(user);
+            setVista('landing');
+          }} 
         />
       )
     }
 
+    // Navegación general de vistas fijas
     if (vista === 'jugadores') {
       return <JugadoresView cambiarVista={setVista} usuario={usuario} />
     }
@@ -65,17 +51,20 @@ function App() {
       return <MiPerfil cambiarVista={setVista} usuario={usuario} />
     }
 
+    // Por defecto si no coincide ninguna, muestra la Landing
     return <Landing cambiarVista={setVista} />
   }
 
   return (
     <div className="app-container">
-      {/* FIX 3: pasamos actualizarUsuario para que el Header pueda limpiar el estado al hacer logout */}
-      <Header cambiarVista={setVista} usuario={usuario} onLogout={() => actualizarUsuario(null)} />
-
+      {/* El Header ahora es GLOBAL y está siempre accesible en cualquier vista */}
+      <Header cambiarVista={setVista} usuario={usuario} />
+      
       <main className="content-body">
         {renderContenido()}
       </main>
+
+      {/* Si querés un footer global también podés ponerlo acá, o dejarlo en las vistas */}
     </div>
   )
 }

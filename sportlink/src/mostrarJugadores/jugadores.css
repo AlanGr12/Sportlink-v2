@@ -78,3 +78,25 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Contenedor neutro de carga para evitar el bloque negro plano */
+.loading-screen-wrapper {
+  background: #0f0f10; 
+  min-height: 100vh;
+  padding-top: 140px; /* Espacio para que no tape el header */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* El cartel estilizado */
+.entrenadores-loading-box, .jugadores-loading-box {
+  color: #cfcfcf;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 30px 50px;
+  border-radius: 10px;
+  text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}

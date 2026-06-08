@@ -10,19 +10,27 @@ import PerfilSidebar from './PerfilSidebar.jsx';
 import PerfilContacto from './PerfilContacto.jsx';
 import PerfilResenas from './PerfilResenas.jsx';
 
+/*
+  Vista principal "Mi Perfil"
+  - Sólo este componente realiza la petición al backend para obtener
+    el perfil completo del usuario (axios GET).
+  - Usa el id de usuario guardado en localStorage (no depende de props)
+  - Pasea el objeto `perfil` a todos los subcomponentes como prop.
+  - Muestra estados: cargando, error y la UI final.
+  - Reutiliza el `Header` y `Footer` de la app para mantener navegación.
+*/
+
 const MiPerfil = (props) => {
   const [perfil, setPerfil] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [errorMensaje, setErrorMensaje] = useState(null);
 
-  // FIX 2: priorizar props.usuario (fuente de verdad de App.jsx),
-  // con localStorage solo como fallback por si acaso
-  const usuario = props.usuario || JSON.parse(localStorage.getItem('usuario') || 'null');
-  const idUsuario = usuario?.idusuario;
+  // obtener idusuario directamente desde localStorage (no depender de props)
+  const usuarioLocal = JSON.parse(localStorage.getItem('usuario') || 'null');
+  const idUsuario = usuarioLocal?.idusuario;
 
   useEffect(() => {
     let montado = true;
-
     const obtenerPerfil = async () => {
       if (!idUsuario) {
         setErrorMensaje('No hay usuario autenticado');
@@ -46,6 +54,7 @@ const MiPerfil = (props) => {
     };
 
     obtenerPerfil();
+
     return () => { montado = false };
   }, [idUsuario]);
 
@@ -71,6 +80,7 @@ const MiPerfil = (props) => {
 
   return (
     <>
+      <Header cambiarVista={props.cambiarVista} usuario={props.usuario} />
       <div className="miPerfil-root">
         <div className="miPerfil-container">
           <div className="miPerfil-grid">

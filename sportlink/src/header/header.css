@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
 
 :root {
   --header-bg-opaco: rgba(0, 0, 0, 0.7);
@@ -25,183 +25,85 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  text-transform: none !important;
 }
 
 .header-container {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1300px;
   padding: 0 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.header-logo-container {
+/* LOGO */
+.header-logo {
   display: flex;
   align-items: center;
-  flex: 1;
 }
 
 .header-logo-img {
-  display: block;
-  height: 27px;
-  width: auto;
+  height: 32px;
+  object-fit: contain;
 }
 
-/* Avatar wrapper to position its dropdown relative to the avatar */
-.header-avatar-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-/* Variant for dropdown anchored to avatar */
-.header-dropdown-menu--avatar {
-  width: 220px;
-  left: auto;
-  right: 0;
-  margin-top: 10px;
-  border-radius: 10px;
-  padding: 10px;
-  animation: dropdownIn 120ms ease both;
-}
-
-@keyframes dropdownIn {
-  from { opacity: 0; transform: translateY(-6px) scale(0.995); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-/* NAVIGATION */
+/* MENÚ NAVEGACIÓN CENTRAL */
 .header-nav {
   display: flex;
-  justify-content: center;
-  flex: 2;
+  align-items: center;
 }
 
 .header-nav-list {
-  list-style: none;
   display: flex;
   align-items: center;
-  gap: 35px;
+  gap: 16px;
+  list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.header-nav-item-relative {
-  position: relative;
-}
-
+/* CLASES COMPARTIDAS DE LINKS Y BOTONES DEL MENÚ */
 .header-nav-link,
-.header-nav-dropdown-btn {
+.header-dropdown-toggle,
+.header-avatar-toggle {
   background: none;
   border: none;
-  text-decoration: none;
-  color: inherit;
-  font-family: 'Space Grotesk', sans-serif;
+  color: var(--header-text-color);
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 500;
+  text-decoration: none;
   cursor: pointer;
-  transition: color 0.2s ease, font-weight 0.1s ease;
-  padding: 10px 0;
+  transition: color 0.2s;
+  padding: 8px 12px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .header-nav-link:hover,
-.header-nav-dropdown-btn:hover,
-.header-nav-dropdown-btn.active {
+.header-dropdown-toggle:hover {
   color: var(--header-accent-color);
-  font-weight: 700;
 }
 
-.header-nav-arrow {
+/* ICONO DE FLECHA EN EXPLORAR */
+.header-arrow {
   width: 14px;
   height: 14px;
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
 }
 
-.header-nav-arrow.up {
-  transform: rotate(-180deg);
+.header-arrow.up {
+  transform: rotate(180deg);
+  color: var(--header-accent-color);
 }
 
-/* ACCIONES DERECHA */
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  justify-content: flex-end;
-  flex: 1;
-}
-
-.header-action-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s;
-}
-
-.header-action-btn:hover {
-  transform: scale(1.05);
-}
-
-.header-action-icon {
-  height: 22px;
-  width: auto;
-}
-
-/* AVATAR BASE — círculo gris cuando no hay usuario */
-.header-avatar {
-  width: 38px;
-  height: 38px;
-  background-color: #D9D9D9;
-  border-radius: 50%;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: box-shadow 0.2s ease;
-}
-
-/* AVATAR LOGUEADO — borde accent */
-.header-avatar--logueado {
-  background-color: #2DEFF2;
-  box-shadow: 0 0 0 2px #2DEFF2;
-}
-
-.header-avatar--logueado:hover {
-  box-shadow: 0 0 0 3px #2DEFF2, 0 0 12px rgba(45, 239, 242, 0.4);
-}
-
-/* Foto de perfil dentro del avatar */
-.header-avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-  display: block;
-}
-
-/* Iniciales dentro del avatar */
-.header-avatar--iniciales {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 16px;
-  color: #000;
-  font-family: 'Space Grotesk', sans-serif;
-}
-
-/* DROPDOWN */
+/* DROPDOWN MENU CENTRAL (EXPLORAR) */
 .header-dropdown-menu {
   position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 12px;
-  width: 320px;
-  background: var(--dropdown-bg);
+  top: 70px;
+  background-color: var(--dropdown-bg);
   border: 1px solid var(--dropdown-border);
   border-radius: 12px;
   padding: 16px;
@@ -212,6 +114,8 @@
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   z-index: 1100;
+  min-width: 180px;
+  
 }
 
 .header-dropdown-item {
@@ -220,67 +124,155 @@
   padding: 8px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  color: #fff;
+  font-size: 14px;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .header-dropdown-item:hover {
   background-color: rgba(255, 255, 255, 0.04);
+  color: var(--header-accent-color);
 }
 
-.header-dropdown-icon {
-  font-size: 20px;
+/* ACCIONES DERECHA (MENSAJES, NOTIS) */
+.header-actions {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.header-action-btn:hover {
+  transform: scale(1.08);
+}
+
+.header-action-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+/* AVATAR PERFIL DERECHA */
+.header-profile-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.header-avatar-toggle {
+  padding: 0;
+}
+
+.header-avatar {
+  width: 36px;
+  height: 36px;
+  background-color: #222;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.header-avatar-toggle:hover .header-avatar {
+  border-color: var(--header-accent-color);
+}
+
+/* AVATAR DROPDOWN (MI PERFIL / CERRAR SESIÓN) */
+.header-avatar-dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background-color: var(--dropdown-bg);
+  border: 1px solid var(--dropdown-border);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  z-index: 1100;
+}
+
+.header-user-info {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px;
+}
+
+.header-user-name {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.header-user-role {
+  color: #888;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   margin-top: 2px;
 }
 
-/* SVG icons inside dropdown items */
-.header-dropdown-icon svg {
-  width: 18px;
-  height: 18px;
-  display: block;
-  color: #ffffff;
+.header-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 6px 0;
 }
 
-.header-dropdown-item--logout .header-dropdown-icon svg {
-  color: #ff4d4f;
+.header-dropdown-link {
+  background: none;
+  border: none;
+  color: #aaa;
+  text-align: left;
+  padding: 8px;
+  font-size: 13.5px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  width: 100%;
 }
 
-.header-dropdown-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 2px;
+.header-dropdown-link:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  color: #fff;
 }
 
-.header-dropdown-title--logout {
-  color: #ff4d4f;
-}
-
-.header-dropdown-desc {
-  font-size: 12px;
-  font-weight: 400;
-  color: #a0a0a0;
-  line-height: 1.4;
-}
-
-/* Logout item specific styling */
-.header-dropdown-item--logout .header-dropdown-icon {
-  filter: none;
+.header-dropdown-item--logout {
+  color: #ff4a4a;
 }
 
 .header-dropdown-item--logout:hover {
-  background-color: rgba(255, 77, 79, 0.06);
+  background-color: rgba(255, 74, 74, 0.06);
+  color: #ff4a4a;
 }
 
-@media (max-width: 768px) {
-  .header-container {
-    padding: 0 20px;
-  }
-  .header-nav-list {
-    gap: 15px;
-  }
-  .header-actions {
-    gap: 10px;
-  }
+/* ========================================================
+   ── CONTROL ABSOLUTO DE FUENTE Y MAYÚSCULAS ABAJO DE TODO ──
+======================================================== */
+.header-nav-list li button,
+.header-nav-link,
+.header-dropdown-toggle,
+.header-dropdown-item,
+.header-dropdown-link,
+.header-user-name {
+  font-family: 'Space Grotesk', sans-serif !important;
+  text-transform: none !important;
 }

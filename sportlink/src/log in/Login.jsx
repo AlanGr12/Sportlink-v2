@@ -2,7 +2,6 @@ import { useState } from 'react'
 import axios from 'axios'
 import './login.css'
 import logoSportlink from '../assets/logoSportlink.png'
-import Header from '../header/header.jsx'
 import Footer from '../footer/footer.jsx'
 
 function Login({ onLogin, onRegistro }) {
@@ -19,14 +18,6 @@ function Login({ onLogin, onRegistro }) {
         }
       )
 
-      console.log(response.data)
-
-      localStorage.setItem(
-     'usuario',
-     JSON.stringify(response.data)
-  )
-
-
       onLogin(response.data)
 
     } catch (error) {
@@ -37,8 +28,7 @@ function Login({ onLogin, onRegistro }) {
 
   return (
     <>
-      <Header />
-
+      {/* SE QUITÓ EL <Header /> DE ACÁ PORQUE AHORA VIENE DESDE APP.JSX */}
       <div className="pagina">
         <img
           src={logoSportlink}
@@ -101,11 +91,10 @@ function Login({ onLogin, onRegistro }) {
             className="enlace-secundario"
             href="/recuperar"
           >
-            TE OLVIDASTE LA CONTRASEÑA?
+            ¿Olvidaste tu contraseña?
           </a>
         </div>
       </div>
-
       <Footer />
     </>
   )
