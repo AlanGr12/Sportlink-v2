@@ -4,6 +4,12 @@ import logoSportlink from '../assets/logoSportlink.png';
 import iconMensajes from '../assets/mensajes.png';
 import iconNotis from '../assets/notis.png';
 
+// NUEVOS IMPORTACIONES DE ICONOS PARA EL DROPDOWN
+import iconCandado from '../assets/candado.png';
+import iconEmpleos from '../assets/empleos.png';
+import iconEntrenamientos from '../assets/entrenamientos.png';
+import iconPruebas from '../assets/pruebas.png';
+
 const Header = (props) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
@@ -11,8 +17,6 @@ const Header = (props) => {
   const explorarRef = useRef(null);
   const avatarRef = useRef(null);
 
-  // FIX 3: ya no leemos localStorage acá, confiamos en la prop usuario que viene de App.jsx
-  // Esto garantiza que cuando App.jsx limpia el estado, el Header lo refleja al instante
   const usuario = props.usuario || null;
   const estaLogueado = !!usuario;
   const userRole = usuario?.tipousuario || null;
@@ -26,7 +30,6 @@ const Header = (props) => {
 
   const handleLogout = () => {
     setAvatarDropdownOpen(false);
-    // FIX 3: llamamos al callback de App.jsx que limpia estado + localStorage juntos
     if (props.onLogout) {
       props.onLogout();
     }
@@ -47,10 +50,13 @@ const Header = (props) => {
   }, []);
 
   const renderDropdownItems = () => {
+    // NUEVO REEMPLAZO CON ICONO DE CANDADO
     if (!estaLogueado) {
       return (
         <div className="header-dropdown-item" style={{ cursor: 'default' }}>
-          <div className="header-dropdown-icon">🔒</div>
+          <div className="header-dropdown-icon">
+            <img src={iconCandado} alt="Seguridad" className="header-dropdown-img-icon" />
+          </div>
           <div>
             <div className="header-dropdown-title">Inicia sesión</div>
             <div className="header-dropdown-desc">
@@ -61,19 +67,24 @@ const Header = (props) => {
       );
     }
 
+    // REEMPLAZO DE EMOJIS POR ICONOS SEGÚN EL ROL
     switch (userRole) {
       case 'jugador':
         return (
           <>
             <div className="header-dropdown-item">
-              <div className="header-dropdown-icon">🏆</div>
+              <div className="header-dropdown-icon">
+                <img src={iconPruebas} alt="Pruebas" className="header-dropdown-img-icon" />
+              </div>
               <div>
                 <div className="header-dropdown-title">Pruebas deportivas</div>
                 <div className="header-dropdown-desc">Postúlate a las convocatorias activas de los clubes oficiales.</div>
               </div>
             </div>
             <div className="header-dropdown-item">
-              <div className="header-dropdown-icon">⚽</div>
+              <div className="header-dropdown-icon">
+                <img src={iconEntrenamientos} alt="Entrenamientos" className="header-dropdown-img-icon" />
+              </div>
               <div>
                 <div className="header-dropdown-title">Entrenamientos</div>
                 <div className="header-dropdown-desc">Encuentra rutinas enfocadas en el alto rendimiento profesional.</div>
@@ -85,21 +96,27 @@ const Header = (props) => {
         return (
           <>
             <div className="header-dropdown-item">
-              <div className="header-dropdown-icon">💼</div>
+              <div className="header-dropdown-icon">
+                <img src={iconEmpleos} alt="Empleos" className="header-dropdown-img-icon" />
+              </div>
               <div>
                 <div className="header-dropdown-title">Empleos</div>
                 <div className="header-dropdown-desc">Postúlate a vacantes técnicas de clubes y academias.</div>
               </div>
             </div>
             <div className="header-dropdown-item">
-              <div className="header-dropdown-icon">🏆</div>
+              <div className="header-dropdown-icon">
+                <img src={iconPruebas} alt="Pruebas" className="header-dropdown-img-icon" />
+              </div>
               <div>
                 <div className="header-dropdown-title">Pruebas deportivas</div>
                 <div className="header-dropdown-desc">Gestiona u observa las convocatorias del mercado de pases.</div>
               </div>
             </div>
             <div className="header-dropdown-item">
-              <div className="header-dropdown-icon">⏱️</div>
+              <div className="header-dropdown-icon">
+                <img src={iconEntrenamientos} alt="Entrenamientos" className="header-dropdown-img-icon" />
+              </div>
               <div>
                 <div className="header-dropdown-title">Entrenamientos</div>
                 <div className="header-dropdown-desc">Diseña y planifica sesiones tácticas avanzadas.</div>
@@ -111,21 +128,27 @@ const Header = (props) => {
         return (
           <>
             <div className="header-dropdown-item">
-              <div className="header-dropdown-icon">💼</div>
+              <div className="header-dropdown-icon">
+                <img src={iconEmpleos} alt="Empleos" className="header-dropdown-img-icon" />
+              </div>
               <div>
                 <div className="header-dropdown-title">Empleos</div>
                 <div className="header-dropdown-desc">Publica ofertas para reclutar staff técnico calificado.</div>
               </div>
             </div>
             <div className="header-dropdown-item">
-              <div className="header-dropdown-icon">🏆</div>
+              <div className="header-dropdown-icon">
+                <img src={iconPruebas} alt="Pruebas" className="header-dropdown-img-icon" />
+              </div>
               <div>
                 <div className="header-dropdown-title">Pruebas deportivas</div>
                 <div className="header-dropdown-desc">Organiza pruebas para captar jóvenes promesas.</div>
               </div>
             </div>
             <div className="header-dropdown-item">
-              <div className="header-dropdown-icon">🏋️</div>
+              <div className="header-dropdown-icon">
+                <img src={iconEntrenamientos} alt="Entrenamientos" className="header-dropdown-img-icon" />
+              </div>
               <div>
                 <div className="header-dropdown-title">Entrenamientos</div>
                 <div className="header-dropdown-desc">Supervisa los planes físicos y técnicos de tus planteles.</div>
@@ -141,7 +164,6 @@ const Header = (props) => {
   return (
     <header className="header">
       <div className="header-container">
-
         <div className="header-logo" onClick={() => props.cambiarVista('landing')} style={{ cursor: 'pointer' }}>
           <img src={logoSportlink} alt="Sportlink" className="header-logo-img" />
         </div>
@@ -170,19 +192,16 @@ const Header = (props) => {
                 </div>
               )}
             </li>
-
             <li>
               <button className="header-nav-link" onClick={() => props.cambiarVista('entrenadores')}>
                 Entrenadores
               </button>
             </li>
-
             <li>
               <button className="header-nav-link" onClick={() => props.cambiarVista('jugadores')}>
                 Jugadores
               </button>
             </li>
-
             <li>
               <button className="header-nav-link" onClick={() => props.cambiarVista('calendario')}>
                 Calendario
@@ -195,7 +214,6 @@ const Header = (props) => {
           <button className="header-action-btn">
             <img src={iconMensajes} alt="Mensajes" className="header-action-icon" />
           </button>
-
           <button className="header-action-btn">
             <img src={iconNotis} alt="Notificaciones" className="header-action-icon" />
           </button>
@@ -205,10 +223,10 @@ const Header = (props) => {
               <div className="header-avatar" style={{ overflow: 'hidden', padding: 0 }}>
                 {estaLogueado ? (
                   usuario.fotoperfil ? (
-                    <img
-                      src={usuario.fotoperfil}
-                      alt={usuario.nombre || "Foto de perfil"}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }}
+                    <img 
+                      src={usuario.fotoperfil} 
+                      alt={usuario.nombre || "Foto de perfil"} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} 
                     />
                   ) : (
                     usuario.nombre?.charAt(0).toUpperCase()
@@ -249,7 +267,6 @@ const Header = (props) => {
             )}
           </div>
         </div>
-
       </div>
     </header>
   );

@@ -276,3 +276,20 @@
   font-family: 'Space Grotesk', sans-serif !important;
   text-transform: none !important;
 }
+
+/* Estilo para los nuevos iconos PNG del dropdown Explorar */
+.header-dropdown-img-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Opcional: Asegura que el contenedor del icono mantenga la alineación ideal */
+.header-dropdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; /* Caja contenedora un poco más ancha para simular el espacio del emoji */
+  height: 32px;
+}
