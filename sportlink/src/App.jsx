@@ -7,6 +7,7 @@ import EntrenadoresView from './mostrarEntrenadores/entrenadores.jsx'
 import JugadoresView from './mostrarJugadores/jugadores.jsx'
 import Header from './header/header.jsx'
 import Footer from './footer/footer.jsx'
+import Calendario from './calendario/calendario.jsx'
 
 function App() {
   // FIX 1: inicializar desde localStorage para que la sesión sobreviva recargas
@@ -61,11 +62,15 @@ function App() {
       return <EntrenadoresView cambiarVista={setVista} usuario={usuario} />
     }
 
+    if (vista === 'calendario') {
+      return <Calendario cambiarVista={setVista} usuario={usuario} />
+    }
+
     if (vista === 'perfil') {
       return <MiPerfil cambiarVista={setVista} usuario={usuario} />
     }
 
-    return <Landing cambiarVista={setVista} />
+    return <Landing cambiarVista={setVista} usuario={usuario} />
   }
 
   return (

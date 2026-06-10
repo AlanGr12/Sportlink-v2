@@ -1,6 +1,5 @@
 import React from 'react';
 import './landing.css';
-import Header from '../header/header.jsx';
 import Footer from '../footer/footer.jsx';
 import fotolanding from '../assets/fotolanding.png';
 import entrenador1 from '../assets/entrenador1.png';
@@ -20,8 +19,6 @@ import calendar from '../assets/calendar.png';
 const Landing = (props) => {
   return (
     <>
-      <Header cambiarVista={props.cambiarVista} />
-
       <main>
 
         {/* ── BANNER ── */}
@@ -48,12 +45,14 @@ const Landing = (props) => {
               Conecta con clubes, entrenadores, y obtené cursos de entrenamiento
               de la mejor calidad. Convertí tu talento en oportunidades reales.
             </p>
-            <button className="btn-banner">
-              UNIRSE A SPORTLINK
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
+            {!props.usuario && (
+              <button className="btn-banner" onClick={() => props.cambiarVista('login')}>
+                UNIRSE A SPORTLINK
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
 
             <div className="banner-stats">
               <div className="stat-pill"><strong>+120</strong> clubes asociados</div>

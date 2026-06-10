@@ -1,0 +1,371 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Space+Grotesk:wght@300..700&display=swap');
+
+/* ── ROOT ── */
+.cal-root {
+  background: #0f0f10;
+  min-height: 100vh;
+  padding-top: 80px; /* espacio para header fijo */
+  color: #e8e8e8;
+  font-family: 'Manrope', sans-serif;
+}
+
+.cal-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 0;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 40px 32px 60px;
+  align-items: start;
+}
+
+/* ── SIDEBAR ── */
+.cal-sidebar {
+  padding-top: 56px;
+  padding-right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: sticky;
+  top: 100px;
+}
+
+.cal-sidebar-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: #555;
+  margin: 0 0 6px 0;
+  text-transform: uppercase;
+}
+
+.cal-cat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1a1a1b;
+  border-radius: 6px;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cal-cat-item:hover {
+  background: #222224;
+}
+
+.cal-cat-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.cal-cat-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  color: #ccc;
+}
+
+.cal-sidebar-divider {
+  height: 1px;
+  background: #2a2a2c;
+  margin: 6px 0;
+}
+
+.cal-agregar-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid #2a2a2c;
+  border-radius: 6px;
+  padding: 9px 12px;
+  color: #23e7f5;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cal-agregar-btn:hover {
+  background: rgba(35, 231, 245, 0.06);
+  border-color: #23e7f5;
+}
+
+.cal-agregar-plus {
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #23e7f5;
+}
+
+/* ── MAIN ── */
+.cal-main {
+  min-width: 0;
+}
+
+/* Cabecera mes */
+.cal-header-mes {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.cal-programacion-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 2.5px;
+  color: #555;
+  margin: 0 0 4px 0;
+}
+
+.cal-mes-titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 2.8rem;
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin: 0;
+  line-height: 1;
+}
+
+.cal-mes-nombre {
+  color: #23e7f5;
+}
+
+.cal-mes-anio {
+  color: #e8e8e8;
+}
+
+.cal-nav-btns {
+  display: flex;
+  gap: 6px;
+  padding-bottom: 6px;
+}
+
+.cal-nav-btn {
+  background: #1a1a1b;
+  border: 1px solid #2a2a2c;
+  border-radius: 6px;
+  color: #ccc;
+  width: 34px;
+  height: 34px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  line-height: 1;
+}
+
+.cal-nav-btn:hover {
+  background: #222224;
+  color: #23e7f5;
+  border-color: #23e7f5;
+}
+
+/* ── GRILLA ── */
+.cal-grid-wrapper {
+  border: 1px solid #1e1e20;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.cal-grid-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #141415;
+  border-bottom: 1px solid #1e1e20;
+}
+
+.cal-dia-semana {
+  padding: 10px 0;
+  text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: #444;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.cal-celda {
+  min-height: 90px;
+  border-right: 1px solid #1e1e20;
+  border-bottom: 1px solid #1e1e20;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.12s;
+  position: relative;
+}
+
+.cal-celda:nth-child(7n) {
+  border-right: none;
+}
+
+/* Últimas filas sin borde inferior */
+.cal-celda:nth-last-child(-n+7) {
+  border-bottom: none;
+}
+
+.cal-celda:hover:not(.cal-celda--vacia) {
+  background: #1a1a1b;
+}
+
+.cal-celda--vacia {
+  background: #0d0d0e;
+  cursor: default;
+}
+
+.cal-celda--hoy {
+  background: #1a1a1b;
+  outline: 1px solid #333;
+  outline-offset: -1px;
+}
+
+.cal-celda--seleccionada:not(.cal-celda--hoy) {
+  background: rgba(35, 231, 245, 0.04);
+  border: 1px solid #23e7f5 !important; 
+}
+
+.cal-celda-num {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #666;
+}
+
+.cal-celda-num--hoy {
+  color: #23e7f5;
+  font-weight: 700;
+  /* PARA DESPUES TEXTO */
+}
+
+/* ── PANEL DÍA ── */
+.cal-panel-dia {
+  margin-top: 20px;
+  background: #141415;
+  border: 1px solid #222224;
+  border-radius: 10px;
+  padding: 24px 28px;
+  animation: panelSlide 0.18s ease;
+}
+
+@keyframes panelSlide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cal-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.cal-panel-fecha-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: #555;
+  text-transform: uppercase;
+  margin: 0 0 4px 0;
+}
+
+.cal-panel-titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #e8e8e8;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.cal-panel-cerrar {
+  background: transparent;
+  border: 1px solid #2a2a2c;
+  border-radius: 6px;
+  color: #666;
+  width: 30px;
+  height: 30px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.cal-panel-cerrar:hover {
+  color: #23e7f5;
+  border-color: #23e7f5;
+}
+
+.cal-panel-vacio {
+  padding: 20px 0 4px;
+  color: #444;
+  font-size: 0.9rem;
+  font-family: 'Manrope', sans-serif;
+}
+
+/* ── PRÓXIMOS EVENTOS ── */
+.cal-proximos {
+  margin-top: 48px;
+}
+
+.cal-proximos-titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #e8e8e8;
+  margin: 0 0 24px 0;
+}
+
+.cal-proximos-vacio {
+  color: #555;
+  font-size: 0.95rem;
+  padding: 32px 0;
+  text-align: center;
+  border: 1px dashed #1e1e20;
+  border-radius: 10px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .cal-layout {
+    grid-template-columns: 1fr;
+    padding: 24px 16px 48px;
+  }
+
+  .cal-sidebar {
+    position: static;
+    padding-top: 0;
+    padding-right: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .cal-sidebar-label,
+  .cal-sidebar-divider {
+    display: none;
+  }
+
+  .cal-celda {
+    min-height: 56px;
+    padding: 6px 8px;
+  }
+
+  .cal-mes-titulo {
+    font-size: 2rem;
+  }
+}
