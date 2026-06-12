@@ -28,47 +28,31 @@ const Landing = (props) => {
             backgroundImage: `
               linear-gradient(
                 160deg,
-                rgba(0,0,0,0.80) 0%,
-                rgba(0,0,0,0.40) 55%,
-                rgba(0,0,0,0.85) 100%
+                rgba(0,0,0,0.75) 0%,
+                rgba(0,0,0,0.45) 60%,
+                rgba(0,0,0,0.8) 100%
               ),
               url(${fotolanding})
             `,
           }}
         >
-          <div className="banner-orb" />
-
           <div className="banner-texto">
-
-            {/* Eyebrow */}
-            <div className="banner-eyebrow">
-              <span className="banner-eyebrow-dot" />
-              Plataforma deportiva profesional
-            </div>
-
             <h1>
               ELEVA TU
               <span className="line-cyan">CAMINO AL DEPORTE</span>
             </h1>
-
             <p>
-              Conectá con clubes, entrenadores, y accedé a entrenamientos de
-              alto rendimiento. Convertí tu talento en oportunidades reales.
+              Conecta con clubes, entrenadores, y obtené cursos de entrenamiento
+              de la mejor calidad. Convertí tu talento en oportunidades reales.
             </p>
-
-            <div className="banner-ctas">
-              {!props.usuario && (
-                <button className="btn-banner" onClick={() => props.cambiarVista('login')}>
-                  UNIRSE A SPORTLINK
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              )}
-              <button className="btn-banner-ghost" onClick={() => props.cambiarVista('entrenadores')}>
-                Explorar entrenadores
+            {!props.usuario && (
+              <button className="btn-banner" onClick={() => props.cambiarVista('login')}>
+                UNIRSE A SPORTLINK
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </button>
-            </div>
+            )}
 
             <div className="banner-stats">
               <div className="stat-pill"><strong>+120</strong> clubes asociados</div>
@@ -81,7 +65,9 @@ const Landing = (props) => {
         {/* ── ENTRENADORES ── */}
         <section className="entrenadoresLanding">
           <div className="tituloLanding">
-            <h2>DESCUBRÍ A LOS <span>ENTRENADORES</span> AFILIADOS</h2>
+            <h2>
+              DESCUBRÍ A LOS <span>ENTRENADORES</span> AFILIADOS
+            </h2>
           </div>
 
           <div className="cardsEntrenadores">
@@ -123,18 +109,19 @@ const Landing = (props) => {
           </div>
         </section>
 
-        <div className="sl-divider" />
-
         {/* ── CLUBES ── */}
         <section className="clubesLanding">
           <div className="izquierdaClubes">
             <h2>
               DESCUBRÍ LOS
-              <br />MEJORES
-              <br /><span>CLUBES</span>
+              <br />
+              MEJORES
+              <br />
+              <span>CLUBES</span>
             </h2>
             <p>
               Instituciones que definen el futuro del deporte.
+              Conectá directamente con sus departamentos de reclutamiento.
             </p>
 
             <div className="listaClubes">
@@ -172,23 +159,22 @@ const Landing = (props) => {
             </div>
 
             <div className="imagenClubes">
-            <img src={instalaciones} alt="Club" />
-            <div>
-              <h3>Instalaciones de Alto Rendimiento</h3>
-              <p>Más de 120 clubes asociados en toda Argentina.</p>
+              <img src={instalaciones} alt="Instalaciones de alto rendimiento" />
+              <div className="img-caption">
+                <h3>Instalaciones de Alto Rendimiento</h3>
+                <p>Más de 120 clubes asociados en toda Argentina.</p>
+              </div>
             </div>
           </div>
-
-          </div>
         </section>
-
-        <div className="sl-divider" />
 
         {/* ── PRUEBAS ── */}
         <section className="pruebasLanding">
           <div className="tituloPruebas">
             <div>
-              <h2>PRUEBAS <span>RECOMENDADAS</span></h2>
+              <h2>
+                PRUEBAS <span>RECOMENDADAS</span>
+              </h2>
               <p className="subtitulo">
                 Las pruebas recomendadas se basan en los deportes,
                 categoría y ubicación que elegiste
@@ -240,7 +226,8 @@ const Landing = (props) => {
           <div className="textoDashboard">
             <h2>
               Organizáte mejor con
-              <br />tu <span>CALENDARIO</span>
+              <br />
+              tu <span>CALENDARIO</span>
             </h2>
             <p>
               Gestioná tus eventos, seguí tus progresos y recibí
@@ -254,9 +241,7 @@ const Landing = (props) => {
               <p>Notificaciones a tu buzón</p>
             </div>
 
-            <button className="btn-dashboard" onClick={() => props.cambiarVista('calendario')}>
-              IR A MI CALENDARIO
-            </button>
+            <button className="btn-dashboard">IR A MI CALENDARIO</button>
           </div>
 
           <div className="dashboard-img">

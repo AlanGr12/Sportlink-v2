@@ -60,7 +60,7 @@ const Header = (props) => {
             </div>
             <div>
               <div className="header-dropdown-title">Pruebas deportivas</div>
-              <div className="header-dropdown-desc">Los jugadores pueden acceder a las pruebas publicadas por los clubes asociados.</div>
+              <div className="header-dropdown-desc">Los jugadores pueden acceder a las pruebas publicadas <br />por los clubes asociados.</div>
             </div>
           </div>
           <div className="header-dropdown-item">
@@ -69,7 +69,7 @@ const Header = (props) => {
             </div>
             <div>
               <div className="header-dropdown-title">Entrenamientos</div>
-              <div className="header-dropdown-desc">Los jugadores pueden acceder a entrenamientos publicados por entrenadores.</div>
+              <div className="header-dropdown-desc">Los jugadores pueden acceder a entrenamientos <br />publicados por entrenadores.</div>
             </div>
           </div>
         </>
