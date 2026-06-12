@@ -53,17 +53,26 @@ const Header = (props) => {
     // NUEVO REEMPLAZO CON ICONO DE CANDADO
     if (!estaLogueado) {
       return (
-        <div className="header-dropdown-item" style={{ cursor: 'default' }}>
-          <div className="header-dropdown-icon">
-            <img src={iconCandado} alt="Seguridad" className="header-dropdown-img-icon" />
-          </div>
-          <div>
-            <div className="header-dropdown-title">Inicia sesión</div>
-            <div className="header-dropdown-desc">
-              Debes iniciar sesión para desbloquear las demás funciones.
+        <>
+          <div className="header-dropdown-item">
+            <div className="header-dropdown-icon">
+              <img src={iconPruebas} alt="Pruebas" className="header-dropdown-img-icon" />
+            </div>
+            <div>
+              <div className="header-dropdown-title">Pruebas deportivas</div>
+              <div className="header-dropdown-desc">Los jugadores pueden acceder a las pruebas publicadas por los clubes asociados.</div>
             </div>
           </div>
-        </div>
+          <div className="header-dropdown-item">
+            <div className="header-dropdown-icon">
+              <img src={iconEntrenamientos} alt="Entrenamientos" className="header-dropdown-img-icon" />
+            </div>
+            <div>
+              <div className="header-dropdown-title">Entrenamientos</div>
+              <div className="header-dropdown-desc">Los jugadores pueden acceder a entrenamientos publicados por entrenadores.</div>
+            </div>
+          </div>
+        </>
       );
     }
 

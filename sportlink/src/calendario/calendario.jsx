@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Footer from '../footer/footer.jsx';
 import './calendario.css';
 
@@ -16,10 +16,10 @@ const MESES = [
 
 const DIAS_SEMANA = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
 
+const ANIOS = Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i);
+
 function getDiasDelMes(year, month) {
-  // month: 0-indexed
-  const primerDia = new Date(year, month, 1).getDay(); // 0=dom
-  // convertir a lunes=0
+  const primerDia = new Date(year, month, 1).getDay();
   const offset = (primerDia === 0) ? 6 : primerDia - 1;
   const totalDias = new Date(year, month + 1, 0).getDate();
   return { offset, totalDias };
@@ -30,7 +30,8 @@ export default function Calendario(props) {
   const [mesActual, setMesActual] = useState(hoy.getMonth());
   const [anioActual, setAnioActual] = useState(hoy.getFullYear());
   const [diaSeleccionado, setDiaSeleccionado] = useState(null);
-  const [panelAbierto, setPanelAbierto] = useState(false);
+  const [dropdownMes, setDropdownMes] = useState(false);
+  const [dropdownAnio, setDropdownAnio] = useState(false);
 
   const { offset, totalDias } = getDiasDelMes(anioActual, mesActual);
 
@@ -39,24 +40,36 @@ export default function Calendario(props) {
     mesActual === hoy.getMonth() &&
     anioActual === hoy.getFullYear();
 
+  const cambiarMes = (nuevoMes) => {
+    setMesActual(nuevoMes);
+    setDiaSeleccionado(null); // fix 2
+    setDropdownMes(false);
+  };
+
+  const cambiarAnio = (nuevoAnio) => {
+    setAnioActual(nuevoAnio);
+    setDiaSeleccionado(null); // fix 2
+    setDropdownAnio(false);
+  };
+
   const irMesAnterior = () => {
+    setDiaSeleccionado(null); // fix 2
     if (mesActual === 0) { setMesActual(11); setAnioActual(a => a - 1); }
     else setMesActual(m => m - 1);
   };
 
   const irMesSiguiente = () => {
+    setDiaSeleccionado(null); // fix 2
     if (mesActual === 11) { setMesActual(0); setAnioActual(a => a + 1); }
     else setMesActual(m => m + 1);
   };
 
   const handleDiaClick = (dia) => {
     setDiaSeleccionado(dia);
-    setPanelAbierto(true);
+    if (dropdownMes) setDropdownMes(false);
+    if (dropdownAnio) setDropdownAnio(false);
   };
 
-  const cerrarPanel = () => setPanelAbierto(false);
-
-  // Construir celdas: vacias al inicio + dias del mes
   const totalCeldas = Math.ceil((offset + totalDias) / 7) * 7;
   const celdas = Array.from({ length: totalCeldas }, (_, i) => {
     const dia = i - offset + 1;
@@ -68,8 +81,22 @@ export default function Calendario(props) {
     return ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][d.getDay()];
   };
 
+  // fix 1: seleccionado siempre gana sobre hoy
+  const clasesCelda = (dia) => [
+    'cal-celda',
+    dia === null ? 'cal-celda--vacia' : '',
+    dia && diaSeleccionado === dia ? 'cal-celda--seleccionada' : '',
+    dia && esHoy(dia) && diaSeleccionado !== dia ? 'cal-celda--hoy' : '',
+  ].filter(Boolean).join(' ');
+
+  const clasesNum = (dia) => [
+    'cal-celda-num',
+    diaSeleccionado === dia ? 'cal-celda-num--seleccionada' : '',
+    esHoy(dia) && diaSeleccionado !== dia ? 'cal-celda-num--hoy' : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className="cal-root">
+    <div className="cal-root" onClick={() => { setDropdownMes(false); setDropdownAnio(false); }}>
       <div className="cal-layout">
 
         {/* ── SIDEBAR ── */}
@@ -81,9 +108,7 @@ export default function Calendario(props) {
               <span className="cal-cat-text">{cat.label}</span>
             </div>
           ))}
-
           <div className="cal-sidebar-divider" />
-
           <button className="cal-agregar-btn">
             <span className="cal-agregar-plus">+</span>
             AGREGAR EVENTO
@@ -98,10 +123,61 @@ export default function Calendario(props) {
             <div>
               <p className="cal-programacion-label">PROGRAMACIÓN ACTUAL</p>
               <h1 className="cal-mes-titulo">
-                <span className="cal-mes-nombre">{MESES[mesActual].toUpperCase()}</span>{' '}
-                <span className="cal-mes-anio">{anioActual}</span>
+                {/* fix 5: dropdowns de mes y año */}
+                <span className="cal-dropdown-wrap" onClick={e => e.stopPropagation()}>
+                  <button
+                    className="cal-mes-btn"
+                    onClick={() => { setDropdownMes(v => !v); setDropdownAnio(false); }}
+                  >
+                    <span className="cal-mes-nombre">{MESES[mesActual].toUpperCase()}</span>
+                    <svg className={`cal-dropdown-arrow ${dropdownMes ? 'open' : ''}`} viewBox="0 0 10 6" fill="none">
+                      <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                  {dropdownMes && (
+                    <div className="cal-dropdown-menu cal-dropdown-menu--mes">
+                      {MESES.map((m, i) => (
+                        <button
+                          key={i}
+                          className={`cal-dropdown-item ${i === mesActual ? 'cal-dropdown-item--activo' : ''}`}
+                          onClick={() => cambiarMes(i)}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </span>
+
+                {' '}
+
+                <span className="cal-dropdown-wrap" onClick={e => e.stopPropagation()}>
+                  <button
+                    className="cal-mes-btn"
+                    onClick={() => { setDropdownAnio(v => !v); setDropdownMes(false); }}
+                  >
+                    <span className="cal-mes-anio">{anioActual}</span>
+                    <svg className={`cal-dropdown-arrow ${dropdownAnio ? 'open' : ''}`} viewBox="0 0 10 6" fill="none">
+                      <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                  {dropdownAnio && (
+                    <div className="cal-dropdown-menu cal-dropdown-menu--anio">
+                      {ANIOS.map(a => (
+                        <button
+                          key={a}
+                          className={`cal-dropdown-item ${a === anioActual ? 'cal-dropdown-item--activo' : ''}`}
+                          onClick={() => cambiarAnio(a)}
+                        >
+                          {a}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </span>
               </h1>
             </div>
+
             <div className="cal-nav-btns">
               <button className="cal-nav-btn" onClick={irMesAnterior}>‹</button>
               <button className="cal-nav-btn" onClick={irMesSiguiente}>›</button>
@@ -110,28 +186,20 @@ export default function Calendario(props) {
 
           {/* Grilla */}
           <div className="cal-grid-wrapper">
-            {/* Cabecera días semana */}
             <div className="cal-grid-header">
               {DIAS_SEMANA.map(d => (
                 <div key={d} className="cal-dia-semana">{d}</div>
               ))}
             </div>
-
-            {/* Celdas */}
             <div className="cal-grid">
               {celdas.map((dia, i) => (
                 <div
                   key={i}
-                  className={[
-                    'cal-celda',
-                    dia === null ? 'cal-celda--vacia' : '',
-                    dia && esHoy(dia) ? 'cal-celda--hoy' : '',
-                    dia && diaSeleccionado === dia ? 'cal-celda--seleccionada' : '',
-                  ].join(' ')}
+                  className={clasesCelda(dia)}
                   onClick={() => dia && handleDiaClick(dia)}
                 >
                   {dia && (
-                    <span className={`cal-celda-num ${esHoy(dia) ? 'cal-celda-num--hoy' : ''}`}>
+                    <span className={clasesNum(dia)}>
                       {String(dia).padStart(2, '0')}
                     </span>
                   )}
@@ -140,8 +208,8 @@ export default function Calendario(props) {
             </div>
           </div>
 
-          {/* Panel día seleccionado */}
-          {panelAbierto && diaSeleccionado && (
+          {/* Panel día seleccionado - fix 4: sin botón de cerrar, + en su lugar */}
+          {diaSeleccionado && (
             <div className="cal-panel-dia">
               <div className="cal-panel-header">
                 <div>
@@ -150,7 +218,7 @@ export default function Calendario(props) {
                   </p>
                   <h2 className="cal-panel-titulo">INFO DEL DÍA</h2>
                 </div>
-                <button className="cal-panel-cerrar" onClick={cerrarPanel}>✕</button>
+                <button className="cal-panel-agregar">+</button>
               </div>
               <div className="cal-panel-vacio">
                 <p>No hay eventos para este día.</p>

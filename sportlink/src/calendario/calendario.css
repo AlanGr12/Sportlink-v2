@@ -26,8 +26,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  position: sticky;
-  top: 100px;
+  position: static;
 }
 
 .cal-sidebar-label {
@@ -232,9 +231,10 @@
   outline-offset: -1px;
 }
 
-.cal-celda--seleccionada:not(.cal-celda--hoy) {
-  background: rgba(35, 231, 245, 0.04);
-  border: 1px solid #23e7f5 !important; 
+.cal-celda--seleccionada {
+  background: rgba(35, 231, 245, 0.04) !important;
+  border: 1px solid #23e7f5 !important;
+  outline: none !important;
 }
 
 .cal-celda-num {
@@ -245,9 +245,13 @@
 }
 
 .cal-celda-num--hoy {
+  color: #888;
+  font-weight: 600;
+}
+
+.cal-celda-num--seleccionada {
   color: #23e7f5;
   font-weight: 700;
-  /* PARA DESPUES TEXTO */
 }
 
 /* ── PANEL DÍA ── */
@@ -290,22 +294,119 @@
   letter-spacing: -0.3px;
 }
 
-.cal-panel-cerrar {
+.cal-panel-agregar {
   background: transparent;
   border: 1px solid #2a2a2c;
   border-radius: 6px;
-  color: #666;
+  color: #23e7f5;
   width: 30px;
   height: 30px;
-  font-size: 0.8rem;
+  font-size: 1.2rem;
+  line-height: 1;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.cal-panel-cerrar:hover {
-  color: #23e7f5;
+.cal-panel-agregar:hover {
+  background: rgba(35, 231, 245, 0.06);
   border-color: #23e7f5;
+}
+
+/* ── DROPDOWNS MES / AÑO ── */
+.cal-dropdown-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.cal-mes-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+}
+
+.cal-dropdown-arrow {
+  width: 12px;
+  height: 8px;
+  color: #555;
+  transition: transform 0.15s, color 0.15s;
+  flex-shrink: 0;
+  margin-bottom: -2px;
+}
+
+.cal-dropdown-arrow.open {
+  transform: rotate(180deg);
+  color: #23e7f5;
+}
+
+.cal-mes-btn:hover .cal-dropdown-arrow {
+  color: #23e7f5;
+}
+
+.cal-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: #141415;
+  border: 1px solid #2a2a2c;
+  border-radius: 8px;
+  padding: 6px;
+  z-index: 100;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+  animation: panelSlide 0.15s ease;
+}
+
+.cal-dropdown-menu--mes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  min-width: 200px;
+}
+
+.cal-dropdown-menu--anio {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 90px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.cal-dropdown-item {
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  color: #aaa;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 7px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  letter-spacing: 0.3px;
+}
+
+.cal-dropdown-item:hover {
+  background: #1e1e20;
+  color: #e8e8e8;
+}
+
+.cal-dropdown-item--activo {
+  color: #23e7f5;
+  background: rgba(35, 231, 245, 0.06);
 }
 
 .cal-panel-vacio {
