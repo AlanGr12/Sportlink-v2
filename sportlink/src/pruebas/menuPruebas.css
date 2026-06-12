@@ -1,0 +1,83 @@
+/* FALTA QUE EL CSS PARA QUE SE VEA CON EL MISMO CELESTE QUE LAS DEMAS VIEWS */
+
+.menu-pruebas {
+  width: 280px;
+  min-height: 100vh;
+  background: #181818;
+  border-right: 1px solid #222222;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.menu-titulo-seccion h3 {
+  color: #00cfff;
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.menu-titulo-seccion p {
+  color: #666666;
+  font-size: 10px;
+  margin: 4px 0 20px 0;
+  font-weight: bold;
+}
+
+/* Contenedor para estilizar y agregar la flecha derecha personalizada */
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.select-wrapper::after {
+  content: "›";
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%) rotate(0deg);
+  color: #666666;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.menu-pruebas select {
+  width: 100%;
+  padding: 14px 15px;
+  background: #252525;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  appearance: none; /* Remueve la flecha por defecto de los navegadores */
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s;
+}
+
+.menu-pruebas select:focus {
+  background: #2d2d2d;
+}
+
+/* Botón llamativo inferior */
+.btn-aplicar-filtros {
+  margin-top: 15px;
+  padding: 14px;
+  background: #00cfff;
+  color: #000000;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-aplicar-filtros:hover {
+  opacity: 0.9;
+}

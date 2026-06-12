@@ -5,6 +5,7 @@ import App from './App.jsx'
 import Landing from './landing/landing.jsx'
 import Jugadores from './mostrarJugadores/jugadores.jsx'
 import Entrenadores from './mostrarEntrenadores/entrenadores.jsx'
+import Pruebas from './pruebas/pruebas.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

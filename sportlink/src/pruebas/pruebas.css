@@ -1,0 +1,154 @@
+/* FALTA QUE EL CSS PARA QUE SE VEA CON EL MISMO CELESTE QUE LAS DEMAS VIEWS */
+
+.contenedor-pruebas {
+  display: flex;
+  background: #0b0b0b;
+  min-height: 100vh;
+  font-family: 'Arial', sans-serif;
+  color: #ffffff;
+}
+
+.contenido-pruebas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Estilo específico para los iconos PNG importados de assets */
+.card-detalle-item .card-icon-asset {
+  width: 18px;          /* Tamaño ideal para que coincida con el texto */
+  height: 18px;
+  object-fit: contain;  /* Evita que el icono se deforme */
+  flex-shrink: 0;       /* Asegura que no se aplaste si el texto es largo */
+  display: block;
+}
+
+/* Rejilla de tarjetas */
+.grid-pruebas {
+  padding: 25px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+  background: #0b0b0b;
+}
+
+/* CORRECCIÓN DE LA TARJETA: Evita que cualquier elemento hijo flote de forma absoluta */
+.card-prueba {
+  background: #141414;
+  border: 1px solid #222222;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-sizing: border-box;
+  height: auto; /* Forzamos a que crezca orgánicamente según el contenido */
+}
+
+/* Contenedor fijo para la foto */
+.card-imagen-wrapper {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  background: #1f1f1f;
+  flex-shrink: 0; /* Impide que la imagen se achique */
+}
+
+.card-imagen-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Fallback por si la imagen de la BD no carga */
+.sin-imagen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #444;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Etiqueta cyan superior */
+.tag-flotante {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #00cfff;
+  color: #000000;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 3px;
+  z-index: 2;
+}
+
+/* CORRECCIÓN: Bloque central de información con flujo vertical real */
+.card-info {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Genera espacio real entre cada línea de texto automáticamente */
+  flex-grow: 1; 
+  position: relative;
+}
+
+/* Nombre del Club */
+.card-info h2 {
+  color: #00cfff;
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+}
+
+/* Contenedores de ítems con iconos de bloque individual */
+.card-detalle-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  position: relative;
+}
+
+.card-detalle-item .icon {
+  font-size: 14px;
+  color: #00cfff;
+  flex-shrink: 0;
+}
+
+.card-info p {
+  color: #aaaaaa;
+  font-size: 13px;
+  margin: 0 !important; /* Resetea cualquier margen externo que venga de otra hoja de estilos */
+  padding: 0 !important;
+  line-height: 1.2;
+}
+
+/* CORRECCIÓN DEL BOTÓN: Posicionamiento estático relativo para que sea clickeable sin interferencias */
+.card-prueba .btn-mas-info {
+  position: relative;
+  z-index: 10; /* Lo posiciona por encima de cualquier capa invisible */
+  margin: 10px 20px 20px 20px;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid #00cfff;
+  color: #00cfff;
+  font-weight: bold;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.card-prueba .btn-mas-info:hover {
+  background: #00cfff;
+  color: #000000;
+}
