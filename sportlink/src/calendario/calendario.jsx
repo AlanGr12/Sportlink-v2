@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Importamos useEffect
 import Footer from '../footer/footer.jsx';
 import './calendario.css';
 
@@ -26,12 +26,25 @@ function getDiasDelMes(year, month) {
 }
 
 export default function Calendario(props) {
+  // Detectar si está el usuario en props o en localStorage
+  const usuario = props.usuario || JSON.parse(localStorage.getItem('usuario') || 'null');
+
+  // Redirigir al login si no ha iniciado sesión
+  useEffect(() => {
+    if (!usuario) {
+      props.cambiarVista('login');
+    }
+  }, [usuario, props]);
+
   const hoy = new Date();
   const [mesActual, setMesActual] = useState(hoy.getMonth());
   const [anioActual, setAnioActual] = useState(hoy.getFullYear());
   const [diaSeleccionado, setDiaSeleccionado] = useState(null);
   const [dropdownMes, setDropdownMes] = useState(false);
   const [dropdownAnio, setDropdownAnio] = useState(false);
+
+  // Si no hay usuario, retornamos null para que no renderice nada mientras redirige
+  if (!usuario) return null;
 
   const { offset, totalDias } = getDiasDelMes(anioActual, mesActual);
 

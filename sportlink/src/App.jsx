@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Login from './log in/Login.jsx'
-import Registrar from './registrar/registrar.jsx'
+import RegistroFlow from './RegistroFlow.jsx'
 import Landing from './landing/landing.jsx'
 import MiPerfil from './mi perfil/miperfil.jsx'
 import EntrenadoresView from './mostrarEntrenadores/entrenadores.jsx'
@@ -11,7 +11,6 @@ import Calendario from './calendario/calendario.jsx'
 import Pruebas from './pruebas/pruebas.jsx'
 
 function App() {
-  // FIX 1: inicializar desde localStorage para que la sesión sobreviva recargas
   const [usuario, setUsuario] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('usuario') || 'null')
@@ -21,7 +20,6 @@ function App() {
   })
   const [vista, setVista] = useState('landing')
 
-  // FIX 3: wrapper que sincroniza el estado de React Y el localStorage
   const actualizarUsuario = (user) => {
     if (user) {
       localStorage.setItem('usuario', JSON.stringify(user))
@@ -46,11 +44,12 @@ function App() {
 
     if (vista === 'registro' && !usuario) {
       return (
-        <Registrar
+        <RegistroFlow
           onRegistro={(user) => {
             actualizarUsuario(user)
             setVista('landing')
           }}
+          onLogin={() => setVista('login')}
         />
       )
     }
@@ -63,7 +62,7 @@ function App() {
       return <EntrenadoresView cambiarVista={setVista} usuario={usuario} />
     }
 
-    if (vista === 'pruebas'){
+    if (vista === 'pruebas') {
       return <Pruebas cambiarVista={setVista} usuario={usuario} />
     }
 
@@ -80,9 +79,7 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* FIX 3: pasamos actualizarUsuario para que el Header pueda limpiar el estado al hacer logout */}
       <Header cambiarVista={setVista} usuario={usuario} onLogout={() => actualizarUsuario(null)} />
-
       <main className="content-body">
         {renderContenido()}
       </main>

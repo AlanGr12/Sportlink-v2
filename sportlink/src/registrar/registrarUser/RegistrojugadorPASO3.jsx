@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-import "./Registrojugador.css";
+import "./RegistrojugadorPASO3.css";
 import Header from "../../header/header.jsx";
 import Footer from "../../footer/footer.jsx";
 import logoSportlink from "../../assets/logoSportlink.png";
@@ -325,10 +325,12 @@ const RegistroJugador = () => {
             REGISTRARSE
           </button>
           <div className="rj-step-info">
-            <span className="rj-step-text">PASO 2/2</span>
+            <span className="rj-step-text">PASO 3/3</span>
             <div className="rj-step-dots">
               <span className="rj-dot rj-dot--done" />
-              <span className="rj-dot rj-dot--active" />
+              <span className="rj-dot rj-dot--done" />
+              <span className="rj-dot rj-dot--active" /
+              >
             </div>
           </div>
         </div>
