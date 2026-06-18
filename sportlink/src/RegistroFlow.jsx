@@ -26,6 +26,7 @@ function RegistroFlow({ onRegistro, onLogin }) {
       />
     )
   }
+  // datosBase se pasa siempre para que cada paso 3 (jugador, entrenador, club) lo reciba
 
   return null
 }

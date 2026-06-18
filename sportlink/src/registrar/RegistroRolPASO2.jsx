@@ -8,15 +8,15 @@ import logoSportlink from '../assets/logoSportlink.png'
 import './RegistroRolPASO2.css'
 
 
-function Registrar({ onRegistro }) {
+function Registrar({ onRegistro, datosBase }) {
   const [tipo, setTipo] = useState(null)
   const [rolSeleccionado, setRolSeleccionado] = useState(null)
 
 
   // Por ahora, al confirmar, si es 'jugador' te manda directo al paso 2 largo
-  if (tipo === 'jugador') return <RegistroJugador onRegistro={onRegistro} />
-  if (tipo === 'entrenador') return <RegistroEntrenador onRegistro={onRegistro} />
-  if (tipo === 'club') return <RegistroClub onRegistro={onRegistro} />
+  if (tipo === 'jugador') return <RegistroJugador datosBase={datosBase} onRegistro={onRegistro} />
+  if (tipo === 'entrenador') return <RegistroEntrenador datosBase={datosBase} onRegistro={onRegistro} />
+  if (tipo === 'club') return <RegistroClub datosBase={datosBase} onRegistro={onRegistro} />
 
 
   function handleSiguiente() {

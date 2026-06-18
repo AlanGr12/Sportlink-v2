@@ -35,10 +35,9 @@ const deportesDisponibles = [
   { id: 15, nombre: 'Golf' }
 ];
 
-const RegistroJugador = () => {
+// email y contraseña vienen de datosBase (Paso 1), no se piden acá
+const RegistroJugador = ({ datosBase = {}, onRegistro }) => {
   const [form, setForm] = useState({
-    email: "",
-    contrasenia: "",
     nombre: "",
     apellido: "",
     deportes: [],
@@ -109,8 +108,6 @@ const RegistroJugador = () => {
     if (!form.nombre) newErrors.nombre = "Este campo es obligatorio";
     if (!form.apellido) newErrors.apellido = "Este campo es obligatorio";
     if (!form.ubicacion) newErrors.ubicacion = "Este campo es obligatorio";
-    if (!form.email) newErrors.email = "El email es obligatorio";
-    if (!form.contrasenia) newErrors.contrasenia = "La contraseña es obligatoria";
     if (!form.telefono) newErrors.telefono = "Este campo es obligatorio";
     if (!form.fechanacimiento) newErrors.fechanacimiento = "Este campo es obligatorio";
     if (!form.genero) newErrors.genero = "Este campo es obligatorio";
@@ -121,8 +118,9 @@ const RegistroJugador = () => {
 
     try {
       const formData = new FormData();
-      formData.append('email', form.email);
-      formData.append('contrasenia', form.contrasenia);
+      // Email y contraseña vienen del Paso 1
+      formData.append('email', datosBase.email);
+      formData.append('contrasenia', datosBase.contraseña);
       formData.append('nombre', form.nombre);
       formData.append('apellido', form.apellido);
       formData.append('iddeporte', form.deportes[0]);
@@ -135,9 +133,9 @@ const RegistroJugador = () => {
         formData.append('fotoperfil', fotoperfil);
       }
 
-    const response = await axios.post('http://localhost:3000/api/jugadores/registro', formData);
-    alert('Jugador registrado correctamente');
-    if (onRegistro) onRegistro(response.data)
+      const response = await axios.post('http://localhost:3000/api/jugadores/registro', formData);
+      alert('Jugador registrado correctamente');
+      if (onRegistro) onRegistro(response.data);
     } catch (error) {
       console.error(error);
       alert(error.response?.data?.error || 'Error al registrar jugador');
@@ -154,7 +152,7 @@ const RegistroJugador = () => {
             REGISTRATE COMO <span className="rj-title-accent">JUGADOR</span>
           </h1>
           <p className="rj-subtitle">
-            Únete al ecosistema deportivo de rendimiento más avanzada del mundo.
+            Únete al ecosistema deportivo de rendimiento más avanzado del mundo.
           </p>
         </div>
 
@@ -190,18 +188,6 @@ const RegistroJugador = () => {
                   <span className="rj-select-arrow">▼</span>
                 </div>
                 {errors.ubicacion && <span className="rj-error">{errors.ubicacion}</span>}
-              </div>
-
-              <div className="rj-field">
-                <label className="rj-label">EMAIL</label>
-                <input className="rj-input" name="email" type="email" placeholder="ejemplo@gmail.com" value={form.email} onChange={handleChange} />
-                {errors.email && <span className="rj-error">{errors.email}</span>}
-              </div>
-
-              <div className="rj-field">
-                <label className="rj-label">CONTRASEÑA</label>
-                <input className="rj-input" name="contrasenia" type="password" placeholder="••••••••" value={form.contrasenia} onChange={handleChange} />
-                {errors.contrasenia && <span className="rj-error">{errors.contrasenia}</span>}
               </div>
 
               <div className="rj-field">
@@ -329,8 +315,7 @@ const RegistroJugador = () => {
             <div className="rj-step-dots">
               <span className="rj-dot rj-dot--done" />
               <span className="rj-dot rj-dot--done" />
-              <span className="rj-dot rj-dot--active" /
-              >
+              <span className="rj-dot rj-dot--active" />
             </div>
           </div>
         </div>
