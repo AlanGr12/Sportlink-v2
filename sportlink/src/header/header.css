@@ -293,3 +293,23 @@
   width: 32px; /* Caja contenedora un poco más ancha para simular el espacio del emoji */
   height: 32px;
 }
+
+/* En tu header.css */
+.header-icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.header-svg-icon {
+  transition: stroke 0.2s ease; /* Transición suave para el color */
+}
+
+.header-icon-btn:hover .header-svg-icon {
+  stroke: var(--header-accent-color); /* Se pone color cian al pasar el mouse */
+}

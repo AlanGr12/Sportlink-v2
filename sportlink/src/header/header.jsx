@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './header.css';
 import logoSportlink from '../assets/logoSportlink.png';
-import iconMensajes from '../assets/mensajes.png';
-import iconNotis from '../assets/notis.png';
+import { IconoMensajes } from '../iconos/IconoMensajes.jsx';
+import { IconoNotificaciones } from '../iconos/IconoNotificaciones.jsx';
 
 // NUEVOS IMPORTACIONES DE ICONOS PARA EL DROPDOWN
 import iconCandado from '../assets/candado.png';
@@ -219,13 +219,17 @@ const Header = (props) => {
           </ul>
         </nav>
 
-        <div className="header-actions">
-          <button className="header-action-btn">
-            <img src={iconMensajes} alt="Mensajes" className="header-action-icon" />
-          </button>
-          <button className="header-action-btn">
-            <img src={iconNotis} alt="Notificaciones" className="header-action-icon" />
-          </button>
+<div className="header-actions">
+  
+  <div className="header-icons-container" style={{ display: 'flex', gap: '10px' }}>
+    <button className="header-action-btn" onClick={() => props.cambiarVista('mensajes')}>
+      <IconoMensajes size={22} color="#ffffff" className="header-svg-icon" />
+    </button>
+    
+    <button className="header-action-btn" onClick={() => props.cambiarVista('notificaciones')}>
+      <IconoNotificaciones size={22} color="#ffffff" className="header-svg-icon" />
+    </button>
+  </div>
 
           <div className="header-profile-container" ref={avatarRef}>
             <button className="header-avatar-toggle" onClick={toggleAvatarDropdown}>
