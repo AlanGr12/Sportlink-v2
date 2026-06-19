@@ -54,7 +54,12 @@ const Header = (props) => {
     if (!estaLogueado) {
       return (
         <>
-          <div className="header-dropdown-item">
+          {/* 1. AGREGADO ONCLICK Y STYLE AQUÍ */}
+          <div 
+            className="header-dropdown-item" 
+            onClick={() => { props.cambiarVista('pruebas'); setDropdownOpen(false); }}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="header-dropdown-icon">
               <img src={iconPruebas} alt="Pruebas" className="header-dropdown-img-icon" />
             </div>
@@ -81,7 +86,12 @@ const Header = (props) => {
       case 'jugador':
         return (
           <>
-            <div className="header-dropdown-item">
+            {/* 2. AGREGADO ONCLICK Y STYLE AQUÍ */}
+            <div 
+              className="header-dropdown-item" 
+              onClick={() => { props.cambiarVista('pruebas'); setDropdownOpen(false); }}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="header-dropdown-icon">
                 <img src={iconPruebas} alt="Pruebas" className="header-dropdown-img-icon" />
               </div>
@@ -113,7 +123,12 @@ const Header = (props) => {
                 <div className="header-dropdown-desc">Postúlate a vacantes técnicas de clubes y academias.</div>
               </div>
             </div>
-            <div className="header-dropdown-item">
+            {/* 3. AGREGADO ONCLICK Y STYLE AQUÍ */}
+            <div 
+              className="header-dropdown-item" 
+              onClick={() => { props.cambiarVista('pruebas'); setDropdownOpen(false); }}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="header-dropdown-icon">
                 <img src={iconPruebas} alt="Pruebas" className="header-dropdown-img-icon" />
               </div>
@@ -145,7 +160,12 @@ const Header = (props) => {
                 <div className="header-dropdown-desc">Publica ofertas para reclutar staff técnico calificado.</div>
               </div>
             </div>
-            <div className="header-dropdown-item">
+            {/* 4. AGREGADO ONCLICK Y STYLE AQUÍ */}
+            <div 
+              className="header-dropdown-item" 
+              onClick={() => { props.cambiarVista('pruebas'); setDropdownOpen(false); }}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="header-dropdown-icon">
                 <img src={iconPruebas} alt="Pruebas" className="header-dropdown-img-icon" />
               </div>

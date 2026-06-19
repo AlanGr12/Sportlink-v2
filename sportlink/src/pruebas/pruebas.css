@@ -78,7 +78,7 @@
   position: absolute;
   top: 12px;
   left: 12px;
-  background: #00cfff;
+  background: #38efff;
   color: #000000;
   font-size: 10px;
   font-weight: bold;
@@ -99,7 +99,7 @@
 
 /* Nombre del Club */
 .card-info h2 {
-  color: #00cfff;
+  color: #38efff;
   font-size: 16px;
   font-weight: 800;
   margin: 0 0 4px 0;
@@ -118,7 +118,7 @@
 
 .card-detalle-item .icon {
   font-size: 14px;
-  color: #00cfff;
+  color: #38efff;
   flex-shrink: 0;
 }
 
@@ -137,8 +137,8 @@
   margin: 10px 20px 20px 20px;
   padding: 12px;
   background: transparent;
-  border: 1px solid #00cfff;
-  color: #00cfff;
+  border: 1px solid #38efff;
+  color: #38efff;
   font-weight: bold;
   font-size: 12px;
   letter-spacing: 1px;
@@ -149,6 +149,6 @@
 }
 
 .card-prueba .btn-mas-info:hover {
-  background: #00cfff;
+  background: #38efff;
   color: #000000;
 }
