@@ -68,7 +68,11 @@ const Header = (props) => {
               <div className="header-dropdown-desc">Los jugadores pueden acceder a las pruebas publicadas <br />por los clubes asociados.</div>
             </div>
           </div>
-          <div className="header-dropdown-item">
+          <div 
+            className="header-dropdown-item"
+            onClick={() => { props.cambiarVista('entrenamientos'); setDropdownOpen(false); }}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="header-dropdown-icon">
               <img src={iconEntrenamientos} alt="Entrenamientos" className="header-dropdown-img-icon" />
             </div>
@@ -100,7 +104,11 @@ const Header = (props) => {
                 <div className="header-dropdown-desc">Postúlate a las convocatorias activas de los clubes oficiales.</div>
               </div>
             </div>
-            <div className="header-dropdown-item">
+            <div 
+              className="header-dropdown-item"
+              onClick={() => { props.cambiarVista('entrenamientos'); setDropdownOpen(false); }}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="header-dropdown-icon">
                 <img src={iconEntrenamientos} alt="Entrenamientos" className="header-dropdown-img-icon" />
               </div>
@@ -137,7 +145,11 @@ const Header = (props) => {
                 <div className="header-dropdown-desc">Gestiona u observa las convocatorias del mercado de pases.</div>
               </div>
             </div>
-            <div className="header-dropdown-item">
+            <div 
+              className="header-dropdown-item"
+              onClick={() => { props.cambiarVista('entrenamientos'); setDropdownOpen(false); }}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="header-dropdown-icon">
                 <img src={iconEntrenamientos} alt="Entrenamientos" className="header-dropdown-img-icon" />
               </div>
@@ -174,7 +186,11 @@ const Header = (props) => {
                 <div className="header-dropdown-desc">Organiza pruebas para captar jóvenes promesas.</div>
               </div>
             </div>
-            <div className="header-dropdown-item">
+            <div 
+              className="header-dropdown-item"
+              onClick={() => { props.cambiarVista('entrenamientos'); setDropdownOpen(false); }}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="header-dropdown-icon">
                 <img src={iconEntrenamientos} alt="Entrenamientos" className="header-dropdown-img-icon" />
               </div>

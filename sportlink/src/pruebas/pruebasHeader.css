@@ -37,13 +37,15 @@
   width: 100%;
 }
 
-.search-input-wrapper .search-icon {
+.search-input-wrapper .buscador-img {
   position: absolute;
   left: 15px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 14px;
-  color: #555555;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  opacity: 0.95;
 }
 
 .pruebas-header input {

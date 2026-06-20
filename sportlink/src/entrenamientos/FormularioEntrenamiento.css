@@ -1,0 +1,7 @@
+.form-error-banner{ color:#ff4d4f; font-size:13px; font-weight:700; padding:8px; background-color:rgba(255,77,79,0.06); border-radius:6px; margin-bottom:8px }
+.formulario-entrenamiento input[type="checkbox"], .formulario-entrenamiento .checkbox-input{ width:16px; height:16px; accent-color:var(--primary) }
+.checkbox-row{ display:flex; align-items:center; gap:8px }
+.checkbox-label{ cursor:pointer }
+.recurrente-opciones{ margin-top:8px }
+.form-fila-doble{ display:flex; gap:12px }
+.form-fila-doble .form-grupo{ flex:1 }

@@ -9,6 +9,7 @@ import Header from './header/header.jsx'
 import Footer from './footer/footer.jsx'
 import Calendario from './calendario/calendario.jsx'
 import Pruebas from './pruebas/pruebas.jsx'
+import PaginaEntrenamientos from './entrenamientos/PaginaEntrenamientos.jsx'
 
 function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -74,15 +75,20 @@ function App() {
       return <MiPerfil cambiarVista={setVista} usuario={usuario} />
     }
 
+    if (vista === 'entrenamientos') {
+      return <PaginaEntrenamientos cambiarVista={setVista} usuario={usuario} />
+    }
+
     return <Landing cambiarVista={setVista} usuario={usuario} />
   }
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Header cambiarVista={setVista} usuario={usuario} onLogout={() => actualizarUsuario(null)} />
-      <main className="content-body">
+      <main className="content-body" style={{ flex: 1 }}>
         {renderContenido()}
       </main>
+      
     </div>
   )
 }

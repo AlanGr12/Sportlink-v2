@@ -1,4 +1,5 @@
 import "./pruebasHeader.css";
+import iconBuscador from '../assets/buscador.png';
 
 function PruebasHeader({ busqueda, setBusqueda }) {
   return (
@@ -12,7 +13,7 @@ function PruebasHeader({ busqueda, setBusqueda }) {
       </p>
 
       <div className="search-input-wrapper">
-        <span className="search-icon">🔍</span>
+        <img src={iconBuscador} alt="Buscar" className="icon-small buscador-img" />
         <input
           type="text"
           placeholder="Buscar pruebas..."
