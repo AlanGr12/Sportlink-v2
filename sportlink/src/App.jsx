@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import axios from 'axios'
 import Login from './log in/Login.jsx'
 import RegistroFlow from './RegistroFlow.jsx'
 import Landing from './landing/landing.jsx'
@@ -6,7 +7,6 @@ import MiPerfil from './mi perfil/miperfil.jsx'
 import EntrenadoresView from './mostrarEntrenadores/entrenadores.jsx'
 import JugadoresView from './mostrarJugadores/jugadores.jsx'
 import Header from './header/header.jsx'
-import Footer from './footer/footer.jsx'
 import Calendario from './calendario/calendario.jsx'
 import Pruebas from './pruebas/pruebas.jsx'
 import PaginaEntrenamientos from './entrenamientos/PaginaEntrenamientos.jsx'
@@ -29,6 +29,30 @@ function App() {
     }
     setUsuario(user)
   }
+
+  useEffect(() => {
+    const fetchIdJugador = async () => {
+      if (!usuario) return
+      if (usuario.idjugador || usuario.idJugador) return
+      if (usuario.tipousuario !== 'jugador') return
+      const idusuario = usuario.idusuario || usuario.idUsuario || usuario.id || null
+      if (!idusuario) return
+
+      try {
+        const response = await axios.get('http://localhost:3000/api/jugadores')
+        const jugador = Array.isArray(response.data)
+          ? response.data.find((j) => j.idusuario === idusuario)
+          : null
+        if (jugador?.idjugador) {
+          actualizarUsuario({ ...usuario, idjugador: jugador.idjugador })
+        }
+      } catch (err) {
+        console.error('No se pudo obtener idjugador para el usuario jugador:', err)
+      }
+    }
+
+    fetchIdJugador()
+  }, [usuario])
 
   const renderContenido = () => {
     if (vista === 'login' && !usuario) {
@@ -64,7 +88,15 @@ function App() {
     }
 
     if (vista === 'pruebas') {
-      return <Pruebas cambiarVista={setVista} usuario={usuario} />
+      const idJugador =
+        usuario?.idjugador ||
+        usuario?.idJugador ||
+        usuario?.jugador?.idjugador ||
+        usuario?.jugador?.idJugador ||
+        usuario?.jugadorId ||
+        usuario?.jugador?.id ||
+        null;
+      return <Pruebas idJugador={idJugador} />
     }
 
     if (vista === 'calendario') {

@@ -11,23 +11,43 @@ import iconoFecha from "../assets/fecha.png";
 
 import "./pruebas.css";
 
-function Pruebas() {
+function Pruebas({ idJugador }) {
   const [pruebas, setPruebas] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [deporte, setDeporte] = useState("");
   const [categoria, setCategoria] = useState("");
   const [zona, setZona] = useState("");
 
+  const usuarioAlmacenado = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('usuario') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+
+  const idJugadorReal =
+    idJugador ||
+    usuarioAlmacenado?.idjugador ||
+    usuarioAlmacenado?.idJugador ||
+    usuarioAlmacenado?.jugador?.idjugador ||
+    usuarioAlmacenado?.jugador?.idJugador ||
+    usuarioAlmacenado?.jugadorId ||
+    usuarioAlmacenado?.jugador?.id ||
+    null;
+
   useEffect(() => {
     obtenerPruebas();
-  }, []);
+  }, [idJugadorReal]);
 
   async function obtenerPruebas() {
     try {
-      const response = await axios.get("http://localhost:3000/api/pruebas");
+      const url = idJugadorReal ? "http://localhost:3000/api/pruebas/deporte" : "http://localhost:3000/api/pruebas";
+      const config = idJugadorReal ? { params: { idJugador: idJugadorReal } } : {};
+      const response = await axios.get(url, config);
       setPruebas(response.data);
     } catch (error) {
-      console.log(error);
+      console.error("Pruebas: error al cargar pruebas", error);
     }
   }
 
