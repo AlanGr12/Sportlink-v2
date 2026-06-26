@@ -469,11 +469,12 @@
   background-color: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(4px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   /* Asegura que el modal esté por encima del header (header z-index:1000) */
   z-index: 1200;
-  padding: 20px;
+  padding: 32px 20px;
+  overflow-y: auto;
 }
 
 .modal-contenedor {
@@ -482,10 +483,12 @@
   border: 1px solid var(--border-light);
   width: 100%;
   max-width: 600px;
-  max-height: 90vh;
+  max-height: calc(100vh - 64px);
   overflow-y: auto;
   box-shadow: var(--shadow-card);
   animation: modalIn 0.3s ease;
+  /* Evita que el modal colapse o se corte si el contenido es muy largo */
+  flex-shrink: 0;
 }
 
 @keyframes modalIn {
@@ -500,11 +503,16 @@
 }
 
 .modal-header {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-secondary);
   padding: 20px 24px;
   border-bottom: 1px solid var(--border-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  z-index: 1;
 }
 
 .modal-titulo {

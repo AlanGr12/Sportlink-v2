@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import ListaEntrenamientos from './ListaEntrenamientos';
 import FormularioEntrenamiento from './FormularioEntrenamiento';
@@ -252,6 +253,18 @@ const PaginaEntrenamientos = ({ usuario }) => {
     cargarEntrenamientos();
   };
 
+  // Bloquea el scroll del fondo mientras hay un modal abierto,
+  // para que el usuario navegue únicamente dentro del modal.
+  useEffect(() => {
+    if (modalAbierto || modalDetalleAbierto) {
+      const overflowOriginal = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = overflowOriginal;
+      };
+    }
+  }, [modalAbierto, modalDetalleAbierto]);
+
   return (
     <>
     <div className="pagina-entrenamientos">
@@ -450,7 +463,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
       </div>
 
       {/* MODAL CREAR / EDITAR */}
-      {modalAbierto && (
+      {modalAbierto && createPortal(
         <div className="modal-overlay" onClick={() => setModalAbierto(false)}>
           <div className="modal-contenedor" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -468,11 +481,12 @@ const PaginaEntrenamientos = ({ usuario }) => {
               />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL VER DETALLE */}
-      {modalDetalleAbierto && entrenamientoSeleccionado && (
+      {modalDetalleAbierto && entrenamientoSeleccionado && createPortal(
         <div className="modal-overlay" onClick={() => setModalDetalleAbierto(false)}>
           <div className="modal-contenedor" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -486,7 +500,8 @@ const PaginaEntrenamientos = ({ usuario }) => {
               />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
     <Footer />  
