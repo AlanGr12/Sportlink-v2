@@ -9,6 +9,7 @@ import './PaginaEntrenamientos.css';
 import iconFecha from '../assets/fecha.png';
 import iconUbicacion from '../assets/ubicacion.png';
 import iconModalidad from '../assets/modalidad.png';
+import iconFutbol from '../assets/futbol.png';
 import iconBuscador from '../assets/buscador.png';
 import Footer from '../footer/footer';
 
@@ -332,7 +333,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
               className={`filtro-header ${sidebarExpandido.deporte ? 'abierto' : ''}`}
               onClick={() => toggleSidebarSeccion('deporte')}
             >
-              <span>⚽ Deporte</span>
+              <span><img src={iconFutbol} alt="Deporte" className="icon-small" /> Deporte</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
             {sidebarExpandido.deporte && (
@@ -392,19 +393,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
             </p>
           </div>
 
-          {/* Barra de Búsqueda */}
-          <div className="buscador-container">
-            <img src={iconBuscador} alt="Buscar" className="icon-small buscador-img" />
-            <input 
-              type="text" 
-              className="buscador-input" 
-              placeholder="Buscar entrenamientos, rutinas, técnicas..." 
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-            />
-          </div>
-
-          {/* Botón Crear Entrenamiento (solo para entrenadores) */}
+          {/* Botón Crear Entrenamiento (solo para entrenadores) — arriba del buscador */}
           {usuario?.tipousuario === 'entrenador' && (
             <div className="acciones-entrenador-container">
               <button 
@@ -418,6 +407,18 @@ const PaginaEntrenamientos = ({ usuario }) => {
               </button>
             </div>
           )}
+
+          {/* Barra de Búsqueda */}
+          <div className="buscador-container">
+            <img src={iconBuscador} alt="Buscar" className="icon-small buscador-img" />
+            <input 
+              type="text" 
+              className="buscador-input" 
+              placeholder="Buscar entrenamientos, rutinas, técnicas..." 
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          </div>
 
           {/* Lista de Entrenamientos */}
           <ListaEntrenamientos

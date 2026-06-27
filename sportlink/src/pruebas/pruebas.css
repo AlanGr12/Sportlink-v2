@@ -1,57 +1,94 @@
-/* FALTA QUE EL CSS PARA QUE SE VEA CON EL MISMO CELESTE QUE LAS DEMAS VIEWS */
+/* ============================================================
+   PRUEBAS — Layout idéntico a PaginaEntrenamientos
+   Todas las variables vienen de entrenamientos.css (:root)
+   ============================================================ */
 
+/* ── CONTENEDOR RAÍZ ──────────────────────────────────────── */
 .contenedor-pruebas {
-  display: flex;
-  background: #0b0b0b;
+  background-color: var(--bg-dark);
+  color: var(--text-white);
   min-height: 100vh;
-  font-family: 'Arial', sans-serif;
-  color: #ffffff;
-}
-
-.contenido-pruebas {
-  flex: 1;
   display: flex;
   flex-direction: column;
-}
-
-/* Estilo específico para los iconos PNG importados de assets */
-.card-detalle-item .card-icon-asset {
-  width: 18px;          /* Tamaño ideal para que coincida con el texto */
-  height: 18px;
-  object-fit: contain;  /* Evita que el icono se deforme */
-  flex-shrink: 0;       /* Asegura que no se aplaste si el texto es largo */
-  display: block;
-}
-
-/* Rejilla de tarjetas */
-.grid-pruebas {
-  padding: 25px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 25px;
-  background: #0b0b0b;
-}
-
-/* CORRECCIÓN DE LA TARJETA: Evita que cualquier elemento hijo flote de forma absoluta */
-.card-prueba {
-  background: #141414;
-  border: 1px solid #222222;
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  position: relative;
+  font-family: var(--font-family);
+  padding: calc(80px + 40px) 24px 24px;
   box-sizing: border-box;
-  height: auto; /* Forzamos a que crezca orgánicamente según el contenido */
 }
 
-/* Contenedor fijo para la foto */
-.card-imagen-wrapper {
-  position: relative;
+/* ── INNER LAYOUT (sidebar + main) ───────────────────────── */
+.pruebas-layout {
+  display: flex;
+  gap: 32px;
+  max-width: 1280px;
+  margin: 0 auto;
   width: 100%;
-  height: 180px;
-  background: #1f1f1f;
-  flex-shrink: 0; /* Impide que la imagen se achique */
+}
+
+/* ── ÁREA PRINCIPAL ───────────────────────────────────────── */
+.contenido-pruebas {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+/* ── GRILLA DE TARJETAS ───────────────────────────────────── */
+.grid-pruebas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  /* align-items:stretch hace que todas las celdas tengan la
+     misma altura — el contenido nunca se derrama afuera */
+  align-items: stretch;
+}
+
+/* ============================================================
+   TARJETA DE PRUEBA — corregida para contener todo su contenido
+   La solución al desbordamiento: la card ES el contenedor con
+   altura implícita (display:flex flex-direction:column) y
+   TODOS los hijos viven dentro de ese flujo.
+   ============================================================ */
+.card-prueba {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+  isolation: isolate;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.card-prueba-info {
+  /* padding interno: espacio respecto al borde de la card */
+  padding: 20px 20px 8px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+  min-height: 0;
+}
+
+.card-prueba:hover {
+  transform: translateY(-4px);
+  border-color: rgba(45, 239, 242, 0.3);
+}
+
+/* ── IMAGEN (bloque fijo, no empuja al contenido afuera) ──── */
+.card-imagen-wrapper {
+  /* overflow:hidden aquí (solo en el bloque de imagen) clipea
+     la foto al border-radius sin afectar el flex layout de la
+     card ni diferir ningún compositing layer */
+  overflow: hidden;
+  /* border-radius solo arriba: empareja con el de .card-prueba */
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  position: relative;
+  height: 200px;
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .card-imagen-wrapper img {
@@ -61,94 +98,307 @@
   display: block;
 }
 
-/* Fallback por si la imagen de la BD no carga */
+/* Overlay: DOM real con pointer-events:none */
+.card-imagen-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0) 40%, rgba(22,24,25,0.9) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Fallback sin imagen */
 .sin-imagen {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #444;
+  color: var(--text-muted);
   font-size: 12px;
   font-weight: bold;
+  background: var(--bg-secondary);
 }
 
-/* Etiqueta cyan superior */
+/* Tag RECOMENDADO */
 .tag-flotante {
   position: absolute;
   top: 12px;
   left: 12px;
-  background: #38efff;
-  color: #000000;
+  background: var(--primary);
+  color: #000;
   font-size: 10px;
-  font-weight: bold;
-  padding: 4px 8px;
+  font-weight: 700;
+  padding: 4px 10px;
   border-radius: 3px;
   z-index: 2;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  pointer-events: none;
 }
 
-/* CORRECCIÓN: Bloque central de información con flujo vertical real */
-.card-info {
-  padding: 20px;
+/* ── CONTENIDO: vive DENTRO del fondo de la card ─────────── */
+.card-prueba-info {
+  /* padding interno: espacio respecto al borde de la card */
+  padding: 20px 20px 8px 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px; /* Genera espacio real entre cada línea de texto automáticamente */
-  flex-grow: 1; 
-  position: relative;
+  gap: 12px;
+  /* flex-grow:1 hace que este bloque ocupe el espacio disponible
+     entre la imagen y el pie — el texto NO se derrama afuera */
+  flex-grow: 1;
+  min-height: 0;
 }
 
-/* Nombre del Club */
-.card-info h2 {
-  color: #38efff;
-  font-size: 16px;
-  font-weight: 800;
-  margin: 0 0 4px 0;
-  letter-spacing: 0.5px;
+/* Nombre del club / título */
+.card-prueba-info h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  margin: 0;
+  letter-spacing: 0.05em;
   line-height: 1.3;
 }
 
-/* Contenedores de ítems con iconos de bloque individual */
-.card-detalle-item {
+/* Lista de detalles: apilados verticalmente */
+.card-prueba-detalles-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Ítem: icono + texto en fila */
+.card-prueba-detalle-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
-  position: relative;
+  font-size: 13px;
 }
 
-.card-detalle-item .icon {
-  font-size: 14px;
-  color: #38efff;
+.card-prueba-detalle-item p {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
+}
+
+/* Iconos PNG */
+.card-icon-asset {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* ── PIE: botón siempre dentro de la card, 100% clickeable ── */
+.card-prueba-pie {
+  /* padding separado del contenido de arriba */
+  padding: 8px 20px 20px 20px;
+}
+
+/* Botón MÁS INFORMACIÓN */
+.btn-mas-info {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background-color: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  border-radius: var(--radius-button);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  text-align: center;
+  font-family: var(--font-family);
+}
+
+.btn-mas-info:hover {
+  background-color: var(--primary);
+  color: #000;
+}
+
+/* ============================================================
+   MODAL DE DETALLE DE PRUEBA
+   Mismo sistema visual que el modal de entrenamientos:
+   - overlay oscuro con blur
+   - contenedor centrado con scroll interno
+   - header sticky + cuerpo scrollable
+   ============================================================ */
+
+/* Overlay — réplica exacta de .modal-overlay de entrenamientos.css */
+.modal-prueba-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1200;
+  padding: 32px 20px;
+  overflow-y: auto;
+}
+
+/* Contenedor del modal */
+.modal-prueba-contenedor {
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-light);
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  box-shadow: var(--shadow-card);
+  animation: modalIn 0.3s ease;
   flex-shrink: 0;
 }
 
-.card-info p {
-  color: #aaaaaa;
-  font-size: 13px;
-  margin: 0 !important; /* Resetea cualquier margen externo que venga de otra hoja de estilos */
-  padding: 0 !important;
-  line-height: 1.2;
+/* Header sticky del modal */
+.modal-prueba-header {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-secondary);
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  z-index: 1;
 }
 
-/* CORRECCIÓN DEL BOTÓN: Posicionamiento estático relativo para que sea clickeable sin interferencias */
-.card-prueba .btn-mas-info {
-  position: relative;
-  z-index: 10; /* Lo posiciona por encima de cualquier capa invisible */
-  margin: 10px 20px 20px 20px;
-  padding: 12px;
-  background: transparent;
-  border: 1px solid #38efff;
-  color: #38efff;
-  font-weight: bold;
-  font-size: 12px;
-  letter-spacing: 1px;
+.modal-prueba-titulo {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-white);
+  font-family: var(--font-family);
+}
+
+.modal-prueba-cerrar {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 24px;
   cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  box-sizing: border-box;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.2s;
 }
 
-.card-prueba .btn-mas-info:hover {
-  background: #38efff;
-  color: #000000;
+.modal-prueba-cerrar:hover {
+  color: var(--text-white);
+}
+
+/* Cuerpo del modal */
+.modal-prueba-cuerpo {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Banner de imagen en el modal */
+.modal-prueba-banner {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-light);
+  display: block;
+}
+
+.modal-prueba-banner-fallback {
+  width: 100%;
+  height: 200px;
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Nombre del club */
+.modal-prueba-club {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-white);
+  margin: 0;
+  font-family: var(--font-family);
+}
+
+/* Grilla de especificaciones */
+.modal-prueba-specs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modal-prueba-spec-item {
+  background-color: #1a1d1e;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-input);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-prueba-spec-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modal-prueba-spec-label img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+.modal-prueba-spec-valor {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-white);
+}
+
+/* Descripción */
+.modal-prueba-descripcion-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-white);
+  margin: 0 0 8px 0;
+  letter-spacing: 0.05em;
+  border-top: 1px solid var(--border-light);
+  padding-top: 16px;
+}
+
+.modal-prueba-descripcion-texto {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Botón cerrar del pie */
+.modal-prueba-acciones {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
 }

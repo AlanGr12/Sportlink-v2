@@ -1,51 +1,195 @@
+import { useState } from "react";
+import "../entrenamientos/entrenamientos.css";
 import "./menuPruebas.css";
 
+// Mismos iconos que PaginaEntrenamientos.jsx
+import iconFecha      from "../assets/fecha.png";
+import iconUbicacion  from "../assets/ubicacion.png";
+import iconModalidad  from "../assets/modalidad.png";
+import iconFutbol     from "../assets/futbol.png";
+
+// Misma lista completa de deportes que PaginaEntrenamientos.jsx
+const deportesDisponibles = [
+  { id: 1,  nombre: "Fútbol" },
+  { id: 2,  nombre: "Basket" },
+  { id: 3,  nombre: "Tenis" },
+  { id: 4,  nombre: "Voley" },
+  { id: 5,  nombre: "Pádel" },
+  { id: 6,  nombre: "Rugby" },
+  { id: 7,  nombre: "Hockey" },
+  { id: 8,  nombre: "Natación" },
+  { id: 9,  nombre: "Atletismo" },
+  { id: 10, nombre: "Ciclismo" },
+  { id: 11, nombre: "Boxeo" },
+  { id: 12, nombre: "Artes Marciales" },
+  { id: 13, nombre: "Handball" },
+  { id: 14, nombre: "Béisbol" },
+  { id: 15, nombre: "Golf" },
+];
+
 function MenuPruebas({
-  deporte,
-  setDeporte,
-  categoria,
-  setCategoria,
-  zona,
-  setZona,
+  deporte,      setDeporte,
+  categoria,    setCategoria,
+  zona,         setZona,
+  fechaDesde,   setFechaDesde,
+  fechaHasta,   setFechaHasta,
+  onAplicar,
+  onReset,
 }) {
+  // Mismo estado de acordeón que PaginaEntrenamientos
+  const [expandido, setExpandido] = useState({
+    zona:      true,
+    categoria: true,
+    deporte:   true,
+    horario:   false,
+  });
+
+  const toggle = (seccion) =>
+    setExpandido((prev) => ({ ...prev, [seccion]: !prev[seccion] }));
+
+  // SVG chevron reutilizable (igual que entrenamientos)
+  const Chevron = () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+
   return (
-    <div className="menu-pruebas">
-      <div className="menu-titulo-seccion">
-        <h3>FILTROS</h3>
-        <p>REFINÁ TU BÚSQUEDA</p>
+    <aside className="filtros-sidebar">
+
+      {/* Título del sidebar — idéntico a entrenamientos */}
+      <div>
+        <h2 className="filtros-titulo">Filtros</h2>
+        <p className="filtros-subtitulo">Refiná tu búsqueda</p>
       </div>
 
-      <div className="select-wrapper">
-        <select value={deporte} onChange={(e) => setDeporte(e.target.value)}>
-          <option value="">Deporte</option>
-          <option value="Fútbol">Fútbol</option>
-          <option value="Hockey">Hockey</option>
-          <option value="Padel">Padel</option>
-          <option value="Basket">Basket</option>
-        </select>
+      {/* ── ZONA ─────────────────────────────────────── */}
+      <div className="filtro-grupo">
+        <div
+          className={`filtro-header ${expandido.zona ? "abierto" : ""}`}
+          onClick={() => toggle("zona")}
+        >
+          <span>
+            <img src={iconUbicacion} alt="Zona" className="icon-small" />
+            Zona
+          </span>
+          <Chevron />
+        </div>
+        {expandido.zona && (
+          <div className="filtro-contenido">
+            <select
+              className="filtro-select"
+              value={zona}
+              onChange={(e) => setZona(e.target.value)}
+            >
+              <option value="">Todas las zonas</option>
+              <option value="CABA">CABA</option>
+              <option value="Zona Norte">Zona Norte</option>
+              <option value="Zona Sur">Zona Sur</option>
+              <option value="Zona Oeste">Zona Oeste</option>
+              <option value="Conurbano">Conurbano</option>
+              <option value="Interior">Interior</option>
+            </select>
+          </div>
+        )}
       </div>
 
-      <div className="select-wrapper">
-        <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-          <option value="">Categoría</option>
-          <option value="Primera">Primera</option>
-          <option value="Reserva">Reserva</option>
-          <option value="Juveniles">Juveniles</option>
-        </select>
+      {/* ── CATEGORÍA (en lugar de Modalidad) ────────── */}
+      <div className="filtro-grupo">
+        <div
+          className={`filtro-header ${expandido.categoria ? "abierto" : ""}`}
+          onClick={() => toggle("categoria")}
+        >
+          <span>
+            <img src={iconModalidad} alt="Categoría" className="icon-small" />
+            Categoría
+          </span>
+          <Chevron />
+        </div>
+        {expandido.categoria && (
+          <div className="filtro-contenido">
+            <select
+              className="filtro-select"
+              value={categoria}
+              onChange={(e) => setCategoria(e.target.value)}
+            >
+              <option value="">Todas</option>
+              <option value="Primera">Primera</option>
+              <option value="Reserva">Reserva</option>
+              <option value="Juveniles">Juveniles</option>
+            </select>
+          </div>
+        )}
       </div>
 
-      <div className="select-wrapper">
-        <select value={zona} onChange={(e) => setZona(e.target.value)}>
-          <option value="">Zona</option>
-          <option value="CABA">CABA</option>
-          <option value="Zona Norte">Zona Norte</option>
-          <option value="Zona Sur">Zona Sur</option>
-          <option value="Zona Oeste">Zona Oeste</option>
-        </select>
+      {/* ── DEPORTE (lista completa de 15) ───────────── */}
+      <div className="filtro-grupo">
+        <div
+          className={`filtro-header ${expandido.deporte ? "abierto" : ""}`}
+          onClick={() => toggle("deporte")}
+        >
+          <span>
+            <img src={iconFutbol} alt="Deporte" className="icon-small" />
+            Deporte
+          </span>
+          <Chevron />
+        </div>
+        {expandido.deporte && (
+          <div className="filtro-contenido">
+            <select
+              className="filtro-select"
+              value={deporte}
+              onChange={(e) => setDeporte(e.target.value)}
+            >
+              <option value="">Todos los deportes</option>
+              {deportesDisponibles.map((d) => (
+                <option key={d.id} value={d.nombre}>
+                  {d.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
-      <button className="btn-aplicar-filtros">APLICAR FILTROS</button>
-    </div>
+      {/* ── FECHAS ───────────────────────────────────── */}
+      <div className="filtro-grupo">
+        <div
+          className={`filtro-header ${expandido.horario ? "abierto" : ""}`}
+          onClick={() => toggle("horario")}
+        >
+          <span>
+            <img src={iconFecha} alt="Fechas" className="icon-small" />
+            Fechas
+          </span>
+          <Chevron />
+        </div>
+        {expandido.horario && (
+          <div className="filtro-contenido">
+            <input
+              type="date"
+              className="filtro-input"
+              value={fechaDesde}
+              onChange={(e) => setFechaDesde(e.target.value)}
+            />
+            <input
+              type="date"
+              className="filtro-input"
+              value={fechaHasta}
+              onChange={(e) => setFechaHasta(e.target.value)}
+            />
+          </div>
+        )}
+      </div>
+
+      <button className="btn-aplicar-filtros" onClick={onAplicar}>
+        Aplicar Filtros
+      </button>
+      <button type="button" className="btn-reset-filtros" onClick={onReset}>
+        Restablecer filtros
+      </button>
+
+    </aside>
   );
 }
 

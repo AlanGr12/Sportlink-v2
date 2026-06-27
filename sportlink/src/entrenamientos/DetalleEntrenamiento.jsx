@@ -75,10 +75,6 @@ const DetalleEntrenamiento = ({ entrenamiento, onCerrar }) => {
             <span className="detalle-item-valor">{entrenamiento.duracionMinutos} Minutos</span>
           </div>
 
-          <div className="detalle-item-caja">
-            <span className="detalle-item-label">⚡ Intensidad</span>
-            <span className="detalle-item-valor capitalized">{entrenamiento.intensidad || 'Media'}</span>
-          </div>
 
           <div className="detalle-item-caja">
             <span className="detalle-item-label"><img src={iconUbicacion} alt="Ubicación" className="icon-small" /> Ubicación</span>

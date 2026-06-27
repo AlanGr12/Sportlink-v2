@@ -11,9 +11,8 @@
 .tarjeta-banner-overlay{ position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.6)); }
 .tarjeta-nombre-entrenador{ position:absolute; left:12px; bottom:10px; margin:0; color:#fff; font-size:14px; font-weight:700 }
 .tarjeta-contenido{ padding:12px 14px; display:flex; flex-direction:column; gap:12px }
-.tarjeta-tipoDeporte-container{ display:flex; justify-content:space-between; align-items:center }
-.tarjeta-tipo-deporte{ font-size:12px; font-weight:700; color:var(--text-muted) }
-.tarjeta-intensidad{ font-size:11px; color:var(--primary); font-weight:700; text-transform:uppercase }
+.tarjeta-tipo-deporte-row{ display:flex; align-items:center; gap:8px }
+.tarjeta-tipo-deporte{ font-size:12px; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.05em }
 .tarjeta-detalle-item{ display:block }
 .tarjeta-detalle-item.destacado{ font-weight:600; font-size:14px; margin-bottom:4px }
 .tarjeta-titulo-texto{ color:var(--text-white) }

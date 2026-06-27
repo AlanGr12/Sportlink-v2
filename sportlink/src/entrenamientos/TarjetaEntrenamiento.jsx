@@ -53,8 +53,20 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
     7: 'Domingo'
   };
 
-  // Solo permitir acciones de edición/borrado si el usuario es entrenador
-  const esPropietario = usuarioActual && usuarioActual.tipousuario === 'entrenador';
+  // Solo puede editar/borrar el entrenador que CREÓ este entrenamiento específico.
+  // Se cubren los distintos nombres de campo que puede traer el backend.
+  const creadorId =
+    entrenamiento.entrenadorId ??
+    entrenamiento.trainerId     ??
+    entrenamiento.userId        ??
+    entrenamiento.creadorId     ??
+    entrenamiento.id_entrenador ??
+    null;
+  const esPropietario =
+    usuarioActual &&
+    usuarioActual.tipousuario === 'entrenador' &&
+    creadorId !== null &&
+    String(creadorId) === String(usuarioActual.id);
 
   return (
     <div className="tarjeta-entrenamiento">
@@ -73,12 +85,9 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
 
       {/* Contenido */}
       <div className="tarjeta-contenido">
-        <div className="tarjeta-tipoDeporte-container">
-          <span className="tarjeta-tipo-deporte">
-            {entrenamiento.tipo || 'ENTRENAMIENTO'}
-          </span>
-          <span className="tarjeta-intensidad">{entrenamiento.intensidad || 'media'}</span>
-        </div>
+        <span className="tarjeta-tipo-deporte">
+          {entrenamiento.tipo || 'ENTRENAMIENTO'}
+        </span>
 
         <div className="tarjeta-detalles-lista">
           {/* Título de entrenamiento */}

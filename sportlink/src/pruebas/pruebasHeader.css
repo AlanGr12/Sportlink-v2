@@ -1,70 +1,81 @@
-/* FALTA QUE EL CSS PARA QUE SE VEA CON EL MISMO CELESTE QUE LAS DEMAS VIEWS */
+/* ============================================================
+   PRUEBAS HEADER — Réplica exacta de .entrenamientos-header
+   + .buscador-container + .buscador-input de entrenamientos.css
+   El header NO necesita padding propio: el contenedor padre
+   (.contenedor-pruebas) ya lo provee vía padding: 24px.
+   ============================================================ */
 
+/* Réplica de .entrenamientos-header */
 .pruebas-header {
-  padding: 40px 30px 20px 30px;
-  background: #111111;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  border-bottom: 1px solid #222222;
+  gap: 8px;
 }
 
+/* Réplica de .entrenamientos-titulo-principal */
 .pruebas-header h1 {
-  color: #ffffff;
   font-size: 32px;
-  font-weight: 900;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
   margin: 0;
-  letter-spacing: 1px;
+  color: var(--text-white);
+  font-family: var(--font-family);
 }
 
-/* Resaltado cian del título */
+/* Span resaltado cian */
 .pruebas-header .text-cyan {
-  color: #00cfff;
+  color: var(--primary);
 }
 
+/* Réplica de .entrenamientos-descripcion */
 .pruebas-header p {
-  color: #888888;
+  color: var(--text-muted);
   font-size: 14px;
-  max-width: 600px;
-  margin: 0 0 10px 0;
   line-height: 1.5;
+  margin: 0;
+  max-width: 600px;
+  font-family: var(--font-family);
 }
 
-/* Wrapper para posicionar la lupa dentro del input */
+/* Réplica de .buscador-container */
 .search-input-wrapper {
   position: relative;
-  max-width: 450px;
   width: 100%;
 }
 
+/* Réplica de .buscador-img */
 .search-input-wrapper .buscador-img {
   position: absolute;
-  left: 15px;
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
   width: 18px;
   height: 18px;
   object-fit: contain;
+  pointer-events: none;
   opacity: 0.95;
 }
 
+/* Réplica de .buscador-input */
 .pruebas-header input {
   width: 100%;
-  padding: 12px 15px 12px 42px;
-  background: #222222;
-  border: 1px solid #333333;
-  border-radius: 6px;
-  color: #ffffff;
+  background-color: #1e2122;
+  border: 1px solid transparent;
+  border-radius: var(--radius-input);
+  padding: 14px 16px 14px 44px;
+  color: var(--text-white);
   font-size: 14px;
   outline: none;
   box-sizing: border-box;
+  font-family: var(--font-family);
   transition: border-color 0.2s;
 }
 
 .pruebas-header input:focus {
-  border-color: #00cfff;
+  border-color: var(--border-active);
 }
 
 .pruebas-header input::placeholder {
-  color: #555555;
+  color: var(--text-muted);
 }
