@@ -53,6 +53,31 @@ const PaginaEntrenamientos = ({ usuario }) => {
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
   const [busqueda, setBusqueda] = useState('');
+  const [mostrarTodas, setMostrarTodas] = useState(false);
+
+  // ── Usuario / idJugador (misma lógica que pruebas.jsx) ────
+  const usuarioAlmacenado = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('usuario') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+
+  const idJugadorReal =
+    usuario?.idjugador ||
+    usuario?.idJugador ||
+    usuario?.jugador?.idjugador ||
+    usuario?.jugador?.idJugador ||
+    usuario?.jugadorId ||
+    usuario?.jugador?.id ||
+    usuarioAlmacenado?.idjugador ||
+    usuarioAlmacenado?.idJugador ||
+    usuarioAlmacenado?.jugador?.idjugador ||
+    usuarioAlmacenado?.jugador?.idJugador ||
+    usuarioAlmacenado?.jugadorId ||
+    usuarioAlmacenado?.jugador?.id ||
+    null;
 
   // Expandir filtros en Sidebar (Estilo acordeón de la imagen)
   const [sidebarExpandido, setSidebarExpandido] = useState({
@@ -99,7 +124,10 @@ const PaginaEntrenamientos = ({ usuario }) => {
     }
   };
 
-  const cargarEntrenamientos = useCallback(async () => {
+  const cargarEntrenamientos = useCallback(async (forceGeneral) => {
+    // Si no se pasa argumento explícito, usar el estado actual de mostrarTodas
+    const usarGeneral = forceGeneral !== undefined ? forceGeneral : mostrarTodas;
+
     setLoading(true);
     setError(null);
 
@@ -114,6 +142,15 @@ const PaginaEntrenamientos = ({ usuario }) => {
       modalidad: filtroModalidad || undefined,
       entrenadorId: usuario?.tipousuario === 'entrenador' ? usuario.id : undefined,
     };
+
+    // Decidir URL: si es jugador y no se pidió "mostrar todas", filtrar por deporte
+    const filtrarPorDeporte = !usarGeneral && !!idJugadorReal;
+    const url = filtrarPorDeporte
+      ? `${API_BASE}/deporte`
+      : API_BASE;
+    if (filtrarPorDeporte) {
+      params.idJugador = idJugadorReal;
+    }
 
     // Headers de autenticación / contexto para jugadores y entrenadores
     const headers = {};
@@ -131,7 +168,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
 
     try {
       // Petición directa usando axios.get
-      const res = await axios.get(API_BASE, { params, headers });
+      const res = await axios.get(url, { params, headers });
       if (res.data && res.data.items) {
         const items = res.data.items.map(normalize);
         setEntrenamientos(items);
@@ -160,7 +197,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
     } finally {
       setLoading(false);
     }
-  }, [page, filtroFechaDesde, filtroFechaHasta, filtroTipo, filtroIntensidad, filtroZona, busqueda, usuario]);
+  }, [page, filtroFechaDesde, filtroFechaHasta, filtroTipo, filtroIntensidad, filtroZona, busqueda, usuario, mostrarTodas, idJugadorReal]);
 
   // Recalc cuando cambia modalidad
   useEffect(() => {
@@ -251,7 +288,20 @@ const PaginaEntrenamientos = ({ usuario }) => {
 
   const aplicarFiltros = () => {
     setPage(1);
-    cargarEntrenamientos();
+    cargarEntrenamientos(mostrarTodas);
+  };
+
+  const restablecerFiltros = () => {
+    setFiltroZona('');
+    setFiltroTipo('');
+    setFiltroModalidad('');
+    setFiltroIntensidad('');
+    setFiltroFechaDesde('');
+    setFiltroFechaHasta('');
+    setBusqueda('');
+    setMostrarTodas(true);
+    setPage(1);
+    cargarEntrenamientos(true);
   };
 
   // Bloquea el scroll del fondo mientras hay un modal abierto,
@@ -381,6 +431,9 @@ const PaginaEntrenamientos = ({ usuario }) => {
 
           <button className="btn-aplicar-filtros" onClick={aplicarFiltros}>
             Aplicar Filtros
+          </button>
+          <button type="button" className="btn-reset-filtros" onClick={restablecerFiltros}>
+            Restablecer filtros
           </button>
         </aside>
 

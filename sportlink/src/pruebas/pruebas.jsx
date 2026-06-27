@@ -23,6 +23,7 @@ function Pruebas({ idJugador }) {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [mostrarTodas, setMostrarTodas] = useState(false);
+  const [deporteUsuario, setDeporteUsuario] = useState(null);
 
   // ── Modal de detalle ──────────────────────────────────────
   const [pruebaSeleccionada, setPruebaSeleccionada] = useState(null);
@@ -73,12 +74,19 @@ function Pruebas({ idJugador }) {
 
   async function obtenerPruebas(forceGeneral = mostrarTodas) {
     try {
-      const url = forceGeneral || !idJugadorReal
-        ? "http://localhost:3000/api/pruebas"
-        : "http://localhost:3000/api/pruebas/deporte";
-      const config = !(forceGeneral || !idJugadorReal) ? { params: { idJugador: idJugadorReal } } : {};
+      const filtrarPorDeporte = !(forceGeneral || !idJugadorReal);
+      const url = filtrarPorDeporte
+        ? "http://localhost:3000/api/pruebas/deporte"
+        : "http://localhost:3000/api/pruebas";
+      const config = filtrarPorDeporte ? { params: { idJugador: idJugadorReal } } : {};
       const response = await axios.get(url, config);
       setPruebas(response.data);
+
+      // Capturar el deporte del usuario a partir de la primera respuesta filtrada
+      if (filtrarPorDeporte && Array.isArray(response.data) && response.data.length > 0) {
+        const primerDeporte = response.data[0]?.deporte?.deporte || null;
+        if (primerDeporte) setDeporteUsuario(primerDeporte);
+      }
     } catch (error) {
       console.error("Pruebas: error al cargar pruebas", error);
     }
@@ -176,7 +184,9 @@ function Pruebas({ idJugador }) {
                       <div className="sin-imagen">SIN FOTO</div>
                     )}
                     <div className="card-imagen-overlay" aria-hidden="true" />
-                    <span className="tag-flotante">RECOMENDADO</span>
+                    {deporteUsuario && prueba.deporte?.deporte === deporteUsuario && (
+                      <span className="tag-flotante">RECOMENDADO</span>
+                    )}
                   </div>
 
                   {/* ── Info (flex-grow:1 → queda dentro del fondo) ── */}

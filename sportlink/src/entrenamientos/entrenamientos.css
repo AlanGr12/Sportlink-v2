@@ -462,6 +462,28 @@
   color: #ff4d4f;
 }
 
+/* BOTÓN RESTABLECER FILTROS */
+.btn-reset-filtros {
+  background-color: transparent;
+  color: var(--text-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-button);
+  padding: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn-reset-filtros:hover {
+  background-color: rgba(45, 239, 242, 0.08);
+  border-color: var(--primary);
+}
+
 /* MODALES */
 .modal-overlay {
   position: fixed;
