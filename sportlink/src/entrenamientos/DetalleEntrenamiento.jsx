@@ -2,6 +2,9 @@ import React from 'react';
 import fallbackFutbol from '../assets/entrenador1.png';
 import fallbackBasket from '../assets/entrenador2.png';
 import fallbackDefault from '../assets/entrenador3.png';
+import iconPrecio from '../assets/precio.png';
+import iconFutbol from '../assets/futbol.png';
+import iconModalidad from '../assets/modalidad.png';
 import iconFecha from '../assets/fecha.png';
 import iconUbicacion from '../assets/ubicacion.png';
 import './DetalleEntrenamiento.css';
@@ -48,11 +51,14 @@ const DetalleEntrenamiento = ({ entrenamiento, onCerrar }) => {
 
   return (
     <div className="detalle-grid">
-      <img 
-        src={getDeporteImagen()} 
-        alt={entrenamiento.titulo} 
-        className="detalle-banner"
-      />
+      {entrenamiento.imagen ? (
+       <img
+  src={`https://cczzvdaraenyqyujbsup.supabase.co/storage/v1/object/public/fotoEntrenamientos/${entrenamiento.imagen}`}
+  alt={entrenamiento.titulo}
+/>
+      ) : (
+        <div className="detalle-banner-fallback">SIN FOTO</div>
+      )}
 
       <div className="detalle-info-header">
         <span className="detalle-tipo">{entrenamiento.tipo || 'ENTRENAMIENTO'}</span>
@@ -71,10 +77,21 @@ const DetalleEntrenamiento = ({ entrenamiento, onCerrar }) => {
         <h4 className="detalle-seccion-titulo">Especificaciones Técnicas</h4>
         <div className="detalle-items-grid">
           <div className="detalle-item-caja">
-            <span className="detalle-item-label">⏱ Duración</span>
-            <span className="detalle-item-valor">{entrenamiento.duracionMinutos} Minutos</span>
+            <span className="detalle-item-label"><img src={iconPrecio} alt="Precio" className="icon-small" /> Precio</span>
+            <span className="detalle-item-valor">{entrenamiento.precio ? `$${entrenamiento.precio}` : 'A consultar'}</span>
           </div>
 
+          <div className="detalle-item-caja">
+            <span className="detalle-item-label"><img src={iconFutbol} alt="Deporte" className="icon-small" /> Deporte</span>
+            <span className="detalle-item-valor">{entrenamiento.tipo || 'No especificado'}</span>
+          </div>
+
+          <div className="detalle-item-caja">
+            <span className="detalle-item-label"><img src={iconModalidad} alt="Cantidad" className="icon-small" /> Cantidad</span>
+            <span className="detalle-item-valor">{entrenamiento.cantidad || entrenamiento.cantidadJugadores || entrenamiento.capacidad
+              ? `${entrenamiento.cantidad || entrenamiento.cantidadJugadores || entrenamiento.capacidad} cupos`
+              : 'A confirmar'}</span>
+          </div>
 
           <div className="detalle-item-caja">
             <span className="detalle-item-label"><img src={iconUbicacion} alt="Ubicación" className="icon-small" /> Ubicación</span>
@@ -83,7 +100,7 @@ const DetalleEntrenamiento = ({ entrenamiento, onCerrar }) => {
 
           <div className="detalle-item-caja">
             <span className="detalle-item-label"><img src={iconFecha} alt="Horario" className="icon-small" /> Horario</span>
-            <span className="detalle-item-valor small">{formatearFecha(entrenamiento.fechaHora)}</span>
+            <span className="detalle-item-valor small">{formatearFecha(entrenamiento.fechaentr)}</span>
           </div>
         </div>
       </div>

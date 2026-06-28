@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import iconFutbol from '../assets/futbol.png';
-import iconBasquet from '../assets/basquet.png';
-import iconEntrenamientos from '../assets/entrenamientos.png';
+import iconPrecio from '../assets/precio.png';
+import iconModalidad from '../assets/modalidad.png';
 import iconFecha from '../assets/fecha.png';
 import iconUbicacion from '../assets/ubicacion.png';
 
@@ -11,7 +11,6 @@ import fallbackDefault from '../assets/entrenador3.png';
 import './TarjetaEntrenamiento.css';
 
 const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar, usuarioActual }) => {
-  const [expandido, setExpandido] = useState(false);
 
   // Obtener la imagen: priorizar imagen proveniente del backend (URL o campo), sino fallback por tipo
   const getDeporteImagen = () => {
@@ -24,7 +23,10 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
       return fallbackBasket;
     }
     return fallbackDefault;
-  };
+  }
+  
+  console.log(entrenamiento);
+  ;
 
   const formatearFecha = (fechaStr) => {
     try {
@@ -40,17 +42,6 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
     } catch {
       return fechaStr;
     }
-  };
-
-  // Mapear días de recurrencia a nombres en español
-  const diasSemana = {
-    1: 'Lunes',
-    2: 'Martes',
-    3: 'Miércoles',
-    4: 'Jueves',
-    5: 'Viernes',
-    6: 'Sábado',
-    7: 'Domingo'
   };
 
   // Solo puede editar/borrar el entrenador que CREÓ este entrenamiento específico.
@@ -70,120 +61,100 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
 
   return (
     <div className="tarjeta-entrenamiento">
-      {/* Banner / Foto de Perfil */}
-      <div className="tarjeta-banner-container">
-        <img 
-          src={getDeporteImagen()} 
-          alt={entrenamiento.titulo} 
-          className="tarjeta-banner-img" 
-        />
-        <div className="tarjeta-banner-overlay" />
+
+      {/* ── Imagen (mitad superior, altura fija 200px — clon de pruebas.jsx) ── */}
+      <div className="card-imagen-wrapper">
+        {entrenamiento.imagen ? (
+          <img
+  src={`https://cczzvdaraenyqyujbsup.supabase.co/storage/v1/object/public/fotoEntrenamientos/${entrenamiento.imagen}`}
+  alt={entrenamiento.titulo}
+/>
+        ) : (
+          <div className="sin-imagen">SIN FOTO</div>
+        )}
+        <div className="card-imagen-overlay" aria-hidden="true" />
         <h3 className="tarjeta-nombre-entrenador">
-          {entrenamiento.entrenadorNombre || 'Entrenador Sportlink'}
+          {entrenamiento.entrenadores?.nombre}
         </h3>
       </div>
 
-      {/* Contenido */}
-      <div className="tarjeta-contenido">
-        <span className="tarjeta-tipo-deporte">
-          {entrenamiento.tipo || 'ENTRENAMIENTO'}
-        </span>
+      {/* ── Info (flex-grow:1 → queda dentro del fondo) ── */}
+      <div className="card-prueba-info">
+        <h2>
+          {entrenamiento.tipo
+            ? entrenamiento.tipo.toUpperCase()
+            : 'ENTRENAMIENTO'
+            }
+        </h2>
 
-        <div className="tarjeta-detalles-lista">
-          {/* Título de entrenamiento */}
-          <div className="tarjeta-detalle-item destacado">
-            <span className="tarjeta-titulo-texto">{entrenamiento.titulo}</span>
+        <div className="card-prueba-detalles-lista">
+          {/* Precio — icono: precio.png */}
+          <div className="card-prueba-detalle-item">
+            <img src={iconPrecio} alt="Precio" className="card-icon-asset" />
+            <p>{entrenamiento.precio ? `$${entrenamiento.precio}` : 'Precio a consultar'}</p>
           </div>
 
-          {/* Duración */}
-          <div className="tarjeta-detalle-item">
-            <span className="tarjeta-detalle-label"><span className="accent">⏱</span> Duración:</span>
-            <span className="tarjeta-detalle-valor-resaltado">{entrenamiento.duracionMinutos} Minutos</span>
+          {/* Fecha */}
+          <div className="card-prueba-detalle-item">
+            <img src={iconFecha} alt="Fecha" className="card-icon-asset" />
+            <p>{entrenamiento.fechaentr ? formatearFecha(entrenamiento.fechaentr) : 'Fecha a confirmar'}</p>
+          </div>
+
+          {/* Cantidad / Cupos — icono: modalidad.png (mismo que sidebar Modalidad) */}
+          <div className="card-prueba-detalle-item">
+            <img src={iconModalidad} alt="Cantidad" className="card-icon-asset" />
+            <p>{entrenamiento.cantidad || entrenamiento.cantidadJugadores || entrenamiento.capacidad
+              ? `${entrenamiento.cantidad || entrenamiento.cantidadJugadores || entrenamiento.capacidad} cupos`
+              : 'Cupos a confirmar'}</p>
           </div>
 
           {/* Ubicación */}
-          <div className="tarjeta-detalle-item">
-            <span className="tarjeta-detalle-label"><img src={iconUbicacion} alt="Ubicación" className="icon-small" /> Ubicación:</span>
-            <span className="valor-derecha">{entrenamiento.ubicacion || 'Cancha Principal'}</span>
+          <div className="card-prueba-detalle-item">
+            <img src={iconUbicacion} alt="Ubicación" className="card-icon-asset" />
+            <p>{entrenamiento.ubicacion || 'Ubicación no especificada'}</p>
           </div>
-
-          {/* Horarios */}
-          <div className="tarjeta-detalle-item">
-            <span className="tarjeta-detalle-label"><img src={iconFecha} alt="Horario" className="icon-small" /> Horarios:</span>
-            {entrenamiento.recurrente && entrenamiento.recurrente.frecuencia ? (
-              <>
-                <span className="tarjeta-detalle-valor-resaltado pequeno">Recurrente ({entrenamiento.recurrente.frecuencia})</span>
-                <button className="tarjeta-detalle-ver-mas" onClick={() => setExpandido(!expandido)}>{expandido ? 'Ver menos' : 'Ver más'}</button>
-              </>
-            ) : (
-              <span className="valor-derecha">{formatearFecha(entrenamiento.fechaHora)}</span>
-            )}
-          </div>
-
-          {/* Desplegable de Horarios Recurrentes */}
-          {expandido && entrenamiento.recurrente && entrenamiento.recurrente.dias && (
-            <div className="tarjeta-horarios-expandido">
-              {entrenamiento.recurrente.dias.map((diaNum) => (
-                <div className="horario-fila" key={diaNum}>
-                  <span className="horario-dia">{diasSemana[diaNum] || 'Día'}:</span>
-                  <span className="horario-horas">
-                    {new Date(entrenamiento.fechaHora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Botón de Acción */}
-        <button 
-          className="btn-mas-informacion"
-          onClick={() => onVerDetalle(entrenamiento)}
-        >
-          Más Información
-        </button>
-
-        {/* Pie de Tarjeta (Reseñas + Acciones Admin) */}
-        <div className="tarjeta-pie">
-          <div className="pie-row">
-            <div className="rating-estrellas">
-              <span className="estrella-icono">★</span>
-              <span className="estrella-icono">★</span>
-              <span className="estrella-icono">★</span>
-              <span className="estrella-icono">★</span>
-              <span className="estrella-icono faded">★</span>
-              <span className="rating-texto">({entrenamiento.ratingTotal || 15})</span>
-            </div>
-            <span className="ver-resenas-link">Ver reseñas ›</span>
-          </div>
-
-          {/* Botones de edición/borrado para el propietario/entrenador */}
-          {esPropietario && (
-            <div className="tarjeta-acciones-admin">
-              <button 
-                className="btn-accion-icono edit" 
-                title="Editar Entrenamiento"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditar(entrenamiento);
-                }}
-              >
-                ✏️
-              </button>
-              <button 
-                className="btn-accion-icono delete" 
-                title="Eliminar Entrenamiento"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onBorrar(entrenamiento.id);
-                }}
-              >
-                🗑️
-              </button>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* ── Pie: botón + acciones admin, siempre dentro de la card ── */}
+      <div className="card-prueba-pie">
+        <button
+          className="btn-mas-info"
+          onClick={(e) => {
+            e.stopPropagation();
+            onVerDetalle(entrenamiento);
+          }}
+        >
+          MÁS INFORMACIÓN
+        </button>
+
+        {/* Botones de edición/borrado para el propietario/entrenador */}
+        {esPropietario && (
+          <div className="tarjeta-acciones-admin">
+            <button
+              className="btn-accion-icono edit"
+              title="Editar Entrenamiento"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditar(entrenamiento);
+              }}
+            >
+              ✏️
+            </button>
+            <button
+              className="btn-accion-icono delete"
+              title="Eliminar Entrenamiento"
+              onClick={(e) => {
+                e.stopPropagation();
+                onBorrar(entrenamiento.id);
+              }}
+            >
+              🗑️
+            </button>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 };

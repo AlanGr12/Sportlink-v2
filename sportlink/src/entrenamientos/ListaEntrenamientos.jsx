@@ -41,7 +41,7 @@ const ListaEntrenamientos = ({
       </div>
     );
   }
-
+  
   return (
     <div className="lista-entrenamientos-grid">
       {entrenamientos.map((entrenamiento) => (
