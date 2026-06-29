@@ -1,5 +1,177 @@
- .perfil-resenas{background:rgba(255,255,255,0.02);padding:16px;border-radius:10px}
- .perfil-resenas h2{margin:0 0 10px 0}
- .resena-card{padding:10px;background:rgba(0,0,0,0.25);border-radius:8px;margin-bottom:10px}
- .resena-meta{font-size:12px;color:#9da0a2;margin-top:8px}
- .perfil-empty{color:#8c8c8c}
+.perfil-resenas-card {
+  background: var(--surface-2);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  border-left: 4px solid var(--cyan);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  min-height: 320px; /* Asegura un formato rectangular vertical alto > ancho en el sidebar */
+}
+
+.perfil-resenas-card:hover {
+  border-color: var(--border-neon);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* Cabecera de Sección */
+.card-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.card-section-header h2 {
+  font-family: var(--font-display) !important;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.section-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--cyan);
+}
+
+/* Lista de Reseñas */
+.perfil-resenas-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.resenas-grid-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex-grow: 1;
+}
+
+.resena-card-item {
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-grow: 1;
+}
+
+.resena-card-item:hover {
+  background: rgba(45, 239, 242, 0.015);
+  border-color: rgba(45, 239, 242, 0.15);
+}
+
+.quote-mark-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  color: rgba(45, 239, 242, 0.04);
+  pointer-events: none;
+  transition: var(--transition);
+}
+
+.resena-card-item:hover .quote-mark-icon {
+  color: rgba(45, 239, 242, 0.12);
+  transform: translateY(-1px) scale(1.05);
+}
+
+.resena-body-text {
+  font-family: var(--font-body) !important;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+  position: relative;
+  z-index: 2;
+  font-style: italic;
+}
+
+/* Metadata del Autor */
+.resena-author-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+  margin-top: auto; /* Empuja el autor al fondo del contenedor */
+}
+
+.author-avatar-stub {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--cyan-dim);
+  border: 1px solid rgba(45, 239, 242, 0.3);
+  color: var(--cyan);
+  font-weight: 700;
+  font-family: var(--font-display);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.author-details-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.author-name {
+  font-family: var(--font-display) !important;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.author-subtitle {
+  font-family: var(--font-body) !important;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+/* Estado Vacío */
+.perfil-empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  gap: 10px;
+  flex-grow: 1;
+}
+
+.empty-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--text-muted);
+}
+
+.perfil-empty {
+  font-family: var(--font-body) !important;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0;
+  text-align: center;
+  line-height: 1.4;
+}

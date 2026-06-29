@@ -1,22 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './miperfil.css';
-import Header from '../header/header.jsx';
 import Footer from '../footer/footer.jsx';
 import PerfilHeader from './PerfilHeader.jsx';
-import PerfilBio from './PerfilBio.jsx';
-import PerfilExperiencia from './PerfilExperiencia.jsx';
 import PerfilSidebar from './PerfilSidebar.jsx';
 import PerfilContacto from './PerfilContacto.jsx';
 import PerfilResenas from './PerfilResenas.jsx';
+import PerfilPublicaciones from './PerfilPublicaciones.jsx';
 
 const MiPerfil = (props) => {
   const [perfil, setPerfil] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [errorMensaje, setErrorMensaje] = useState(null);
 
-  // FIX 2: priorizar props.usuario (fuente de verdad de App.jsx),
-  // con localStorage solo como fallback por si acaso
+  // Fuente de verdad de App.jsx, con localStorage como fallback
   const usuario = props.usuario || JSON.parse(localStorage.getItem('usuario') || 'null');
   const idUsuario = usuario?.idusuario;
 
@@ -75,15 +72,22 @@ const MiPerfil = (props) => {
         <div className="miPerfil-container">
           <div className="miPerfil-grid">
             <main className="miPerfil-main">
+              {/* Header que incluye Nombre, Badges y Bio integrada */}
               <PerfilHeader perfil={perfil} />
-              <PerfilBio perfil={perfil} />
-              <PerfilExperiencia perfil={perfil} />
-              <PerfilResenas perfil={perfil} />
+              
+              {/* Sección de futuras publicaciones del usuario */}
+              <PerfilPublicaciones />
             </main>
 
             <aside className="miPerfil-aside">
+              {/* Ficha técnica de estadísticas */}
               <PerfilSidebar perfil={perfil} />
+              
+              {/* Datos de contacto */}
               <PerfilContacto perfil={perfil} />
+              
+              {/* Reseñas movidas al lateral derecho con formato vertical */}
+              <PerfilResenas perfil={perfil} />
             </aside>
           </div>
         </div>

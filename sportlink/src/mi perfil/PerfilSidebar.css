@@ -1,5 +1,91 @@
-.perfil-sidebar .perfil-card{background:rgba(255,255,255,0.02);padding:14px;border-radius:10px}
-.perfil-card h3{margin:0 0 10px 0}
-.perfil-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.02)}
-.perfil-row-key{color:#9da0a2;font-size:13px}
-.perfil-row-val{font-weight:700}
+.perfil-sidebar-card {
+  background: var(--surface-2);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 22px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: var(--transition);
+}
+
+.perfil-sidebar-card:hover {
+  border-color: var(--border-neon);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), 0 0 15px rgba(45, 239, 242, 0.03);
+}
+
+.sidebar-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-card-header h3 {
+  font-family: var(--font-display) !important;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.header-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--cyan);
+}
+
+.sidebar-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.perfil-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 8px;
+  border-radius: var(--radius-sm);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  transition: var(--transition);
+}
+
+.perfil-stat-row:hover {
+  background: rgba(255, 255, 255, 0.015);
+  transform: translateX(2px);
+  border-bottom-color: rgba(45, 239, 242, 0.1);
+}
+
+.perfil-stat-row:last-child {
+  border-bottom: none;
+}
+
+.perfil-stat-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.field-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.perfil-stat-row:hover .field-icon {
+  color: var(--cyan);
+}
+
+.perfil-stat-value {
+  font-family: var(--font-display) !important;
+  font-weight: 700;
+  color: var(--cyan);
+  font-size: 0.95rem;
+}

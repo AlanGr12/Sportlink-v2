@@ -1,5 +1,101 @@
- .perfil-contacto{background:rgba(255,255,255,0.02);padding:14px;border-radius:10px}
- .perfil-contacto h3{margin:0 0 8px 0}
- .contact-row{padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.02)}
- .contact-row strong{color:#9da0a2;margin-right:6px}
- .contact-row span{font-weight:600}
+.perfil-contacto-card {
+  background: var(--surface-2);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 22px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: var(--transition);
+}
+
+.perfil-contacto-card:hover {
+  border-color: var(--border-neon);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), 0 0 15px rgba(45, 239, 242, 0.03);
+}
+
+.contact-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.contact-card-header h3 {
+  font-family: var(--font-display) !important;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.header-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--cyan);
+}
+
+.contact-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-item-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: var(--radius-sm);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  transition: var(--transition);
+}
+
+.contact-item-row:hover {
+  background: rgba(255, 255, 255, 0.015);
+  transform: translateX(2px);
+  border-bottom-color: rgba(45, 239, 242, 0.1);
+}
+
+.contact-item-row:last-child {
+  border-bottom: none;
+}
+
+.contact-label-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contact-label-block strong {
+  font-family: var(--font-body) !important;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.contact-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.contact-item-row:hover .contact-icon {
+  color: var(--cyan);
+}
+
+.contact-value {
+  font-family: var(--font-body) !important;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  word-break: break-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
