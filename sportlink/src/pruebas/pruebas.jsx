@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import axios from "axios";
 import MenuPruebas from "./menuPruebas";
 import PruebasHeader from "./pruebasHeader";
+import FormularioPrueba from "./FormularioPrueba";
 import Footer from "../footer/footer";
 
 // Iconos de assets
@@ -14,7 +15,7 @@ import iconoModalidad from "../assets/modalidad.png";
 import "../entrenamientos/entrenamientos.css";
 import "./pruebas.css";
 
-function Pruebas({ idJugador }) {
+function Pruebas({ idJugador, usuario }) {
   const [pruebas, setPruebas] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [deporte, setDeporte] = useState("");
@@ -29,24 +30,8 @@ function Pruebas({ idJugador }) {
   const [pruebaSeleccionada, setPruebaSeleccionada] = useState(null);
   const [modalAbierto, setModalAbierto] = useState(false);
 
-  const abrirModal = (prueba) => {
-    setPruebaSeleccionada(prueba);
-    setModalAbierto(true);
-  };
-
-  const cerrarModal = () => {
-    setModalAbierto(false);
-    setPruebaSeleccionada(null);
-  };
-
-  // Bloquear scroll del body mientras el modal está abierto
-  useEffect(() => {
-    if (modalAbierto) {
-      const original = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = original; };
-    }
-  }, [modalAbierto]);
+  // ── Modal de creación (solo rol club) ─────────────────────
+  const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
 
   // ── Usuario ───────────────────────────────────────────────
   const usuarioAlmacenado = (() => {
@@ -57,6 +42,79 @@ function Pruebas({ idJugador }) {
     }
   })();
 
+  // El prop `usuario` tiene prioridad; si no llega, usamos localStorage
+  const usuarioEfectivo = usuario || usuarioAlmacenado;
+
+  // idclub resuelto asíncronamente via /api/login/perfil/:idusuario
+  const [idclubResuelto, setIdclubResuelto] = useState(null);
+
+  // ── Toast de notificación ──────────────────────────────────
+  const [toast, setToast] = useState(null);
+  const mostrarToast = (mensaje, tipo = "success") => {
+    setToast({ mensaje, tipo });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const abrirModal = (prueba) => {
+    setPruebaSeleccionada(prueba);
+    setModalAbierto(true);
+  };
+
+  const cerrarModal = () => {
+    setModalAbierto(false);
+    setPruebaSeleccionada(null);
+  };
+
+  // Bloquear scroll del body mientras cualquier modal está abierto
+  useEffect(() => {
+    if (modalAbierto || modalCrearAbierto) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = original; };
+    }
+  }, [modalAbierto, modalCrearAbierto]);
+
+  // ── Cuando el usuario es un club, obtener su idclub real desde la API ────
+  // El login solo guarda idusuario — el idclub está en el perfil completo.
+  useEffect(() => {
+    const esClub = usuarioEfectivo?.tipousuario === "club";
+    const idusuario = usuarioEfectivo?.idusuario;
+    if (!esClub || !idusuario) return;
+
+    let montado = true;
+    axios.get(`http://localhost:3000/api/login/perfil/${idusuario}`)
+      .then((res) => {
+        if (!montado) return;
+        const perfil = res.data;
+        const candidatos = [
+          perfil?.idclub,
+          perfil?.idClub,
+          perfil?.id_club,
+          perfil?.clubId,
+          perfil?.club?.idclub,
+          perfil?.club?.idClub,
+          perfil?.club?.id,
+          perfil?.data?.idclub,
+          perfil?.data?.club?.idclub,
+        ];
+        for (const c of candidatos) {
+          const n = Number(c);
+          if (!isNaN(n) && n > 0) {
+            setIdclubResuelto(n);
+            return;
+          }
+        }
+        console.warn("[Pruebas] No se encontró idclub en el perfil:", JSON.stringify(perfil, null, 2));
+      })
+      .catch((err) => {
+        console.error("[Pruebas] Error al obtener perfil del club:", err);
+      });
+
+    return () => { montado = false; };
+  }, [usuarioEfectivo?.tipousuario, usuarioEfectivo?.idusuario]);
+
+  // Identificador real del club — cubre todas las variantes de campo
+  // que puede devolver el backend al hacer login con rol "club".
   const idJugadorReal =
     idJugador ||
     usuarioAlmacenado?.idjugador ||
@@ -138,7 +196,7 @@ function Pruebas({ idJugador }) {
   //FALTA CAMBIAR : LOS FILTRAR ZONA Y FILTRAR DEPORTE TIENEN QUE SER LOS MISMO QUE LOS ARRAYS DE REGISTRAR JUGADOR
 
   // ── Restricción de acceso para entrenadores ───────────────
-  if (usuarioAlmacenado?.tipousuario === "entrenador") {
+  if (usuarioEfectivo?.tipousuario === "entrenador") {
     return (
       <div className="contenedor-pruebas" style={{ alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", padding: "60px 24px", maxWidth: "480px", margin: "0 auto" }}>
@@ -157,6 +215,11 @@ function Pruebas({ idJugador }) {
   // ── Render ────────────────────────────────────────────────
   return (
     <>
+      {/* Toast de notificación */}
+      {toast && (
+        <div className={`toast-banner ${toast.tipo}`}>{toast.mensaje}</div>
+      )}
+
       <div className="contenedor-pruebas">
         <div className="pruebas-layout">
           <MenuPruebas
@@ -170,6 +233,19 @@ function Pruebas({ idJugador }) {
           />
 
           <main className="contenido-pruebas">
+            {/* ── Botón Crear Prueba (solo para clubs) ─────────────── */}
+            {usuarioEfectivo?.tipousuario === "club" && (
+              <div className="acciones-entrenador-container">
+                <button
+                  className="btn-crear-entrenamiento"
+                  onClick={() => setModalCrearAbierto(true)}
+                  disabled={!idclubResuelto}
+                >
+                  <span>+</span> {idclubResuelto ? "Crear Prueba" : "Cargando club..."}
+                </button>
+              </div>
+            )}
+
             <PruebasHeader busqueda={busqueda} setBusqueda={setBusqueda} />
 
             <div className="grid-pruebas">
@@ -236,6 +312,46 @@ function Pruebas({ idJugador }) {
       </div>
 
       <Footer />
+
+      {/* ── MODAL CREAR PRUEBA ──────────────────────────────────
+          Renderizado en document.body vía portal                 */}
+      {modalCrearAbierto && createPortal(
+        <div
+          className="modal-prueba-overlay"
+          onClick={() => setModalCrearAbierto(false)}
+        >
+          <div
+            className="modal-prueba-contenedor"
+            style={{ maxWidth: "640px" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header sticky */}
+            <div className="modal-prueba-header">
+              <h3 className="modal-prueba-titulo">Crear Nueva Prueba</h3>
+              <button
+                className="modal-prueba-cerrar"
+                onClick={() => setModalCrearAbierto(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Cuerpo con el formulario */}
+            <div className="modal-prueba-cuerpo">
+              <FormularioPrueba
+                idclub={idclubResuelto}
+                onGuardado={() => {
+                  setModalCrearAbierto(false);
+                  mostrarToast("¡Prueba creada con éxito!");
+                  obtenerPruebas(mostrarTodas);
+                }}
+                onCancelar={() => setModalCrearAbierto(false)}
+              />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* ── MODAL DE DETALLE ────────────────────────────────
           Renderizado en document.body vía portal (igual que

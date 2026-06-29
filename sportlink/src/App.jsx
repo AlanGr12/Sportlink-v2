@@ -96,7 +96,7 @@ function App() {
         usuario?.jugadorId ||
         usuario?.jugador?.id ||
         null;
-      return <Pruebas idJugador={idJugador} />
+      return <Pruebas idJugador={idJugador} usuario={usuario} />
     }
 
     if (vista === 'calendario') {
