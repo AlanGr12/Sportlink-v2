@@ -45,8 +45,33 @@ function Pruebas({ idJugador, usuario }) {
   // El prop `usuario` tiene prioridad; si no llega, usamos localStorage
   const usuarioEfectivo = usuario || usuarioAlmacenado;
 
+  const idJugadorReal =
+    idJugador ||
+    usuarioEfectivo?.idjugador ||
+    usuarioEfectivo?.idJugador ||
+    usuarioEfectivo?.jugador?.idjugador ||
+    usuarioEfectivo?.jugador?.idJugador ||
+    usuarioEfectivo?.jugadorId ||
+    usuarioEfectivo?.jugador?.id ||
+    usuarioAlmacenado?.idjugador ||
+    usuarioAlmacenado?.idJugador ||
+    usuarioAlmacenado?.jugador?.idjugador ||
+    usuarioAlmacenado?.jugador?.idJugador ||
+    usuarioAlmacenado?.jugadorId ||
+    usuarioAlmacenado?.jugador?.id ||
+    null;
+
   // idclub resuelto asíncronamente via /api/login/perfil/:idusuario
   const [idclubResuelto, setIdclubResuelto] = useState(null);
+  const [idjugadorResuelto, setIdjugadorResuelto] = useState(() => {
+    const id = Number(idJugadorReal);
+    return !isNaN(id) && id > 0 ? id : null;
+  });
+  const [inscripcionLoading, setInscripcionLoading] = useState(false);
+  const [inscripcionError, setInscripcionError] = useState("");
+
+  const tipoUsuario = usuarioEfectivo?.tipousuario?.toString()?.toLowerCase();
+  const esJugador = tipoUsuario === "jugador" || tipoUsuario === "player";
 
   // ── Toast de notificación ──────────────────────────────────
   const [toast, setToast] = useState(null);
@@ -63,6 +88,46 @@ function Pruebas({ idJugador, usuario }) {
   const cerrarModal = () => {
     setModalAbierto(false);
     setPruebaSeleccionada(null);
+  };
+
+  const handleInscribirse = async () => {
+    if (!pruebaSeleccionada) return;
+    setInscripcionError("");
+
+    const idJugadorNum = Number(idjugadorResuelto);
+    const idPruebaNum = Number(
+      pruebaSeleccionada?.idprueba || pruebaSeleccionada?.idPrueba || pruebaSeleccionada?.id || 0
+    );
+
+    if (isNaN(idJugadorNum) || idJugadorNum <= 0) {
+      setInscripcionError("No se pudo identificar tu jugador. Cerrá sesión e ingresá nuevamente.");
+      return;
+    }
+
+    if (isNaN(idPruebaNum) || idPruebaNum <= 0) {
+      setInscripcionError("No se pudo identificar la prueba seleccionada.");
+      return;
+    }
+
+    setInscripcionLoading(true);
+    try {
+      await axios.post(
+        "http://localhost:3000/api/inscripcionesprueba",
+        { idjugador: idJugadorNum, idprueba: idPruebaNum },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      mostrarToast("Inscripción realizada correctamente.");
+    } catch (error) {
+      const response = error?.response;
+      const data = response?.data;
+      const mensajeRaw = data?.message || data || error.message || "Ocurrió un error al inscribirte.";
+      const mensaje = String(mensajeRaw);
+      setInscripcionError(mensaje);
+      console.error("[Pruebas] Error al inscribirse:", error);
+    } finally {
+      setInscripcionLoading(false);
+    }
   };
 
   // Bloquear scroll del body mientras cualquier modal está abierto
@@ -113,17 +178,43 @@ function Pruebas({ idJugador, usuario }) {
     return () => { montado = false; };
   }, [usuarioEfectivo?.tipousuario, usuarioEfectivo?.idusuario]);
 
-  // Identificador real del club — cubre todas las variantes de campo
-  // que puede devolver el backend al hacer login con rol "club".
-  const idJugadorReal =
-    idJugador ||
-    usuarioAlmacenado?.idjugador ||
-    usuarioAlmacenado?.idJugador ||
-    usuarioAlmacenado?.jugador?.idjugador ||
-    usuarioAlmacenado?.jugador?.idJugador ||
-    usuarioAlmacenado?.jugadorId ||
-    usuarioAlmacenado?.jugador?.id ||
-    null;
+  // ── Cuando el usuario es un jugador, obtener su idjugador real desde la API ──
+  useEffect(() => {
+    const idusuario = usuarioEfectivo?.idusuario;
+    if (!esJugador || !idusuario) return;
+
+    let montado = true;
+    axios.get(`http://localhost:3000/api/login/perfil/${idusuario}`)
+      .then((res) => {
+        if (!montado) return;
+        const perfil = res.data;
+        const candidatos = [
+          perfil?.idjugador,
+          perfil?.idJugador,
+          perfil?.id_jugador,
+          perfil?.jugador?.idjugador,
+          perfil?.jugador?.idJugador,
+          perfil?.jugadorId,
+          perfil?.jugador?.id,
+          perfil?.data?.idjugador,
+          perfil?.data?.jugador?.idjugador,
+          perfil?.data?.jugador?.id,
+        ];
+        for (const c of candidatos) {
+          const n = Number(c);
+          if (!isNaN(n) && n > 0) {
+            setIdjugadorResuelto(n);
+            return;
+          }
+        }
+        console.warn("[Pruebas] No se encontró idjugador en el perfil:", JSON.stringify(perfil, null, 2));
+      })
+      .catch((err) => {
+        console.error("[Pruebas] Error al obtener perfil del jugador:", err);
+      });
+
+    return () => { montado = false; };
+  }, [esJugador, usuarioEfectivo?.idusuario]);
 
   // ── Carga de datos ────────────────────────────────────────
   useEffect(() => {
@@ -453,8 +544,28 @@ function Pruebas({ idJugador, usuario }) {
                 </>
               )}
 
+              {/* Mensaje de error de inscripción */}
+              {inscripcionError && (
+                <div className="form-error-banner" style={{ marginBottom: "14px" }}>
+                  {inscripcionError}
+                </div>
+              )}
+
               {/* Pie con botón cerrar */}
               <div className="modal-prueba-acciones">
+                {esJugador && (
+                  <button
+                    className="btn-guardar"
+                    onClick={handleInscribirse}
+                    disabled={inscripcionLoading || !idjugadorResuelto}
+                  >
+                    {inscripcionLoading
+                      ? "Inscribiendo..."
+                      : idjugadorResuelto
+                        ? "Inscribirse"
+                        : "Cargando jugador..."}
+                  </button>
+                )}
                 <button className="btn-cancelar" onClick={cerrarModal}>
                   Cerrar
                 </button>
