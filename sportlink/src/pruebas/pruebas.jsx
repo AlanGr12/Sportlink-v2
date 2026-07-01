@@ -68,7 +68,9 @@ function Pruebas({ idJugador, usuario }) {
     return !isNaN(id) && id > 0 ? id : null;
   });
   const [inscripcionLoading, setInscripcionLoading] = useState(false);
+  const [verificandoInscripcion, setVerificandoInscripcion] = useState(false);
   const [inscripcionError, setInscripcionError] = useState("");
+  const [isInscripto, setIsInscripto] = useState(false);
 
   const tipoUsuario = usuarioEfectivo?.tipousuario?.toString()?.toLowerCase();
   const esJugador = tipoUsuario === "jugador" || tipoUsuario === "player";
@@ -81,6 +83,11 @@ function Pruebas({ idJugador, usuario }) {
   };
 
   const abrirModal = (prueba) => {
+    const inscriptoLocal = estaInscripto(prueba);
+    setIsInscripto(inscriptoLocal);
+    setVerificandoInscripcion(!inscriptoLocal && !!idjugadorResuelto);
+    setInscripcionError("");
+    setInscripcionLoading(false);
     setPruebaSeleccionada(prueba);
     setModalAbierto(true);
   };
@@ -88,6 +95,169 @@ function Pruebas({ idJugador, usuario }) {
   const cerrarModal = () => {
     setModalAbierto(false);
     setPruebaSeleccionada(null);
+    setIsInscripto(false);
+    setInscripcionError("");
+    setInscripcionLoading(false);
+    setVerificandoInscripcion(false);
+  };
+
+  useEffect(() => {
+    let cancelado = false;
+
+    if (!modalAbierto) {
+      setIsInscripto(false);
+      setInscripcionError("");
+      setVerificandoInscripcion(false);
+      return;
+    }
+
+    if (!pruebaSeleccionada || !idjugadorResuelto) {
+      setIsInscripto(false);
+      setVerificandoInscripcion(false);
+      return;
+    }
+
+    const validarInscripcion = async () => {
+      const idPruebaNum = obtenerIdPrueba(pruebaSeleccionada);
+      const inscriptoLocal = estaInscripto(pruebaSeleccionada);
+
+      setIsInscripto(inscriptoLocal);
+      setVerificandoInscripcion(!inscriptoLocal);
+
+      if (inscriptoLocal || !idPruebaNum) {
+        setVerificandoInscripcion(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get("http://localhost:3000/api/inscripcionesprueba", {
+          params: { idjugador: idjugadorResuelto, idprueba: idPruebaNum }
+        });
+
+        if (cancelado) return;
+        setIsInscripto(respuestaTieneInscripcion(response.data, idjugadorResuelto, idPruebaNum));
+      } catch (error) {
+        if (!cancelado) {
+          console.error("[Pruebas] Error al verificar inscripción:", error);
+          setIsInscripto(false);
+        }
+      } finally {
+        if (!cancelado) {
+          setVerificandoInscripcion(false);
+        }
+      }
+    };
+
+    validarInscripcion();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [modalAbierto, pruebaSeleccionada, idjugadorResuelto]);
+
+  const obtenerIdPrueba = (prueba) => {
+    const id = Number(prueba?.idprueba || prueba?.idPrueba || prueba?.id || 0);
+    return !isNaN(id) && id > 0 ? id : null;
+  };
+
+  const normalizarListaInscripciones = (data) => {
+    if (Array.isArray(data)) return data;
+    if (!data || typeof data !== "object") return [];
+
+    const posiblesListas = [
+      data.inscripciones,
+      data.inscripcionesprueba,
+      data.inscripcionesPrueba,
+      data.data,
+      data.resultado,
+      data.results,
+      data.items
+    ];
+
+    for (const lista of posiblesListas) {
+      if (Array.isArray(lista)) return lista;
+    }
+
+    return [data];
+  };
+
+  const respuestaTieneInscripcion = (data, idJugador, idPrueba) => {
+    if (data === true || data?.inscripto === true || data?.inscrito === true || data?.yaInscripto === true) {
+      return true;
+    }
+
+    const idJugadorNum = Number(idJugador);
+    const idPruebaNum = Number(idPrueba);
+
+    return normalizarListaInscripciones(data).some((item) => {
+      const jugador = Number(
+        item?.idjugador ??
+        item?.idJugador ??
+        item?.jugadorId ??
+        item?.jugador?.idjugador ??
+        item?.jugador?.idJugador ??
+        item?.jugador?.id
+      );
+      const prueba = Number(
+        item?.idprueba ??
+        item?.idPrueba ??
+        item?.pruebaId ??
+        item?.prueba?.idprueba ??
+        item?.prueba?.idPrueba ??
+        item?.prueba?.id
+      );
+
+      return jugador === idJugadorNum && prueba === idPruebaNum;
+    });
+  };
+
+  const estaInscripto = (prueba) => {
+    if (!prueba || !idjugadorResuelto) {
+      console.log("[Pruebas] estaInscripto: datos incompletos", { prueba: !!prueba, idjugadorResuelto });
+      return false;
+    }
+
+    const idJugadorNum = Number(idjugadorResuelto);
+    if (isNaN(idJugadorNum) || idJugadorNum <= 0) {
+      console.log("[Pruebas] estaInscripto: idJugadorNum inválido", idJugadorNum);
+      return false;
+    }
+
+    // Validar si hay una propiedad booleana directa indicando inscripción
+    const estadoBooleano = prueba?.yaInscripto ?? prueba?.yainscripto ?? prueba?.estaInscripto ?? prueba?.inscripto ?? prueba?.inscrito;
+    if (estadoBooleano === true || String(estadoBooleano).toLowerCase() === "true") {
+      console.log("[Pruebas] estaInscripto: TRUE por propiedad booleana", { estadoBooleano });
+      return true;
+    }
+
+    // Validar en arrays de inscripciones
+    const listas = prueba?.inscripciones || prueba?.inscritos || prueba?.inscriptos || prueba?.inscripcion || prueba?.jugadores || prueba?.participantes;
+    if (Array.isArray(listas) && listas.length > 0) {
+      const encontrado = listas.some((item) => {
+        const candidato = Number(
+          item?.idjugador ??
+          item?.idJugador ??
+          item?.jugadorId ??
+          item?.jugador?.idjugador ??
+          item?.jugador?.idJugador ??
+          item?.jugador?.id ??
+          item?.id ??
+          item
+        );
+        return !isNaN(candidato) && candidato > 0 && candidato === idJugadorNum;
+      });
+      if (encontrado) {
+        console.log("[Pruebas] estaInscripto: TRUE encontrado en array", { listas: listas.length, idJugadorNum });
+        return true;
+      }
+    }
+
+    console.log("[Pruebas] estaInscripto: FALSE - no se encontró inscripción", { 
+      idJugadorNum, 
+      tieneEstadoBooleano: !!estadoBooleano,
+      tieneArrays: !!listas 
+    });
+    return false;
   };
 
   const handleInscribirse = async () => {
@@ -95,34 +265,71 @@ function Pruebas({ idJugador, usuario }) {
     setInscripcionError("");
 
     const idJugadorNum = Number(idjugadorResuelto);
-    const idPruebaNum = Number(
-      pruebaSeleccionada?.idprueba || pruebaSeleccionada?.idPrueba || pruebaSeleccionada?.id || 0
-    );
+    const idPruebaNum = obtenerIdPrueba(pruebaSeleccionada);
 
     if (isNaN(idJugadorNum) || idJugadorNum <= 0) {
       setInscripcionError("No se pudo identificar tu jugador. Cerrá sesión e ingresá nuevamente.");
       return;
     }
 
-    if (isNaN(idPruebaNum) || idPruebaNum <= 0) {
+    if (!idPruebaNum) {
       setInscripcionError("No se pudo identificar la prueba seleccionada.");
       return;
     }
+
+    if (isInscripto || verificandoInscripcion || estaInscripto(pruebaSeleccionada)) {
+      setInscripcionError("Ya estás inscrito en esta prueba.");
+      return;
+    }
+
+    const body = { idjugador: idJugadorNum, idprueba: idPruebaNum };
+    console.log("[Pruebas] Inscripción payload:", body);
 
     setInscripcionLoading(true);
     try {
       await axios.post(
         "http://localhost:3000/api/inscripcionesprueba",
-        { idjugador: idJugadorNum, idprueba: idPruebaNum },
+        body,
         { headers: { "Content-Type": "application/json" } }
       );
 
       mostrarToast("Inscripción realizada correctamente.");
+      setIsInscripto(true);
+      setPruebas((prevPruebas) => prevPruebas.map((prueba) => {
+        if (obtenerIdPrueba(prueba) !== idPruebaNum) return prueba;
+
+        const inscripcionesActuales = Array.isArray(prueba.inscripciones) ? prueba.inscripciones : [];
+        return {
+          ...prueba,
+          yaInscripto: true,
+          inscripciones: [
+            ...inscripcionesActuales,
+            { idjugador: idJugadorNum, idprueba: idPruebaNum }
+          ]
+        };
+      }));
     } catch (error) {
       const response = error?.response;
       const data = response?.data;
-      const mensajeRaw = data?.message || data || error.message || "Ocurrió un error al inscribirte.";
-      const mensaje = String(mensajeRaw);
+      const extractErrorMessage = (value) => {
+        if (typeof value === "string") return value;
+        if (Array.isArray(value)) return value.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join(", ");
+        if (typeof value === "object" && value !== null) {
+          if (typeof value.message === "string") return value.message;
+          if (typeof value.error === "string") return value.error;
+          if (typeof value.detail === "string") return value.detail;
+          if (Array.isArray(value.errors)) return extractErrorMessage(value.errors);
+          return JSON.stringify(value);
+        }
+        return "";
+      };
+
+      const mensaje =
+        extractErrorMessage(data) ||
+        extractErrorMessage(error) ||
+        error?.message ||
+        "Ocurrió un error al inscribirte.";
+
       setInscripcionError(mensaje);
       console.error("[Pruebas] Error al inscribirse:", error);
     } finally {
@@ -221,6 +428,12 @@ function Pruebas({ idJugador, usuario }) {
     obtenerPruebas(false);
   }, [idJugadorReal]);
 
+  useEffect(() => {
+    if (!mostrarTodas && !deporte && deporteUsuario) {
+      setDeporte(deporteUsuario);
+    }
+  }, [deporteUsuario, mostrarTodas, deporte]);
+
   async function obtenerPruebas(forceGeneral = mostrarTodas) {
     try {
       const filtrarPorDeporte = !(forceGeneral || !idJugadorReal);
@@ -234,7 +447,12 @@ function Pruebas({ idJugador, usuario }) {
       // Capturar el deporte del usuario a partir de la primera respuesta filtrada
       if (filtrarPorDeporte && Array.isArray(response.data) && response.data.length > 0) {
         const primerDeporte = response.data[0]?.deporte?.deporte || null;
-        if (primerDeporte) setDeporteUsuario(primerDeporte);
+        if (primerDeporte) {
+          setDeporteUsuario(primerDeporte);
+          if (!forceGeneral && !deporte) {
+            setDeporte(primerDeporte);
+          }
+        }
       }
     } catch (error) {
       console.error("Pruebas: error al cargar pruebas", error);
@@ -272,6 +490,13 @@ function Pruebas({ idJugador, usuario }) {
 
     return coincideBusqueda && coincideDeporte && coincideCategoria && coincideZona && coincideFechaDesde && coincideFechaHasta;
   });
+
+  const modalDetalleValido = modalAbierto && pruebaSeleccionada && (
+    pruebaSeleccionada?.idprueba != null ||
+    pruebaSeleccionada?.idPrueba != null ||
+    pruebaSeleccionada?.id != null ||
+    pruebaSeleccionada?.club?.nombre
+  );
 
   // ── Formato de fecha ──────────────────────────────────────
   const formatearFecha = (fechaStr) => {
@@ -447,7 +672,7 @@ function Pruebas({ idJugador, usuario }) {
       {/* ── MODAL DE DETALLE ────────────────────────────────
           Renderizado en document.body vía portal (igual que
           el modal de DetalleEntrenamiento)                  */}
-      {modalAbierto && pruebaSeleccionada && createPortal(
+      {modalDetalleValido && createPortal(
         <div
           className="modal-prueba-overlay"
           onClick={cerrarModal}
@@ -554,17 +779,33 @@ function Pruebas({ idJugador, usuario }) {
               {/* Pie con botón cerrar */}
               <div className="modal-prueba-acciones">
                 {esJugador && (
-                  <button
-                    className="btn-guardar"
-                    onClick={handleInscribirse}
-                    disabled={inscripcionLoading || !idjugadorResuelto}
-                  >
-                    {inscripcionLoading
-                      ? "Inscribiendo..."
-                      : idjugadorResuelto
-                        ? "Inscribirse"
-                        : "Cargando jugador..."}
-                  </button>
+                  isInscripto || verificandoInscripcion ? (
+                    <button
+                      className="btn-guardar"
+                      disabled
+                      style={{
+                        backgroundColor: "#ffffff",
+                        color: "#111111",
+                        border: "1px solid #d1d5db",
+                        cursor: "not-allowed",
+                        opacity: 0.7
+                      }}
+                    >
+                      {isInscripto ? "INSCRIPTO" : "VERIFICANDO..."}
+                    </button>
+                  ) : (
+                    <button
+                      className="btn-guardar"
+                      onClick={handleInscribirse}
+                      disabled={inscripcionLoading || !idjugadorResuelto}
+                    >
+                      {inscripcionLoading
+                        ? "Inscribiendo..."
+                        : idjugadorResuelto
+                          ? "INSCRIBIRSE"
+                          : "Cargando jugador..."}
+                    </button>
+                  )
                 )}
                 <button className="btn-cancelar" onClick={cerrarModal}>
                   Cerrar
