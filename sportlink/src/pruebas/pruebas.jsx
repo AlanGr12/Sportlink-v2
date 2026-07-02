@@ -74,6 +74,14 @@ function Pruebas({ idJugador, usuario }) {
 
   const tipoUsuario = usuarioEfectivo?.tipousuario?.toString()?.toLowerCase();
   const esJugador = tipoUsuario === "jugador" || tipoUsuario === "player";
+  const esClub = tipoUsuario === "club";
+  const esEntrenador = tipoUsuario === "entrenador";
+
+  // ── Postulantes ──────────────────────────────────────────
+  const [postulantes, setPostulantes] = useState([]);
+  const [postulantesLoading, setPostulantesLoading] = useState(false);
+  const [postulantesError, setPostulantesError] = useState("");
+  const [fotoJugador, setFotoJugador] = useState("");
 
   // ── Toast de notificación ──────────────────────────────────
   const [toast, setToast] = useState(null);
@@ -154,6 +162,47 @@ function Pruebas({ idJugador, usuario }) {
       cancelado = true;
     };
   }, [modalAbierto, pruebaSeleccionada, idjugadorResuelto]);
+
+  useEffect(() => {
+    let cancelado = false;
+
+    if (!modalAbierto || !pruebaSeleccionada || !esClub) {
+      setPostulantes([]);
+      setPostulantesError("");
+      setPostulantesLoading(false);
+      return;
+    }
+
+    const obtenerPostulantes = async () => {
+      const idPruebaNum = obtenerIdPrueba(pruebaSeleccionada);
+      if (!idPruebaNum) return;
+
+      setPostulantesLoading(true);
+      setPostulantesError("");
+      try {
+        const response = await axios.get("http://localhost:3000/api/inscripcionesprueba", {
+          params: { idprueba: idPruebaNum }
+        });
+        if (cancelado) return;
+        setPostulantes(normalizarListaInscripciones(response.data));
+      } catch (error) {
+        if (!cancelado) {
+          console.error("[Pruebas] Error al obtener postulantes:", error);
+          setPostulantesError("Error al cargar la lista de postulantes.");
+        }
+      } finally {
+        if (!cancelado) {
+          setPostulantesLoading(false);
+        }
+      }
+    };
+
+    obtenerPostulantes();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [modalAbierto, pruebaSeleccionada, esClub]);
 
   const obtenerIdPrueba = (prueba) => {
     const id = Number(prueba?.idprueba || prueba?.idPrueba || prueba?.id || 0);
@@ -293,7 +342,8 @@ function Pruebas({ idJugador, usuario }) {
         { headers: { "Content-Type": "application/json" } }
       );
 
-      mostrarToast("Inscripción realizada correctamente.");
+      const nombreClub = pruebaSeleccionada?.club?.nombre || "Club";
+      mostrarToast(`Te has inscrito correctamente a la prueba de ${nombreClub}`);
       setIsInscripto(true);
       setPruebas((prevPruebas) => prevPruebas.map((prueba) => {
         if (obtenerIdPrueba(prueba) !== idPruebaNum) return prueba;
@@ -349,7 +399,6 @@ function Pruebas({ idJugador, usuario }) {
   // ── Cuando el usuario es un club, obtener su idclub real desde la API ────
   // El login solo guarda idusuario — el idclub está en el perfil completo.
   useEffect(() => {
-    const esClub = usuarioEfectivo?.tipousuario === "club";
     const idusuario = usuarioEfectivo?.idusuario;
     if (!esClub || !idusuario) return;
 
@@ -383,7 +432,7 @@ function Pruebas({ idJugador, usuario }) {
       });
 
     return () => { montado = false; };
-  }, [usuarioEfectivo?.tipousuario, usuarioEfectivo?.idusuario]);
+  }, [esClub, usuarioEfectivo?.idusuario]);
 
   // ── Cuando el usuario es un jugador, obtener su idjugador real desde la API ──
   useEffect(() => {
@@ -395,6 +444,11 @@ function Pruebas({ idJugador, usuario }) {
       .then((res) => {
         if (!montado) return;
         const perfil = res.data;
+
+        // Guardar la foto del jugador para el Toast
+        const foto = perfil?.fotoperfil || perfil?.jugador?.fotoperfil || perfil?.data?.fotoperfil || perfil?.data?.jugador?.fotoperfil || "";
+        setFotoJugador(foto);
+
         const candidatos = [
           perfil?.idjugador,
           perfil?.idJugador,
@@ -475,6 +529,19 @@ function Pruebas({ idJugador, usuario }) {
 
   // ── Filtrado ──────────────────────────────────────────────
   const pruebasFiltradas = pruebas.filter((prueba) => {
+    // Filtro Estricto de Pruebas para Rol Club
+    if (esClub) {
+      if (!idclubResuelto) return false;
+      const idClubPrueba = Number(
+        prueba.idclub ??
+        prueba.idClub ??
+        prueba.club?.idclub ??
+        prueba.club?.idClub ??
+        prueba.clubId
+      );
+      if (idClubPrueba !== Number(idclubResuelto)) return false;
+    }
+
     const coincideBusqueda =
       prueba.club?.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
       prueba.descripcion?.toLowerCase().includes(busqueda.toLowerCase());
@@ -512,7 +579,7 @@ function Pruebas({ idJugador, usuario }) {
   //FALTA CAMBIAR : LOS FILTRAR ZONA Y FILTRAR DEPORTE TIENEN QUE SER LOS MISMO QUE LOS ARRAYS DE REGISTRAR JUGADOR
 
   // ── Restricción de acceso para entrenadores ───────────────
-  if (usuarioEfectivo?.tipousuario === "entrenador") {
+  if (esEntrenador) {
     return (
       <div className="contenedor-pruebas" style={{ alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", padding: "60px 24px", maxWidth: "480px", margin: "0 auto" }}>
@@ -533,7 +600,26 @@ function Pruebas({ idJugador, usuario }) {
     <>
       {/* Toast de notificación */}
       {toast && (
-        <div className={`toast-banner ${toast.tipo}`}>{toast.mensaje}</div>
+        <div className="toast-banner custom-toast">
+          <div className="toast-cuerpo">
+            {fotoJugador ? (
+              <img src={fotoJugador} alt="Avatar" className="toast-avatar" />
+            ) : (
+              <div className="toast-avatar-fallback">
+                👤
+              </div>
+            )}
+            <div className="toast-texto">
+              <h4 className="toast-titulo">Te has inscrito correctamente a la prueba.</h4>
+              <p className="toast-descripcion">{toast.mensaje}</p>
+            </div>
+          </div>
+          <div className="toast-acciones">
+            <button className="btn-toast-entendido" onClick={() => setToast(null)}>
+              ENTENDIDO
+            </button>
+          </div>
+        </div>
       )}
 
       <div className="contenedor-pruebas">
@@ -549,20 +635,13 @@ function Pruebas({ idJugador, usuario }) {
           />
 
           <main className="contenido-pruebas">
-            {/* ── Botón Crear Prueba (solo para clubs) ─────────────── */}
-            {usuarioEfectivo?.tipousuario === "club" && (
-              <div className="acciones-entrenador-container">
-                <button
-                  className="btn-crear-entrenamiento"
-                  onClick={() => setModalCrearAbierto(true)}
-                  disabled={!idclubResuelto}
-                >
-                  <span>+</span> {idclubResuelto ? "Crear Prueba" : "Cargando club..."}
-                </button>
-              </div>
-            )}
-
-            <PruebasHeader busqueda={busqueda} setBusqueda={setBusqueda} />
+            <PruebasHeader
+              busqueda={busqueda}
+              setBusqueda={setBusqueda}
+              esClub={esClub}
+              idclubResuelto={idclubResuelto}
+              onCrear={() => setModalCrearAbierto(true)}
+            />
 
             <div className="grid-pruebas">
               {pruebasFiltradas.map((prueba) => (
@@ -767,6 +846,60 @@ function Pruebas({ idJugador, usuario }) {
                     {pruebaSeleccionada.descripcion}
                   </p>
                 </>
+              )}
+
+              {/* Sección de Postulantes (solo para clubes) */}
+              {esClub && (
+                <div className="modal-prueba-postulantes-seccion">
+                  <p className="modal-prueba-descripcion-titulo">Postulantes Inscriptos ({postulantes.length})</p>
+                  {postulantesLoading ? (
+                    <div className="postulantes-loading">Cargando postulantes...</div>
+                  ) : postulantesError ? (
+                    <div className="form-error-banner">{postulantesError}</div>
+                  ) : postulantes.length === 0 ? (
+                    <div className="postulantes-vacio">Aún no hay postulantes inscriptos en esta prueba.</div>
+                  ) : (
+                    <div className="postulantes-lista">
+                      {postulantes.map((item, index) => {
+                        const inscrito = item;
+                        const jugador = item.jugador || item.jugadores || item;
+                        
+                        const nombreCompleto = (jugador?.nombre && jugador?.apellido)
+                          ? `${jugador.nombre} ${jugador.apellido}`
+                          : (jugador?.nombre || jugador?.apellido || 
+                             inscrito?.nombre || inscrito?.usuario?.nombre || 
+                             inscrito?.jugador?.nombre || "Jugador Sin Nombre");
+
+                        const deporte = jugador?.deportes?.deporte || jugador?.deporte || inscrito?.deporte || "No especificado";
+                        const ubicacion = jugador?.ubicacion || inscrito?.ubicacion || "No especificada";
+                        const telefono = jugador?.telefono || inscrito?.telefono || "No especificado";
+                        const genero = jugador?.genero || inscrito?.genero || "No especificado";
+                        const foto = jugador?.fotoperfil || inscrito?.fotoperfil || "";
+
+                        return (
+                          <div key={jugador?.idjugador || inscrito?.idjugador || index} className="postulante-card">
+                            {foto ? (
+                              <img src={foto} alt={nombreCompleto} className="postulante-foto" />
+                            ) : (
+                              <div className="postulante-foto-fallback">
+                                {nombreCompleto.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="postulante-info">
+                              <h4 className="postulante-nombre">{nombreCompleto}</h4>
+                              <div className="postulante-detalles">
+                                <p><span>🏅 Deporte:</span> {deporte}</p>
+                                <p><span>📍 Ubicación:</span> {ubicacion}</p>
+                                <p><span>📞 Teléfono:</span> {telefono}</p>
+                                <p><span>⚧ Género:</span> {genero}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* Mensaje de error de inscripción */}
