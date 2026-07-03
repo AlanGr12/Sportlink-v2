@@ -1,5 +1,5 @@
 .pagina-entrenamientos { }
-.toast-banner{ position:fixed; top:24px; right:24px; padding:16px 24px; border-radius:8px; color:#fff; z-index:2000; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-weight:600; font-size:14px; animation:modalIn 0.2s ease }
+.toast-banner{ position:fixed; right:24px; padding:16px 24px; border-radius:8px; color:#fff; z-index:2000; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-weight:600; font-size:14px; animation:modalIn 0.2s ease }
 .toast-banner.success{ background-color:#10b981 }
 .toast-banner.error{ background-color:#ef4444 }
 .toast-banner.info{ background-color:#3b82f6 }

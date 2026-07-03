@@ -10,6 +10,7 @@ import iconUbicacion from '../assets/ubicacion.png';
 import './DetalleEntrenamiento.css';
 
 const DetalleEntrenamiento = ({ entrenamiento, onCerrar }) => {
+  
   const getDeporteImagen = () => {
     // Priorizar imagen enviada por backend (puede ser `imagen` o `entrenadorFoto`)
     if (entrenamiento.imagen) return entrenamiento.imagen;
@@ -22,6 +23,7 @@ const DetalleEntrenamiento = ({ entrenamiento, onCerrar }) => {
     }
     return fallbackDefault;
   };
+console.log(entrenamiento)
 
   const formatearFecha = (fechaStr) => {
     try {
@@ -49,6 +51,24 @@ const DetalleEntrenamiento = ({ entrenamiento, onCerrar }) => {
     7: 'Domingo'
   };
 
+  const deportesDisponibles = [
+  { id: 1, nombre: 'Fútbol' },
+  { id: 2, nombre: 'Basket' },
+  { id: 3, nombre: 'Tenis' },
+  { id: 4, nombre: 'Voley' },
+  { id: 5, nombre: 'Pádel' },
+  { id: 6, nombre: 'Rugby' },
+  { id: 7, nombre: 'Hockey' },
+  { id: 8, nombre: 'Natación' },
+  { id: 9, nombre: 'Atletismo' },
+  { id: 10, nombre: 'Ciclismo' },
+  { id: 11, nombre: 'Boxeo' },
+  { id: 12, nombre: 'Artes Marciales' },
+  { id: 13, nombre: 'Handball' },
+  { id: 14, nombre: 'Béisbol' },
+  { id: 15, nombre: 'Golf' }
+];
+
   return (
     <div className="detalle-grid">
       {entrenamiento.imagen ? (
@@ -61,9 +81,9 @@ const DetalleEntrenamiento = ({ entrenamiento, onCerrar }) => {
       )}
 
       <div className="detalle-info-header">
-        <span className="detalle-tipo">{entrenamiento.tipo || 'ENTRENAMIENTO'}</span>
+        <span className="detalle-tipo">{entrenamiento.deportes?.deporte || 'ENTRENAMIENTO'}</span>
         <h2 className="detalle-titulo">{entrenamiento.titulo}</h2>
-        <p className="detalle-autor">Por {entrenamiento.entrenadorNombre || 'Entrenador Asociado'}</p>
+        <p className="detalle-autor">Entrenador/a: {entrenamiento.entrenadores?.nombre || 'Entrenador Asociado'}</p>
       </div>
 
       <div className="detalle-seccion">
@@ -83,7 +103,7 @@ const DetalleEntrenamiento = ({ entrenamiento, onCerrar }) => {
 
           <div className="detalle-item-caja">
             <span className="detalle-item-label"><img src={iconFutbol} alt="Deporte" className="icon-small" /> Deporte</span>
-            <span className="detalle-item-valor">{entrenamiento.tipo || 'No especificado'}</span>
+          <span className="detalle-item-valor">{entrenamiento.deportes?.deporte || 'ENTRENAMIENTO'}</span>
           </div>
 
           <div className="detalle-item-caja">
