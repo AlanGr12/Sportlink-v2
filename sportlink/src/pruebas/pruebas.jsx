@@ -85,9 +85,9 @@ function Pruebas({ idJugador, usuario }) {
 
   // ── Toast de notificación ──────────────────────────────────
   const [toast, setToast] = useState(null);
-  const mostrarToast = (mensaje, tipo = "success") => {
-    setToast({ mensaje, tipo });
-    //setTimeout(() => setToast(null), 4000);
+const mostrarToast = (titulo, mensaje, tipo = "success") => {
+  setToast({ titulo, mensaje, tipo });
+  //setTimeout(() => setToast(null), 4000);
   };
 
   const abrirModal = (prueba) => {
@@ -343,7 +343,10 @@ function Pruebas({ idJugador, usuario }) {
       );
 
       const nombreClub = pruebaSeleccionada?.club?.nombre || "Club";
-      mostrarToast(`Te has inscrito correctamente a la prueba de ${nombreClub}`);
+      mostrarToast(
+  "Inscripción realizada",
+  "Te has inscripto correctamente a la prueba."
+);
       setIsInscripto(true);
       setPruebas((prevPruebas) => prevPruebas.map((prueba) => {
         if (obtenerIdPrueba(prueba) !== idPruebaNum) return prueba;
@@ -446,6 +449,7 @@ function Pruebas({ idJugador, usuario }) {
         const perfil = res.data;
 
         // Guardar la foto del jugador para el Toast
+        console.log("PERFIL:", perfil);
         const foto = perfil?.fotoperfil || perfil?.jugador?.fotoperfil || perfil?.data?.fotoperfil || perfil?.data?.jugador?.fotoperfil || "";
         setFotoJugador(foto);
 
@@ -610,8 +614,13 @@ function Pruebas({ idJugador, usuario }) {
               </div>
             )}
             <div className="toast-texto">
-              <h4 className="toast-titulo">Te has inscrito correctamente a la prueba.</h4>
-              <p className="toast-descripcion">{toast.mensaje}</p>
+             <h4 className="toast-titulo">
+  {toast.titulo}
+</h4>
+
+<p className="toast-descripcion">
+  {toast.mensaje}
+</p>
             </div>
           </div>
           <div className="toast-acciones">
@@ -737,7 +746,10 @@ function Pruebas({ idJugador, usuario }) {
                 idclub={idclubResuelto}
                 onGuardado={() => {
                   setModalCrearAbierto(false);
-                  mostrarToast("¡Prueba creada con éxito!");
+                  mostrarToast(
+  "Prueba publicada correctamente",
+  "Tu prueba ya está disponible para que los jugadores puedan verla e inscribirse."
+);
                   obtenerPruebas(mostrarTodas);
                 }}
                 onCancelar={() => setModalCrearAbierto(false)}
