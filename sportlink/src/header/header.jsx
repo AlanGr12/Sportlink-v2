@@ -13,19 +13,34 @@ import iconPruebas from '../assets/pruebas.png';
 const Header = (props) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
+  const [notificacionesOpen, setNotificacionesOpen] = useState(false);
 
   const explorarRef = useRef(null);
   const avatarRef = useRef(null);
+  const notificacionesRef = useRef(null);
 
   const usuario = props.usuario || null;
   const estaLogueado = !!usuario;
   const userRole = usuario?.tipousuario || null;
 
-  const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+    setAvatarDropdownOpen(false);
+    setNotificacionesOpen(false);
+  };
 
   const toggleAvatarDropdown = (e) => {
     e && e.stopPropagation();
     setAvatarDropdownOpen(!avatarDropdownOpen);
+    setDropdownOpen(false);
+    setNotificacionesOpen(false);
+  };
+
+  const toggleNotificaciones = (e) => {
+    e && e.stopPropagation();
+    setNotificacionesOpen(!notificacionesOpen);
+    setDropdownOpen(false);
+    setAvatarDropdownOpen(false);
   };
 
   const handleLogout = () => {
@@ -43,6 +58,9 @@ const Header = (props) => {
       }
       if (avatarRef.current && !avatarRef.current.contains(event.target)) {
         setAvatarDropdownOpen(false);
+      }
+      if (notificacionesRef.current && !notificacionesRef.current.contains(event.target)) {
+        setNotificacionesOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -257,14 +275,31 @@ const Header = (props) => {
 
 <div className="header-actions">
   
-  <div className="header-icons-container" style={{ display: 'flex', gap: '10px' }}>
+  <div className="header-icons-container" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
     <button className="header-action-btn" onClick={() => props.cambiarVista('mensajes')}>
       <IconoMensajes size={22} color="#ffffff" className="header-svg-icon" />
     </button>
     
-    <button className="header-action-btn" onClick={() => props.cambiarVista('notificaciones')}>
-      <IconoNotificaciones size={22} color="#ffffff" className="header-svg-icon" />
-    </button>
+    <div className="header-notifications-container" ref={notificacionesRef}>
+      <button className="header-action-btn" onClick={toggleNotificaciones}>
+        <IconoNotificaciones size={22} color="#ffffff" className="header-svg-icon" />
+      </button>
+
+      {notificacionesOpen && (
+        <div className="header-notifications-dropdown">
+          <div className="header-notifications-header">
+            <h4 className="header-notifications-title">Notificaciones</h4>
+          </div>
+          <div className="header-notifications-empty">
+            <div className="header-notifications-empty-icon">
+              <IconoNotificaciones size={24} color="rgba(255, 255, 255, 0.4)" />
+            </div>
+            <p className="header-notifications-empty-text">No tienes notificaciones pendientes</p>
+            <p className="header-notifications-empty-subtext">Te avisaremos cuando recibas una actualización de tus preferencias.</p>
+          </div>
+        </div>
+      )}
+    </div>
   </div>
 
           <div className="header-profile-container" ref={avatarRef}>
