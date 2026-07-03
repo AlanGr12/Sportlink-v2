@@ -220,7 +220,7 @@
 
 .btn-mas-info:hover {
   background-color: var(--primary);
-  color: #000;
+  color: #000000;
 }
 
 /* ============================================================
@@ -408,14 +408,14 @@
    ============================================================ */
 .custom-toast {
   position: fixed;
-  top: 130px; /* Posicionado verticalmente libre de la superposición del Header principal de la app */
+  top: 80px; /* Posicionado verticalmente libre de la superposición del Header principal de la app */
   right: 16px;
   width: 340px;
   background-color: #000000 !important; /* Fondo negro sólido */
   border: 1px solid #00f3ff !important; /* Borde fino cian brillante */
   border-radius: 12px;
   padding: 16px;
-  z-index: 9999; /* Z-index muy alto para estar por encima de todo */
+  z-index: 20; /* Z-index muy alto para estar por encima de todo */
   box-shadow: 0 4px 24px rgba(0, 243, 255, 0.25);
   font-family: var(--font-family);
   display: flex;

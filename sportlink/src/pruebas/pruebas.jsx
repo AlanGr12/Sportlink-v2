@@ -87,7 +87,7 @@ function Pruebas({ idJugador, usuario }) {
   const [toast, setToast] = useState(null);
   const mostrarToast = (mensaje, tipo = "success") => {
     setToast({ mensaje, tipo });
-    setTimeout(() => setToast(null), 4000);
+    //setTimeout(() => setToast(null), 4000);
   };
 
   const abrirModal = (prueba) => {
