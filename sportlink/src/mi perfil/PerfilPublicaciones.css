@@ -26,17 +26,6 @@
   position: relative;
 }
 
-.feed-scanner-glow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-  animation: scanfeed 4s linear infinite;
-  opacity: 0.3;
-}
-
 @keyframes scanfeed {
   0% { transform: translateY(0); }
   50% { transform: translateY(220px); }
