@@ -141,6 +141,45 @@
   gap: 14px;
 }
 
+.header-auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-auth-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--header-text-color);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-family: 'Space Grotesk', sans-serif !important;
+  text-transform: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-auth-btn:hover {
+  color: var(--header-accent-color);
+}
+
+.header-auth-btn-register {
+  border-color: rgba(45, 239, 242, 0.3);
+  background-color: rgba(45, 239, 242, 0.05);
+}
+
+.header-auth-btn-register:hover {
+  border-color: var(--header-accent-color);
+  background-color: rgba(45, 239, 242, 0.1);
+  box-shadow: 0 0 12px rgba(45, 239, 242, 0.2);
+  color: var(--header-accent-color);
+}
+
 .header-action-btn {
   background: none;
   border: none;

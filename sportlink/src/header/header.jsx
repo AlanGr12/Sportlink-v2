@@ -274,85 +274,78 @@ const Header = (props) => {
         </nav>
 
 <div className="header-actions">
-  
-  <div className="header-icons-container" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-    <button className="header-action-btn" onClick={() => props.cambiarVista('mensajes')}>
-      <IconoMensajes size={22} color="#ffffff" className="header-svg-icon" />
-    </button>
-    
-    <div className="header-notifications-container" ref={notificacionesRef}>
-      <button className="header-action-btn" onClick={toggleNotificaciones}>
-        <IconoNotificaciones size={22} color="#ffffff" className="header-svg-icon" />
-      </button>
+  {estaLogueado ? (
+    <>
+      <div className="header-icons-container" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <button className="header-action-btn" onClick={() => props.cambiarVista('mensajes')}>
+          <IconoMensajes size={22} color="#ffffff" className="header-svg-icon" />
+        </button>
+        
+        <div className="header-notifications-container" ref={notificacionesRef}>
+          <button className="header-action-btn" onClick={toggleNotificaciones}>
+            <IconoNotificaciones size={22} color="#ffffff" className="header-svg-icon" />
+          </button>
 
-      {notificacionesOpen && (
-        <div className="header-notifications-dropdown">
-          <div className="header-notifications-header">
-            <h4 className="header-notifications-title">Notificaciones</h4>
-          </div>
-          <div className="header-notifications-empty">
-            <div className="header-notifications-empty-icon">
-              <IconoNotificaciones size={24} color="rgba(255, 255, 255, 0.4)" />
+          {notificacionesOpen && (
+            <div className="header-notifications-dropdown">
+              <div className="header-notifications-header">
+                <h4 className="header-notifications-title">Notificaciones</h4>
+              </div>
+              <div className="header-notifications-empty">
+                <div className="header-notifications-empty-icon">
+                  <IconoNotificaciones size={24} color="rgba(255, 255, 255, 0.4)" />
+                </div>
+                <p className="header-notifications-empty-text">No tienes notificaciones pendientes</p>
+                <p className="header-notifications-empty-subtext">Te avisaremos cuando recibas una actualización de tus preferencias.</p>
+              </div>
             </div>
-            <p className="header-notifications-empty-text">No tienes notificaciones pendientes</p>
-            <p className="header-notifications-empty-subtext">Te avisaremos cuando recibas una actualización de tus preferencias.</p>
-          </div>
+          )}
         </div>
-      )}
-    </div>
-  </div>
+      </div>
 
-          <div className="header-profile-container" ref={avatarRef}>
-            <button className="header-avatar-toggle" onClick={toggleAvatarDropdown}>
-              <div className="header-avatar" style={{ overflow: 'hidden', padding: 0 }}>
-                {estaLogueado ? (
-                  usuario.fotoperfil ? (
-                    <img 
-                      src={usuario.fotoperfil} 
-                      alt={usuario.nombre || "Foto de perfil"} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} 
-                    />
-                  ) : (
-                    usuario.nombre?.charAt(0).toUpperCase()
-                  )
-                ) : (
-                  '?'
-                )}
-              </div>
-            </button>
-
-            {avatarDropdownOpen && (
-              <div className="header-avatar-dropdown">
-                {estaLogueado ? (
-                  <>
-                    <div className="header-user-info">
-                      <span className="header-user-name">{usuario.nombre}</span>
-                      <span className="header-user-role">{usuario.tipousuario}</span>
-                    </div>
-                    <hr className="header-divider" />
-                    <button className="header-dropdown-link" onClick={() => { props.cambiarVista('perfil'); setAvatarDropdownOpen(false); }}>
-                      Mi Perfil
-                    </button>
-                    <button className="header-dropdown-link header-dropdown-item--logout" onClick={handleLogout}>
-                      Cerrar Sesión
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button className="header-dropdown-link" onClick={() => { props.cambiarVista('login'); setAvatarDropdownOpen(false); }}>
-                      Iniciar Sesión
-                    </button>
-                    <button className="header-dropdown-link" onClick={() => { props.cambiarVista('registro'); setAvatarDropdownOpen(false); }}>
-                      Registrarse
-                    </button>
-                  </>
-                )}
-
-                
-              </div>
+      <div className="header-profile-container" ref={avatarRef}>
+        <button className="header-avatar-toggle" onClick={toggleAvatarDropdown}>
+          <div className="header-avatar" style={{ overflow: 'hidden', padding: 0 }}>
+            {usuario.fotoperfil ? (
+              <img 
+                src={usuario.fotoperfil} 
+                alt={usuario.nombre || "Foto de perfil"} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} 
+              />
+            ) : (
+              usuario.nombre?.charAt(0).toUpperCase()
             )}
           </div>
-        </div>
+        </button>
+
+        {avatarDropdownOpen && (
+          <div className="header-avatar-dropdown">
+            <div className="header-user-info">
+              <span className="header-user-name">{usuario.nombre}</span>
+              <span className="header-user-role">{usuario.tipousuario}</span>
+            </div>
+            <hr className="header-divider" />
+            <button className="header-dropdown-link" onClick={() => { props.cambiarVista('perfil'); setAvatarDropdownOpen(false); }}>
+              Mi Perfil
+            </button>
+            <button className="header-dropdown-link header-dropdown-item--logout" onClick={handleLogout}>
+              Cerrar Sesión
+            </button>
+          </div>
+        )}
+      </div>
+    </>
+  ) : (
+    <div className="header-auth-buttons">
+      <button className="header-auth-btn" onClick={() => props.cambiarVista('login')}>
+        Iniciar Sesión
+      </button>
+      <button className="header-auth-btn header-auth-btn-register" onClick={() => props.cambiarVista('registro')}>
+        Registrarse
+      </button>
+    </div>
+  )}
+</div>
       </div>
     </header>
   );
