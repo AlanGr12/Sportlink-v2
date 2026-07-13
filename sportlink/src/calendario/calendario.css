@@ -439,6 +439,220 @@
   border-radius: 10px;
 }
 
+/* ── CHIPS DE EVENTOS EN CELDA ── */
+.cal-celda-eventos {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 5px;
+}
+
+.cal-celda-evento-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 4px;
+  padding: 2px 6px 2px 4px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.cal-celda-evento-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: #8b5cf6;
+  flex-shrink: 0;
+}
+
+.cal-celda-evento-nombre {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #c4b5fd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-celda-mas {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  color: #666;
+  letter-spacing: 0.3px;
+  padding-left: 2px;
+}
+
+/* ── PANEL EVENTOS DEL DÍA ── */
+.cal-panel-eventos {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.cal-panel-evento {
+  background: #0f1012;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.cal-panel-evento:hover {
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.cal-panel-evento-img-wrap {
+  width: 100%;
+  max-height: 160px;
+  overflow: hidden;
+}
+
+.cal-panel-evento-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.cal-panel-evento-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cal-panel-evento-titulo-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cal-panel-evento-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: #8b5cf6;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+}
+
+.cal-panel-evento-nombre {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e8e8e8;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.cal-panel-evento-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cal-panel-evento-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.72rem;
+  color: #666;
+}
+
+.cal-panel-evento-meta-item svg {
+  color: #8b5cf6;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.cal-panel-evento-desc {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.8rem;
+  color: #888;
+  line-height: 1.5;
+  margin: 0;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.cal-panel-evento-btn {
+  background: #23e7f5;
+  border: none;
+  border-radius: 6px;
+  color: #000;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 6px 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.cal-panel-evento-btn:hover {
+  background: #1bd4d7;
+  transform: translateY(-1px);
+}
+
+/* ── PRÓXIMOS EVENTOS — lista ── */
+.cal-proximos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cal-proximos-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #141415;
+  border: 1px solid #1e1e20;
+  border-radius: 8px;
+  padding: 12px 16px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cal-proximos-item:hover {
+  background: #1a1a1c;
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+.cal-proximos-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: #8b5cf6;
+  flex-shrink: 0;
+}
+
+.cal-proximos-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cal-proximos-nombre {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #d0d0d0;
+}
+
+.cal-proximos-fecha {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.7rem;
+  color: #555;
+  letter-spacing: 0.2px;
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
   .cal-layout {
