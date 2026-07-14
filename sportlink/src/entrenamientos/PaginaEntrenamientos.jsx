@@ -6,11 +6,11 @@ import FormularioEntrenamiento from './FormularioEntrenamiento';
 import DetalleEntrenamiento from './DetalleEntrenamiento';
 import './entrenamientos.css';
 import './PaginaEntrenamientos.css';
-import iconFecha from '../assets/fecha.png';
-import iconUbicacion from '../assets/ubicacion.png';
-import iconModalidad from '../assets/modalidad.png';
-import iconFutbol from '../assets/futbol.png';
-import iconBuscador from '../assets/buscador.png';
+import { IconoFecha } from '../iconos/IconoFecha.jsx';
+import { IconoUbicacion } from '../iconos/IconoUbicacion.jsx';
+import { IconoModalidad } from '../iconos/IconoModalidad.jsx';
+import { IconoFutbol } from '../iconos/IconoFutbol.jsx';
+import { IconoBuscador } from '../iconos/IconoBuscador.jsx';
 import Footer from '../footer/footer';
 
 
@@ -338,7 +338,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
               className={`filtro-header ${sidebarExpandido.zona ? 'abierto' : ''}`}
               onClick={() => toggleSidebarSeccion('zona')}
             >
-              <span><img src={iconUbicacion} alt="Zona" className="icon-small" /> Zona</span>
+              <span><IconoUbicacion size={16} color="currentColor" className="icon-small" /> Zona</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
             {sidebarExpandido.zona && (
@@ -360,7 +360,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
               className={`filtro-header ${sidebarExpandido.modalidad ? 'abierto' : ''}`}
               onClick={() => toggleSidebarSeccion('modalidad')}
             >
-              <span><img src={iconModalidad} alt="Modalidad" className="icon-small" /> Modalidad</span>
+              <span><IconoModalidad size={16} color="currentColor" className="icon-small" /> Modalidad</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
             {sidebarExpandido.modalidad && (
@@ -383,7 +383,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
               className={`filtro-header ${sidebarExpandido.deporte ? 'abierto' : ''}`}
               onClick={() => toggleSidebarSeccion('deporte')}
             >
-              <span><img src={iconFutbol} alt="Deporte" className="icon-small" /> Deporte</span>
+              <span><IconoFutbol size={16} color="currentColor" className="icon-small" /> Deporte</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
             {sidebarExpandido.deporte && (
@@ -408,7 +408,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
               className={`filtro-header ${sidebarExpandido.horario ? 'abierto' : ''}`}
               onClick={() => toggleSidebarSeccion('horario')}
             >
-              <span><img src={iconFecha} alt="Fechas" className="icon-small" /> Fechas</span>
+              <span><IconoFecha size={16} color="currentColor" className="icon-small" /> Fechas</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
             {sidebarExpandido.horario && (
@@ -463,7 +463,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
 
           {/* Barra de Búsqueda */}
           <div className="buscador-container">
-            <img src={iconBuscador} alt="Buscar" className="icon-small buscador-img" />
+            <IconoBuscador size={16} color="currentColor" className="icon-small buscador-img" />
             <input 
               type="text" 
               className="buscador-input" 

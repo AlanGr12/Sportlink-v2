@@ -6,11 +6,11 @@ import PruebasHeader from "./pruebasHeader";
 import FormularioPrueba from "./FormularioPrueba";
 import Footer from "../footer/footer";
 
-// Iconos de assets
-import iconoMedalla   from "../assets/medalla.png";
-import iconoUbicacion from "../assets/ubicacion.png";
-import iconoFecha     from "../assets/fecha.png";
-import iconoModalidad from "../assets/modalidad.png";
+// Iconos hechos con codigo
+import { IconoMedalla } from "../iconos/IconoMedalla.jsx";
+import { IconoUbicacion } from "../iconos/IconoUbicacion.jsx";
+import { IconoFecha } from "../iconos/IconoFecha.jsx";
+import { IconoModalidad } from "../iconos/IconoModalidad.jsx";
 
 import "../entrenamientos/entrenamientos.css";
 import "./pruebas.css";
@@ -679,17 +679,17 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
                     <div className="card-prueba-detalles-lista">
                       <div className="card-prueba-detalle-item">
-                        <img src={iconoMedalla} alt="Deporte" className="card-icon-asset" />
+                        <IconoMedalla size={16} color="currentColor" className="card-icon-asset" />
                         <p>{prueba.deporte?.deporte || "Deporte no especificado"}</p>
                       </div>
 
                       <div className="card-prueba-detalle-item">
-                        <img src={iconoUbicacion} alt="Zona" className="card-icon-asset" />
+                        <IconoUbicacion size={16} color="currentColor" className="card-icon-asset" />
                         <p>{prueba.zona || "Zona no especificada"}</p>
                       </div>
 
                       <div className="card-prueba-detalle-item">
-                        <img src={iconoFecha} alt="Fecha" className="card-icon-asset" />
+                        <IconoFecha size={16} color="currentColor" className="card-icon-asset" />
                         <p>{prueba.fechaprueba ? formatearFecha(prueba.fechaprueba) : "Fecha a confirmar"}</p>
                       </div>
                     </div>
@@ -808,7 +808,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
                 <div className="modal-prueba-spec-item">
                   <span className="modal-prueba-spec-label">
-                    <img src={iconoMedalla} alt="Deporte" />
+                    <IconoMedalla size={16} color="currentColor" />
                     Deporte
                   </span>
                   <span className="modal-prueba-spec-valor">
@@ -818,7 +818,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
                 <div className="modal-prueba-spec-item">
                   <span className="modal-prueba-spec-label">
-                    <img src={iconoModalidad} alt="Categoría" />
+                    <IconoModalidad size={16} color="currentColor" />
                     Categoría
                   </span>
                   <span className="modal-prueba-spec-valor">
@@ -828,7 +828,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
                 <div className="modal-prueba-spec-item">
                   <span className="modal-prueba-spec-label">
-                    <img src={iconoUbicacion} alt="Zona" />
+                    <IconoUbicacion size={16} color="currentColor" />
                     Zona
                   </span>
                   <span className="modal-prueba-spec-valor">
@@ -838,7 +838,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
                 <div className="modal-prueba-spec-item">
                   <span className="modal-prueba-spec-label">
-                    <img src={iconoFecha} alt="Fecha" />
+                    <IconoFecha size={16} color="currentColor" />
                     Fecha
                   </span>
                   <span className="modal-prueba-spec-valor">

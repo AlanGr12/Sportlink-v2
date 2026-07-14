@@ -3,10 +3,10 @@ import "../entrenamientos/entrenamientos.css";
 import "./menuPruebas.css";
 
 // Mismos iconos que PaginaEntrenamientos.jsx
-import iconFecha      from "../assets/fecha.png";
-import iconUbicacion  from "../assets/ubicacion.png";
-import iconModalidad  from "../assets/modalidad.png";
-import iconFutbol     from "../assets/futbol.png";
+import { IconoFecha } from "../iconos/IconoFecha.jsx";
+import { IconoUbicacion } from "../iconos/IconoUbicacion.jsx";
+import { IconoModalidad } from "../iconos/IconoModalidad.jsx";
+import { IconoFutbol } from "../iconos/IconoFutbol.jsx";
 
 // Misma lista completa de deportes que PaginaEntrenamientos.jsx
 const deportesDisponibles = [
@@ -70,7 +70,7 @@ function MenuPruebas({
           onClick={() => toggle("zona")}
         >
           <span>
-            <img src={iconUbicacion} alt="Zona" className="icon-small" />
+            <IconoUbicacion size={16} color="currentColor" className="icon-small" />
             Zona
           </span>
           <Chevron />
@@ -101,7 +101,7 @@ function MenuPruebas({
           onClick={() => toggle("categoria")}
         >
           <span>
-            <img src={iconModalidad} alt="Categoría" className="icon-small" />
+            <IconoModalidad size={16} color="currentColor" className="icon-small" />
             Categoría
           </span>
           <Chevron />
@@ -129,7 +129,7 @@ function MenuPruebas({
           onClick={() => toggle("deporte")}
         >
           <span>
-            <img src={iconFutbol} alt="Deporte" className="icon-small" />
+            <IconoFutbol size={16} color="currentColor" className="icon-small" />
             Deporte
           </span>
           <Chevron />
@@ -159,7 +159,7 @@ function MenuPruebas({
           onClick={() => toggle("horario")}
         >
           <span>
-            <img src={iconFecha} alt="Fechas" className="icon-small" />
+            <IconoFecha size={16} color="currentColor" className="icon-small" />
             Fechas
           </span>
           <Chevron />

@@ -4,11 +4,11 @@ import logoSportlink from '../assets/logoSportlink.png';
 import { IconoMensajes } from '../iconos/IconoMensajes.jsx';
 import { IconoNotificaciones } from '../iconos/IconoNotificaciones.jsx';
 
-// NUEVOS IMPORTACIONES DE ICONOS PARA EL DROPDOWN
-import iconCandado from '../assets/candado.png';
-import iconEmpleos from '../assets/empleos.png';
-import iconEntrenamientos from '../assets/entrenamientos.png';
-import iconPruebas from '../assets/pruebas.png';
+// NUEVAS IMPORTACIONES DE ICONOS EN CODIGO PARA EL DROPDOWN
+import { IconoCandado } from '../iconos/IconoCandado.jsx';
+import { IconoEmpleos } from '../iconos/IconoEmpleos.jsx';
+import { IconoEntrenamientos } from '../iconos/IconoEntrenamientos.jsx';
+import { IconoMedalla } from '../iconos/IconoMedalla.jsx';
 
 const Header = (props) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -68,18 +68,16 @@ const Header = (props) => {
   }, []);
 
   const renderDropdownItems = () => {
-    // NUEVO REEMPLAZO CON ICONO DE CANDADO
     if (!estaLogueado) {
       return (
         <>
-          {/* 1. AGREGADO ONCLICK Y STYLE AQUÍ */}
           <div 
             className="header-dropdown-item" 
             onClick={() => { props.cambiarVista('pruebas'); setDropdownOpen(false); }}
             style={{ cursor: 'pointer' }}
           >
             <div className="header-dropdown-icon">
-              <img src={iconPruebas} alt="Pruebas" className="header-dropdown-img-icon" />
+              <IconoMedalla size={22} color="currentColor" className="header-dropdown-img-icon" />
             </div>
             <div>
               <div className="header-dropdown-title">Pruebas deportivas</div>
@@ -92,7 +90,7 @@ const Header = (props) => {
             style={{ cursor: 'pointer' }}
           >
             <div className="header-dropdown-icon">
-              <img src={iconEntrenamientos} alt="Entrenamientos" className="header-dropdown-img-icon" />
+              <IconoEntrenamientos size={22} color="currentColor" className="header-dropdown-img-icon" />
             </div>
             <div>
               <div className="header-dropdown-title">Entrenamientos</div>
@@ -103,19 +101,17 @@ const Header = (props) => {
       );
     }
 
-    // REEMPLAZO DE EMOJIS POR ICONOS SEGÚN EL ROL
     switch (userRole) {
       case 'jugador':
         return (
           <>
-            {/* 2. AGREGADO ONCLICK Y STYLE AQUÍ */}
             <div 
               className="header-dropdown-item" 
               onClick={() => { props.cambiarVista('pruebas'); setDropdownOpen(false); }}
               style={{ cursor: 'pointer' }}
             >
               <div className="header-dropdown-icon">
-                <img src={iconPruebas} alt="Pruebas" className="header-dropdown-img-icon" />
+                <IconoMedalla size={22} color="currentColor" className="header-dropdown-img-icon" />
               </div>
               <div>
                 <div className="header-dropdown-title">Pruebas deportivas</div>
@@ -128,7 +124,7 @@ const Header = (props) => {
               style={{ cursor: 'pointer' }}
             >
               <div className="header-dropdown-icon">
-                <img src={iconEntrenamientos} alt="Entrenamientos" className="header-dropdown-img-icon" />
+                <IconoEntrenamientos size={22} color="currentColor" className="header-dropdown-img-icon" />
               </div>
               <div>
                 <div className="header-dropdown-title">Entrenamientos</div>
@@ -142,21 +138,20 @@ const Header = (props) => {
           <>
             <div className="header-dropdown-item">
               <div className="header-dropdown-icon">
-                <img src={iconEmpleos} alt="Empleos" className="header-dropdown-img-icon" />
+                <IconoEmpleos size={22} color="currentColor" className="header-dropdown-img-icon" />
               </div>
               <div>
                 <div className="header-dropdown-title">Empleos</div>
                 <div className="header-dropdown-desc">Postúlate a vacantes técnicas de clubes y academias.</div>
               </div>
             </div>
-            {/* 3. AGREGADO ONCLICK Y STYLE AQUÍ */}
             <div 
               className="header-dropdown-item" 
               onClick={() => { props.cambiarVista('pruebas'); setDropdownOpen(false); }}
               style={{ cursor: 'pointer' }}
             >
               <div className="header-dropdown-icon">
-                <img src={iconPruebas} alt="Pruebas" className="header-dropdown-img-icon" />
+                <IconoMedalla size={22} color="currentColor" className="header-dropdown-img-icon" />
               </div>
               <div>
                 <div className="header-dropdown-title">Pruebas deportivas</div>
@@ -169,7 +164,7 @@ const Header = (props) => {
               style={{ cursor: 'pointer' }}
             >
               <div className="header-dropdown-icon">
-                <img src={iconEntrenamientos} alt="Entrenamientos" className="header-dropdown-img-icon" />
+                <IconoEntrenamientos size={22} color="currentColor" className="header-dropdown-img-icon" />
               </div>
               <div>
                 <div className="header-dropdown-title">Entrenamientos</div>
@@ -183,21 +178,20 @@ const Header = (props) => {
           <>
             <div className="header-dropdown-item">
               <div className="header-dropdown-icon">
-                <img src={iconEmpleos} alt="Empleos" className="header-dropdown-img-icon" />
+                <IconoEmpleos size={22} color="currentColor" className="header-dropdown-img-icon" />
               </div>
               <div>
                 <div className="header-dropdown-title">Empleos</div>
                 <div className="header-dropdown-desc">Publica ofertas para reclutar staff técnico calificado.</div>
               </div>
             </div>
-            {/* 4. AGREGADO ONCLICK Y STYLE AQUÍ */}
             <div 
               className="header-dropdown-item" 
               onClick={() => { props.cambiarVista('pruebas'); setDropdownOpen(false); }}
               style={{ cursor: 'pointer' }}
             >
               <div className="header-dropdown-icon">
-                <img src={iconPruebas} alt="Pruebas" className="header-dropdown-img-icon" />
+                <IconoMedalla size={22} color="currentColor" className="header-dropdown-img-icon" />
               </div>
               <div>
                 <div className="header-dropdown-title">Pruebas deportivas</div>
@@ -210,7 +204,7 @@ const Header = (props) => {
               style={{ cursor: 'pointer' }}
             >
               <div className="header-dropdown-icon">
-                <img src={iconEntrenamientos} alt="Entrenamientos" className="header-dropdown-img-icon" />
+                <IconoEntrenamientos size={22} color="currentColor" className="header-dropdown-img-icon" />
               </div>
               <div>
                 <div className="header-dropdown-title">Entrenamientos</div>

@@ -1,5 +1,5 @@
 import "./pruebasHeader.css";
-import iconBuscador from '../assets/buscador.png';
+import { IconoBuscador } from '../iconos/IconoBuscador.jsx';
 
 function PruebasHeader({ busqueda, setBusqueda, esClub, idclubResuelto, onCrear }) {
   return (
@@ -25,7 +25,7 @@ function PruebasHeader({ busqueda, setBusqueda, esClub, idclubResuelto, onCrear 
       )}
 
       <div className="search-input-wrapper">
-        <img src={iconBuscador} alt="Buscar" className="icon-small buscador-img" />
+        <IconoBuscador size={16} color="currentColor" className="icon-small buscador-img" />
         <input
           type="text"
           placeholder="Buscar pruebas..."

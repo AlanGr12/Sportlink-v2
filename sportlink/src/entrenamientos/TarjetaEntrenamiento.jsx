@@ -1,9 +1,9 @@
 import React from 'react';
-import iconFutbol from '../assets/futbol.png';
-import iconPrecio from '../assets/precio.png';
-import iconModalidad from '../assets/modalidad.png';
-import iconFecha from '../assets/fecha.png';
-import iconUbicacion from '../assets/ubicacion.png';
+import { IconoFutbol } from '../iconos/IconoFutbol.jsx';
+import { IconoPrecio } from '../iconos/IconoPrecio.jsx';
+import { IconoModalidad } from '../iconos/IconoModalidad.jsx';
+import { IconoFecha } from '../iconos/IconoFecha.jsx';
+import { IconoUbicacion } from '../iconos/IconoUbicacion.jsx';
 
 import fallbackFutbol from '../assets/entrenador1.png';
 import fallbackBasket from '../assets/entrenador2.png';
