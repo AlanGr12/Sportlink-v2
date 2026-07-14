@@ -3,42 +3,68 @@ import { createPortal } from 'react-dom';
 import './ModalEvento.css';
 
 /**
- * ModalEvento — popup para crear un evento en el calendario.
+ * ModalEvento — popup para crear o editar un evento personalizado.
  *
  * Props:
- *  - onGuardar(evento)    callback con el objeto evento creado
+ *  - onGuardar(payload)   callback con el objeto evento a guardar/editar
  *  - onCerrar()           callback para cerrar el modal
  *  - fechaInicial         objeto { anio, mes, dia } (mes 0-indexed)
  *  - fechaBloqueada       si true el campo fecha queda fijo/disabled
+ *  - eventoEditar         objeto evento existente para modo edición (opcional)
  */
-export default function ModalEvento({ onGuardar, onCerrar, fechaInicial, fechaBloqueada = false }) {
-  const [nombre, setNombre] = useState('');
-  const [fecha, setFecha] = useState('');
-  const [hora, setHora] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [imagenFile, setImagenFile] = useState(null);
-  const [imagenPreview, setImagenPreview] = useState(null);
-  const [errores, setErrores] = useState({});
+export default function ModalEvento({
+  onGuardar,
+  onCerrar,
+  fechaInicial,
+  fechaBloqueada = false,
+  eventoEditar   = null,
+}) {
+  const modoEdicion = !!eventoEditar;
+
+  const [nombre,       setNombre]       = useState('');
+  const [fecha,        setFecha]        = useState('');
+  const [hora,         setHora]         = useState('');
+  const [descripcion,  setDescripcion]  = useState('');
+  const [imagenFile,   setImagenFile]   = useState(null);
+  const [imagenPreview,setImagenPreview]= useState(null);
+  const [errores,      setErrores]      = useState({});
+  const [guardando,    setGuardando]    = useState(false);
   const imagenRef = useRef(null);
 
+  // ── Inicialización ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (fechaInicial) {
-      const { anio, mes, dia } = fechaInicial;
+    if (modoEdicion && eventoEditar) {
+      // Modo edición: pre-poblar campos
+      setNombre(eventoEditar.nombre || '');
+      setFecha(eventoEditar.fecha   || '');
+      setHora(eventoEditar.hora     || '');
+      setDescripcion(eventoEditar.descripcion || '');
+      if (eventoEditar.imagenPreview) {
+        setImagenPreview(eventoEditar.imagenPreview);
+      }
+    } else {
+      // Modo creación: fecha inicial si viene del día seleccionado
+      if (fechaInicial) {
+        const { anio, mes, dia } = fechaInicial;
+        const pad = (n) => String(n).padStart(2, '0');
+        setFecha(`${anio}-${pad(mes + 1)}-${pad(dia)}`);
+      }
+      // Hora por defecto: hora actual + 1
+      const ahora = new Date();
+      ahora.setHours(ahora.getHours() + 1, 0, 0, 0);
       const pad = (n) => String(n).padStart(2, '0');
-      setFecha(`${anio}-${pad(mes + 1)}-${pad(dia)}`);
+      setHora(`${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`);
     }
-    const ahora = new Date();
-    ahora.setHours(ahora.getHours() + 1, 0, 0, 0);
-    const pad = (n) => String(n).padStart(2, '0');
-    setHora(`${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`);
-  }, [fechaInicial]);
+  }, []);   // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Cerrar con Escape ───────────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onCerrar(); };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onCerrar]);
 
+  // ── Imagen ──────────────────────────────────────────────────────────────────
   const handleImagenChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -54,30 +80,38 @@ export default function ModalEvento({ onGuardar, onCerrar, fechaInicial, fechaBl
     if (imagenRef.current) imagenRef.current.value = '';
   };
 
+  // ── Validación ──────────────────────────────────────────────────────────────
   const validar = () => {
     const e = {};
     if (!nombre.trim() || nombre.trim().length < 2) {
       e.nombre = 'El nombre debe tener al menos 2 caracteres.';
     }
     if (!fecha) e.fecha = 'La fecha es requerida.';
-    if (!hora) e.hora = 'La hora es requerida.';
+    if (!hora)  e.hora  = 'La hora es requerida.';
     setErrores(e);
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  // ── Submit ──────────────────────────────────────────────────────────────────
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validar()) return;
-    const evento = {
-      id: Date.now(),
-      nombre: nombre.trim(),
-      fecha,
-      hora,
-      descripcion: descripcion.trim() || null,
-      imagenPreview: imagenPreview || null,
-      imagenNombre: imagenFile?.name || null,
-    };
-    onGuardar(evento);
+
+    setGuardando(true);
+    try {
+      await onGuardar({
+        // En modo edición, el id viene del evento existente
+        id:           modoEdicion ? eventoEditar.id : undefined,
+        nombre:       nombre.trim(),
+        fecha,
+        hora,
+        descripcion:  descripcion.trim() || null,
+        imagenPreview: imagenPreview || null,
+        imagenNombre:  imagenFile?.name || null,
+      });
+    } finally {
+      setGuardando(false);
+    }
   };
 
   return createPortal(
@@ -91,7 +125,9 @@ export default function ModalEvento({ onGuardar, onCerrar, fechaInicial, fechaBl
         <div className="mev-header">
           <div className="mev-header-left">
             <span className="mev-header-dot" />
-            <h2 className="mev-titulo" id="mev-titulo">NUEVO EVENTO</h2>
+            <h2 className="mev-titulo" id="mev-titulo">
+              {modoEdicion ? 'EDITAR EVENTO' : 'NUEVO EVENTO'}
+            </h2>
           </div>
           <button className="mev-btn-cerrar" onClick={onCerrar} aria-label="Cerrar">
             <svg viewBox="0 0 14 14" fill="none" width="14" height="14">
@@ -182,7 +218,7 @@ export default function ModalEvento({ onGuardar, onCerrar, fechaInicial, fechaBl
               <div className="mev-imagen-preview-wrap">
                 <img src={imagenPreview} alt="Vista previa" className="mev-imagen-preview" />
                 <div className="mev-imagen-info">
-                  <span className="mev-imagen-nombre">📷 {imagenFile?.name}</span>
+                  <span className="mev-imagen-nombre">📷 {imagenFile?.name || 'imagen'}</span>
                   <button type="button" className="mev-btn-quitar-imagen" onClick={handleQuitarImagen}>
                     Quitar
                   </button>
@@ -207,12 +243,12 @@ export default function ModalEvento({ onGuardar, onCerrar, fechaInicial, fechaBl
 
           {/* Acciones */}
           <div className="mev-acciones">
-            <button type="button" className="mev-btn-cancelar" onClick={onCerrar}>
+            <button type="button" className="mev-btn-cancelar" onClick={onCerrar} disabled={guardando}>
               Cancelar
             </button>
-            <button type="submit" className="mev-btn-guardar">
+            <button type="submit" className="mev-btn-guardar" disabled={guardando}>
               <span className="mev-btn-guardar-dot" />
-              Guardar evento
+              {guardando ? 'Guardando…' : modoEdicion ? 'Actualizar evento' : 'Guardar evento'}
             </button>
           </div>
 

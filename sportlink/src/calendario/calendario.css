@@ -602,6 +602,35 @@
   transform: translateY(-1px);
 }
 
+/* Variante violeta (Editar) */
+.cal-panel-evento-btn--editar {
+  background: #8b5cf6 !important;
+  color: #fff !important;
+}
+
+.cal-panel-evento-btn--editar:hover {
+  background: #7c3aed !important;
+  transform: translateY(-1px);
+}
+
+/* Variante roja (Eliminar) */
+.cal-panel-evento-btn--eliminar {
+  background: transparent !important;
+  color: #ef4444 !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+}
+
+.cal-panel-evento-btn--eliminar:hover {
+  background: rgba(239, 68, 68, 0.08) !important;
+  transform: translateY(-1px);
+}
+
+.cal-panel-evento-btn--eliminar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* ── PRÓXIMOS EVENTOS — lista ── */
 .cal-proximos-lista {
   display: flex;
