@@ -25,8 +25,7 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
     return fallbackDefault;
   }
   
-  console.log(entrenamiento);
-  ;
+
 
   const formatearFecha = (fechaStr) => {
     try {
@@ -88,21 +87,21 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
         </h2>
 
         <div className="card-prueba-detalles-lista">
-          {/* Precio — icono: precio.png */}
+          {/* Precio */}
           <div className="card-prueba-detalle-item">
-            <img src={iconPrecio} alt="Precio" className="card-icon-asset" />
+            <IconoPrecio size={16} />
             <p>{entrenamiento.precio ? `$${entrenamiento.precio}` : 'Precio a consultar'}</p>
           </div>
 
           {/* Fecha */}
           <div className="card-prueba-detalle-item">
-            <img src={iconFecha} alt="Fecha" className="card-icon-asset" />
+            <IconoFecha size={16} />
             <p>{entrenamiento.fechaentr ? formatearFecha(entrenamiento.fechaentr) : 'Fecha a confirmar'}</p>
           </div>
 
-          {/* Cantidad / Cupos — icono: modalidad.png (mismo que sidebar Modalidad) */}
+          {/* Cantidad / Cupos */}
           <div className="card-prueba-detalle-item">
-            <img src={iconModalidad} alt="Cantidad" className="card-icon-asset" />
+            <IconoModalidad size={16} />
             <p>{entrenamiento.cantidad || entrenamiento.cantidadJugadores || entrenamiento.capacidad
               ? `${entrenamiento.cantidad || entrenamiento.cantidadJugadores || entrenamiento.capacidad} cupos`
               : 'Cupos a confirmar'}</p>
@@ -110,7 +109,7 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
 
           {/* Ubicación */}
           <div className="card-prueba-detalle-item">
-            <img src={iconUbicacion} alt="Ubicación" className="card-icon-asset" />
+            <IconoUbicacion size={16} />
             <p>{entrenamiento.ubicacion || 'Ubicación no especificada'}</p>
           </div>
         </div>
