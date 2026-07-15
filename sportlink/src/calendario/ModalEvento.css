@@ -112,7 +112,7 @@
 }
 
 .mev-req {
-  color: #8b5cf6;
+  color: #f65c5c;
 }
 
 .mev-opcional {
@@ -125,7 +125,7 @@
 .mev-bloqueado-badge {
   background: rgba(139, 92, 246, 0.12);
   border: 1px solid rgba(139, 92, 246, 0.3);
-  color: #8b5cf6;
+  color: #23e7f5;
   border-radius: 4px;
   font-size: 0.6rem;
   letter-spacing: 1px;
@@ -190,7 +190,7 @@
 
 .mev-input:focus,
 .mev-textarea:focus {
-  border-color: #8b5cf6;
+  border-color: #23e7f5;
 }
 
 .mev-input--error {
@@ -243,7 +243,7 @@
 }
 
 .mev-upload-box:hover {
-  border-color: #8b5cf6;
+  border-color: #23e7f5;
   background: rgba(139, 92, 246, 0.04);
 }
 
@@ -349,10 +349,10 @@
 }
 
 .mev-btn-guardar {
-  background: #8b5cf6;
+  background: #23e7f5;
   border: none;
   border-radius: 7px;
-  color: #fff;
+  color: #000000;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
@@ -363,21 +363,11 @@
   align-items: center;
   gap: 8px;
   transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
 }
 
 .mev-btn-guardar:hover {
-  background: #7c3aed;
+  background: #39dfeb;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
-}
-
-.mev-btn-guardar-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.6);
-  flex-shrink: 0;
 }
 
 /* ── Responsive ── */

@@ -478,7 +478,7 @@
   width: 7px;
   height: 7px;
   border-radius: 2px;
-  background: #8b5cf6;
+  background: #23e7f5;
   flex-shrink: 0;
 }
 
@@ -550,7 +550,7 @@
   width: 10px;
   height: 10px;
   border-radius: 3px;
-  background: #8b5cf6;
+  background: #23e7f5;
   flex-shrink: 0;
   box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
 }
@@ -580,7 +580,7 @@
 }
 
 .cal-panel-evento-meta-item svg {
-  color: #8b5cf6;
+  color: #23e7f5;
   opacity: 0.7;
   flex-shrink: 0;
 }
@@ -619,12 +619,12 @@
 
 /* Variante violeta (Editar) */
 .cal-panel-evento-btn--editar {
-  background: #8b5cf6 !important;
-  color: #fff !important;
+  background: #23e7f5 !important;
+  color: #000000 !important;
 }
 
 .cal-panel-evento-btn--editar:hover {
-  background: #7c3aed !important;
+  background: #23e7f5 !important;
   transform: translateY(-1px);
 }
 
@@ -673,7 +673,7 @@
   width: 9px;
   height: 9px;
   border-radius: 2px;
-  background: #8b5cf6;
+  background: #23e7f5;
   flex-shrink: 0;
 }
 
