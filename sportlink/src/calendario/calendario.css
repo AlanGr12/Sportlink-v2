@@ -11,12 +11,39 @@
 
 .cal-layout {
   display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 0;
-  max-width: 1300px;
+  grid-template-columns: 3fr 1fr;
+  gap: 32px;
+  max-width: 1500px;
   margin: 0 auto;
   padding: 40px 32px 60px;
   align-items: start;
+}
+
+.cal-left-block {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 0;
+  align-items: start;
+}
+
+@media (min-width: 1101px) {
+  .cal-left-block {
+    position: sticky;
+    top: 96px;
+    height: calc(100vh - 120px);
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .cal-left-block::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.cal-sidebar-right {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding-top: 56px;
 }
 
 /* ── SIDEBAR ── */
@@ -199,7 +226,7 @@
 
 .cal-celda {
   /* Altura fija: la celda nunca crece aunque haya muchos chips */
-  height: 90px;
+  height: 105px;
   overflow: hidden;
   border-right: 1px solid #1e1e20;
   border-bottom: 1px solid #1e1e20;
@@ -454,9 +481,17 @@
   gap: 2px;
   margin-top: 4px;
   /* Limita el bloque de chips para que no desborde la celda */
-  max-height: 56px;
+  max-height: 72px;
   overflow: hidden;
   width: 100%;
+}
+
+.cal-celda-evento-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 2px;
 }
 
 .cal-celda-evento-chip {
@@ -470,6 +505,8 @@
   height: 16px;
   padding: 0 5px 0 4px;
   max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -490,6 +527,16 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
+}
+
+.cal-celda-evento-hora {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.58rem;
+  color: #888;
+  margin-top: 1px;
+  line-height: 1;
+  padding-left: 2px;
 }
 
 .cal-celda-mas {
@@ -697,11 +744,36 @@
   letter-spacing: 0.2px;
 }
 
+.cal-btn-ver-mas {
+  background: transparent;
+  border: 1px solid #2a2a2c;
+  color: #23e7f5;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 8px;
+  transition: all 0.2s ease;
+}
+
+.cal-btn-ver-mas:hover {
+  background: rgba(35, 231, 245, 0.05);
+  border-color: #23e7f5;
+}
+
 /* ── RESPONSIVE ── */
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .cal-layout {
     grid-template-columns: 1fr;
     padding: 24px 16px 48px;
+  }
+
+  .cal-left-block {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 
   .cal-sidebar {
@@ -711,7 +783,7 @@
     flex-direction: row;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 24px;
+    margin-bottom: 0;
   }
 
   .cal-sidebar-label,
@@ -720,8 +792,12 @@
   }
 
   .cal-celda {
-    height: 62px;
+    height: 72px;
     padding: 5px 6px;
+  }
+
+  .cal-celda-evento-hora {
+    display: none;
   }
 
   .cal-mes-titulo {

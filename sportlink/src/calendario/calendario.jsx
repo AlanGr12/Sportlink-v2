@@ -3,6 +3,11 @@ import axios from 'axios';
 import Footer from '../footer/footer.jsx';
 import ModalEvento from './ModalEvento.jsx';
 import ModalDetallePrueba from './ModalDetallePrueba.jsx';
+import { IconoFecha } from '../iconos/IconoFecha.jsx';
+import { IconoUbicacion } from '../iconos/IconoUbicacion.jsx';
+import { IconoMedalla } from '../iconos/IconoMedalla.jsx';
+import { IconoEntrenamientos } from '../iconos/IconoEntrenamientos.jsx';
+import { IconoMensajes } from '../iconos/IconoMensajes.jsx';
 import './calendario.css';
 
 const API = 'http://localhost:3000/api';
@@ -92,6 +97,11 @@ function mapearEventoBackend(e) {
   };
 }
 
+function limpiarTitulo(titulo) {
+  if (!titulo) return '';
+  return titulo.replace(/^(prueba|entrenamiento|entrevista|personalizado):\s*/i, '');
+}
+
 // ── Componente principal ─────────────────────────────────────────────────────
 
 // ── Función pura: extrae el idusuario numérico de cualquier objeto de sesión ──
@@ -118,6 +128,108 @@ function resolverUserId(usuarioObj) {
   }
 }
 
+function EventoCard({ ev, eliminando, onVerPrueba, onEditar, onEliminar }) {
+  const esPersonalizado = ev.tipo?.toUpperCase() === 'PERSONALIZADO';
+  const esPrueba        = ev.tipo?.toUpperCase() === 'PRUEBA';
+
+  return (
+    <div className="cal-panel-evento">
+      {/* Imagen si tiene */}
+      {ev.imagenPreview && (
+        <div className="cal-panel-evento-img-wrap">
+          <img
+            src={ev.imagenPreview}
+            alt={ev.nombre}
+            className="cal-panel-evento-img"
+          />
+        </div>
+      )}
+      <div className="cal-panel-evento-body">
+        {/* Nombre + dot */}
+        <div className="cal-panel-evento-titulo-row">
+          <span
+            className="cal-panel-evento-dot"
+            style={{
+              background: obtenerColorPorTipo(ev.tipo),
+              boxShadow:  `0 0 8px ${obtenerColorPorTipo(ev.tipo)}66`,
+            }}
+          />
+          <h3 className="cal-panel-evento-nombre">{ev.nombre}</h3>
+        </div>
+
+        {/* Meta: fecha + hora */}
+        <div className="cal-panel-evento-meta">
+          <span className="cal-panel-evento-meta-item">
+            <IconoFecha size={12} />
+            {(() => { const f = parsearFecha(ev.fecha); return `${f.dia} de ${MESES[f.mes]} de ${f.anio}`; })()}
+          </span>
+          {ev.hora && (
+            <span className="cal-panel-evento-meta-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              {formatHora(ev.hora)}
+            </span>
+          )}
+          {/* Creador / Club */}
+          {ev.creador && (
+            <span className="cal-panel-evento-meta-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              {ev.creador}
+            </span>
+          )}
+          {/* Ubicación */}
+          {ev.ubicacion && (
+            <span className="cal-panel-evento-meta-item">
+              <IconoUbicacion size={12} />
+              {ev.ubicacion}
+            </span>
+          )}
+        </div>
+
+        {/* Descripción */}
+        {ev.descripcion && (
+          <p className="cal-panel-evento-desc">{ev.descripcion}</p>
+        )}
+
+        {/* Acciones según tipo */}
+        <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+          {/* Botón "Ver prueba" — solo eventos de tipo PRUEBA */}
+          {esPrueba && ev.datosPrueba && (
+            <button
+              className="cal-panel-evento-btn"
+              onClick={() => onVerPrueba && onVerPrueba(ev.datosPrueba)}
+            >
+              VER PRUEBA
+            </button>
+          )}
+
+          {/* Botones Editar / Eliminar — SOLO eventos personalizados */}
+          {esPersonalizado && ev.id && onEditar && onEliminar && (
+            <>
+              <button
+                className="cal-panel-evento-btn cal-panel-evento-btn--editar"
+                onClick={() => onEditar(ev)}
+              >
+                EDITAR
+              </button>
+              <button
+                className="cal-panel-evento-btn cal-panel-evento-btn--eliminar"
+                onClick={() => onEliminar(ev)}
+                disabled={eliminando}
+              >
+                {eliminando ? 'ELIMINANDO…' : 'ELIMINAR'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Calendario(props) {
   const usuario = props.usuario || JSON.parse(localStorage.getItem('usuario') || 'null');
 
@@ -138,6 +250,7 @@ export default function Calendario(props) {
   // ── Estado de eventos ────────────────────────────────────────────────────
   const [eventos,         setEventos]         = useState({});   // { 'YYYY-MM-DD': [ev, ...] }
   const [cargandoEventos, setCargandoEventos] = useState(false);
+  const [proximosVisibles, setProximosVisibles] = useState(3);
 
   // ── Estado de modales ────────────────────────────────────────────────────
   // 'libre' | 'diaBloqueado' | 'editar' | null
@@ -451,9 +564,9 @@ export default function Calendario(props) {
   return (
     <div className="cal-root" onClick={() => { setDropdownMes(false); setDropdownAnio(false); }}>
       <div className="cal-layout">
-
-        {/* ── SIDEBAR ── */}
-        <aside className="cal-sidebar">
+        <div className="cal-left-block">
+          {/* ── SIDEBAR ── */}
+          <aside className="cal-sidebar">
           <p className="cal-sidebar-label">CATEGORÍAS</p>
           {CATEGORIAS.map(cat => (
             <div key={cat.id} className="cal-cat-item">
@@ -561,32 +674,38 @@ export default function Calendario(props) {
                         {/* Chips de eventos — color dinámico según tipo */}
                         {evsDia.length > 0 && (
                           <div className="cal-celda-eventos">
-                            {evsDia.slice(0, 3).map((ev, idx) => {
+                            {evsDia.slice(0, 2).map((ev, idx) => {
                               const tipoKey = ev.tipo?.toUpperCase() || 'PERSONALIZADO';
                               return (
-                                <div
-                                  key={ev.id ?? `${clave}-${idx}`}
-                                  className="cal-celda-evento-chip"
-                                  style={{
-                                    background:   CHIP_BG_POR_TIPO[tipoKey]     || CHIP_BG_POR_TIPO.PERSONALIZADO,
-                                    borderColor:  CHIP_BORDER_POR_TIPO[tipoKey] || CHIP_BORDER_POR_TIPO.PERSONALIZADO,
-                                  }}
-                                >
-                                  <span
-                                    className="cal-celda-evento-dot"
-                                    style={{ background: obtenerColorPorTipo(ev.tipo) }}
-                                  />
-                                  <span
-                                    className="cal-celda-evento-nombre"
-                                    style={{ color: obtenerColorPorTipo(ev.tipo) }}
+                                <div key={ev.id ?? `${clave}-${idx}`} className="cal-celda-evento-wrapper">
+                                  <div
+                                    className="cal-celda-evento-chip"
+                                    style={{
+                                      background:   CHIP_BG_POR_TIPO[tipoKey]     || CHIP_BG_POR_TIPO.PERSONALIZADO,
+                                      borderColor:  CHIP_BORDER_POR_TIPO[tipoKey] || CHIP_BORDER_POR_TIPO.PERSONALIZADO,
+                                    }}
                                   >
-                                    {ev.nombre}
-                                  </span>
+                                    <span
+                                      className="cal-celda-evento-dot"
+                                      style={{ background: obtenerColorPorTipo(ev.tipo) }}
+                                    />
+                                    <span
+                                      className="cal-celda-evento-nombre"
+                                      style={{ color: obtenerColorPorTipo(ev.tipo) }}
+                                    >
+                                      {limpiarTitulo(ev.nombre)}
+                                    </span>
+                                  </div>
+                                  {ev.hora && (
+                                    <span className="cal-celda-evento-hora">
+                                      {ev.hora}
+                                    </span>
+                                  )}
                                 </div>
                               );
                             })}
-                            {evsDia.length > 3 && (
-                              <div className="cal-celda-mas">+{evsDia.length - 3} más</div>
+                            {evsDia.length > 2 && (
+                              <div className="cal-celda-mas">+{evsDia.length - 2} más</div>
                             )}
                           </div>
                         )}
@@ -597,140 +716,59 @@ export default function Calendario(props) {
               })}
             </div>
           </div>
+        </main>
+      </div>
 
-          {/* Panel día seleccionado */}
-          {diaSeleccionado && (
-            <div className="cal-panel-dia">
-              <div className="cal-panel-header">
-                <div>
-                  <p className="cal-panel-fecha-label">
-                    {nombreDiaSemana(diaSeleccionado)}, {diaSeleccionado} de {MESES[mesActual]} de {anioActual}
-                  </p>
-                  <h2 className="cal-panel-titulo">INFO DEL DÍA</h2>
-                </div>
-                <button className="cal-panel-agregar" onClick={abrirModalDia}>+</button>
-              </div>
+      {/* ── SIDEBAR DERECHA ── */}
+      <aside className="cal-sidebar-right">
+        {/* Panel día seleccionado */}
+        <div className="cal-panel-dia">
+          <div className="cal-panel-header">
+            <div>
+              <p className="cal-panel-fecha-label">
+                {diaSeleccionado 
+                  ? `${nombreDiaSemana(diaSeleccionado)}, ${diaSeleccionado} de ${MESES[mesActual]} de ${anioActual}`
+                  : "Selecciona un día"}
+              </p>
+              <h2 className="cal-panel-titulo">INFO DEL DÍA</h2>
+            </div>
+            <button 
+              className="cal-panel-agregar" 
+              onClick={abrirModalDia}
+              disabled={!diaSeleccionado}
+              style={{ opacity: !diaSeleccionado ? 0.5 : 1, cursor: !diaSeleccionado ? 'not-allowed' : 'pointer' }}
+            >
+              +
+            </button>
+          </div>
 
-              {cargandoEventos ? (
-                <div style={{ padding: '24px 0', textAlign: 'center', color: '#666', fontSize: '13px' }}>
-                  Cargando eventos…
-                </div>
+          {!diaSeleccionado ? (
+            <div className="cal-panel-vacio">
+              <p>Selecciona un día en el calendario para ver sus detalles.</p>
+            </div>
+          ) : cargandoEventos ? (
+            <div style={{ padding: '24px 0', textAlign: 'center', color: '#666', fontSize: '13px' }}>
+              Cargando eventos…
+            </div>
               ) : eventosDelDia.length === 0 ? (
                 <div className="cal-panel-vacio">
                   <p>No hay eventos para este día.</p>
                 </div>
               ) : (
                 <div className="cal-panel-eventos">
-                  {eventosDelDia.map((ev, idx) => {
-                    const esPersonalizado = ev.tipo?.toUpperCase() === 'PERSONALIZADO';
-                    const esPrueba        = ev.tipo?.toUpperCase() === 'PRUEBA';
-                    const eliminando      = eliminandoId === ev.id;
-
-                    return (
-                      <div key={ev.id ?? idx} className="cal-panel-evento">
-                        {/* Imagen si tiene */}
-                        {ev.imagenPreview && (
-                          <div className="cal-panel-evento-img-wrap">
-                            <img
-                              src={ev.imagenPreview}
-                              alt={ev.nombre}
-                              className="cal-panel-evento-img"
-                            />
-                          </div>
-                        )}
-                        <div className="cal-panel-evento-body">
-                          {/* Nombre + dot */}
-                          <div className="cal-panel-evento-titulo-row">
-                            <span
-                              className="cal-panel-evento-dot"
-                              style={{
-                                background: obtenerColorPorTipo(ev.tipo),
-                                boxShadow:  `0 0 8px ${obtenerColorPorTipo(ev.tipo)}66`,
-                              }}
-                            />
-                            <h3 className="cal-panel-evento-nombre">{ev.nombre}</h3>
-                          </div>
-
-                          {/* Meta: fecha + hora */}
-                          <div className="cal-panel-evento-meta">
-                            <span className="cal-panel-evento-meta-item">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                              </svg>
-                              {(() => { const f = parsearFecha(ev.fecha); return `${f.dia} de ${MESES[f.mes]} de ${f.anio}`; })()}
-                            </span>
-                            {ev.hora && (
-                              <span className="cal-panel-evento-meta-item">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                                </svg>
-                                {formatHora(ev.hora)}
-                              </span>
-                            )}
-                            {/* Creador / Club */}
-                            {ev.creador && (
-                              <span className="cal-panel-evento-meta-item">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                                </svg>
-                                {ev.creador}
-                              </span>
-                            )}
-                            {/* Ubicación */}
-                            {ev.ubicacion && (
-                              <span className="cal-panel-evento-meta-item">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-                                </svg>
-                                {ev.ubicacion}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Descripción */}
-                          {ev.descripcion && (
-                            <p className="cal-panel-evento-desc">{ev.descripcion}</p>
-                          )}
-
-                          {/* Acciones según tipo */}
-                          <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
-                            {/* Botón "Ver prueba" — solo eventos de tipo PRUEBA */}
-                            {esPrueba && ev.datosPrueba && (
-                              <button
-                                className="cal-panel-evento-btn"
-                                onClick={() => setPruebaDetalle(ev.datosPrueba)}
-                              >
-                                VER PRUEBA
-                              </button>
-                            )}
-
-                            {/* Botones Editar / Eliminar — SOLO eventos personalizados */}
-                            {esPersonalizado && ev.id && (
-                              <>
-                                <button
-                                  className="cal-panel-evento-btn cal-panel-evento-btn--editar"
-                                  onClick={() => abrirEdicion(ev)}
-                                >
-                                  EDITAR
-                                </button>
-                                <button
-                                  className="cal-panel-evento-btn cal-panel-evento-btn--eliminar"
-                                  onClick={() => eliminarEvento(ev)}
-                                  disabled={eliminando}
-                                >
-                                  {eliminando ? 'ELIMINANDO…' : 'ELIMINAR'}
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {eventosDelDia.map((ev, idx) => (
+                    <EventoCard
+                      key={ev.id ?? idx}
+                      ev={ev}
+                      eliminando={eliminandoId === ev.id}
+                      onVerPrueba={setPruebaDetalle}
+                      onEditar={abrirEdicion}
+                      onEliminar={eliminarEvento}
+                    />
+                  ))}
                 </div>
               )}
             </div>
-          )}
 
           {/* Próximos eventos */}
           <section className="cal-proximos">
@@ -747,30 +785,31 @@ export default function Calendario(props) {
                   <p>No hay próximos eventos programados actualmente.</p>
                 </div>
               ) : (
-                <div className="cal-proximos-lista">
-                  {proximos.slice(0, 8).map((ev, idx) => {
-                    const f = parsearFecha(ev.fecha);
-                    return (
-                      <div key={ev.id ?? idx} className="cal-proximos-item">
-                        <span
-                          className="cal-proximos-dot"
-                          style={{ background: obtenerColorPorTipo(ev.tipo) }}
-                        />
-                        <div className="cal-proximos-info">
-                          <span className="cal-proximos-nombre">{ev.nombre}</span>
-                          <span className="cal-proximos-fecha">
-                            {f.dia} de {MESES[f.mes]} de {f.anio} — {formatHora(ev.hora)}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="cal-proximos-lista" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {proximos.slice(0, proximosVisibles).map((ev, idx) => (
+                    <EventoCard
+                      key={ev.id ?? idx}
+                      ev={ev}
+                      eliminando={eliminandoId === ev.id}
+                      onVerPrueba={setPruebaDetalle}
+                      onEditar={abrirEdicion}
+                      onEliminar={eliminarEvento}
+                    />
+                  ))}
+                  {proximos.length > proximosVisibles && (
+                    <button 
+                      className="cal-btn-ver-mas"
+                      onClick={() => setProximosVisibles(v => v + 5)}
+                    >
+                      Ver más
+                    </button>
+                  )}
                 </div>
               );
             })()}
           </section>
 
-        </main>
+        </aside>
       </div>
 
       <Footer />
