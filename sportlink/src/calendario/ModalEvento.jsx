@@ -92,7 +92,7 @@ export default function ModalEvento({
     return Object.keys(e).length === 0;
   };
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
+  // ── Submit ──────────────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validar()) return;
@@ -109,10 +109,15 @@ export default function ModalEvento({
         imagenPreview: imagenPreview || null,
         imagenNombre:  imagenFile?.name || null,
       });
-    } finally {
+      // onGuardar llama cerrarModal() internamente si tiene éxito,
+      // lo que desmonta el componente. setGuardando(false) sólo
+      // se alcanza si onGuardar lanzó una excepción, en cuyo caso
+      // el modal sigue montado y el reset es necesario.
+    } catch {
       setGuardando(false);
     }
   };
+
 
   return createPortal(
     <div

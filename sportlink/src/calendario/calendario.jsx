@@ -94,21 +94,35 @@ function mapearEventoBackend(e) {
 
 // ── Componente principal ─────────────────────────────────────────────────────
 
-export default function Calendario(props) {
-  const usuario = props.usuario || JSON.parse(localStorage.getItem('usuario') || 'null');
-
-  /**
-   * Extrae el idusuario numérico del objeto usuario guardado en sesión.
-   * Cubre todas las formas posibles que puede tener el objeto:
-   *   { idusuario: 5 }  |  { idUsuario: 5 }  |  { id: 5 }
-   * Retorna un número > 0 o null.
-   */
-  const obtenerUserId = () => {
-    if (!usuario) return null;
-    const raw = usuario.idusuario ?? usuario.idUsuario ?? usuario.id ?? null;
+// ── Función pura: extrae el idusuario numérico de cualquier objeto de sesión ──
+// Recibe el objeto explícitamente para evitar cierres (closures) stale.
+// Si el objeto no tiene el campo resuelve, intenta leer del localStorage.
+function resolverUserId(usuarioObj) {
+  const intentar = (obj) => {
+    if (!obj || typeof obj !== 'object') return null;
+    const raw = obj.idusuario ?? obj.idUsuario ?? obj.id ?? null;
     const num = Number(raw);
     return (!isNaN(num) && num > 0) ? num : null;
   };
+
+  // 1er intento: objeto pasado como argumento
+  const fromArg = intentar(usuarioObj);
+  if (fromArg) return fromArg;
+
+  // 2do intento (fallback): leer directamente del localStorage
+  try {
+    const stored = JSON.parse(localStorage.getItem('usuario') || 'null');
+    return intentar(stored);
+  } catch {
+    return null;
+  }
+}
+
+export default function Calendario(props) {
+  const usuario = props.usuario || JSON.parse(localStorage.getItem('usuario') || 'null');
+
+  /** Wrapper que usa la función pura con el usuario actual del componente */
+  const obtenerUserId = () => resolverUserId(usuario);
 
   useEffect(() => {
     if (!usuario) props.cambiarVista('login');
@@ -182,12 +196,13 @@ export default function Calendario(props) {
 
   // ── Cargar eventos del backend ────────────────────────────────────────────
   const cargarEventos = useCallback(async () => {
-    if (!usuario) return;
-    const userId = obtenerUserId();
+    // Usa la función pura que hace fallback al localStorage automáticamente
+    const userId = resolverUserId(usuario);
     if (!userId) {
-      console.error('[Calendario] cargarEventos: no se pudo resolver el userId del usuario en sesión:', usuario);
+      console.error('[Calendario] cargarEventos: no se pudo resolver el userId. Objeto usuario:', usuario);
       return;
     }
+    console.log('[Calendario] cargarEventos: userId resuelto =', userId);
     setCargandoEventos(true);
     try {
       const res = await axios.get(`${API}/calendario`, {
@@ -245,12 +260,13 @@ export default function Calendario(props) {
   // ── Guardar evento (crear o editar) ──────────────────────────────────────
   const guardarEvento = async (payload) => {
     try {
-      const userId = obtenerUserId();
+      const userId = resolverUserId(usuario);
       if (!userId) {
-        console.error('[Calendario] guardarEvento: userId no resuelto, usuario en sesión:', usuario);
+        console.error('[Calendario] guardarEvento: userId no resuelto. Objeto usuario:', usuario);
         alert('Error de sesión: no se pudo identificar al usuario. Por favor, cerrá sesión y volvé a ingresar.');
         return;
       }
+      console.log('[Calendario] guardarEvento: userId resuelto =', userId);
 
       if (payload.id && modalTipo === 'editar') {
         // ── EDITAR ──
@@ -293,10 +309,15 @@ export default function Calendario(props) {
         });
 
         const backendEv = res.data;
+
+        // Normalizar la fecha: el backend puede devolver "YYYY-MM-DDTHH:mm:ss"
+        // pero la clave del mapa debe ser siempre "YYYY-MM-DD"
+        const fechaNormalizada = (backendEv.fecha || payload.fecha).split('T')[0];
+
         const nuevoEv = {
           id:           backendEv.idEvento,
           tipo:         'PERSONALIZADO',
-          fecha:        backendEv.fecha || payload.fecha,
+          fecha:        fechaNormalizada,
           hora:         backendEv.horaInicio
                           ? backendEv.horaInicio.slice(0, 5)
                           : payload.hora,
@@ -310,7 +331,12 @@ export default function Calendario(props) {
           creador:      null,
         };
 
+        // 1. Actualización optimista inmediata — el evento aparece al instante
         agregarEventoLocal(nuevoEv);
+
+        // 2. Re-fetch silencioso — sincroniza con el servidor en segundo plano
+        //    sin bloquear el cierre del modal
+        cargarEventos();
       }
 
       cerrarModal();
@@ -325,7 +351,7 @@ export default function Calendario(props) {
     if (!ev.id) return;
     if (!window.confirm(`¿Eliminar el evento "${ev.nombre}"?`)) return;
 
-    const userId = obtenerUserId();
+    const userId = resolverUserId(usuario);
     if (!userId) {
       alert('Error de sesión: no se pudo identificar al usuario.');
       return;
