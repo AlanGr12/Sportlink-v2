@@ -255,8 +255,8 @@ const Header = (props) => {
               </button>
             </li>
             <li>
-              <button className="header-nav-link" onClick={() => props.cambiarVista('jugadores')}>
-                Jugadores
+              <button className="header-nav-link" onClick={() => props.cambiarVista('clubes')}>
+                Clubes
               </button>
             </li>
             <li>

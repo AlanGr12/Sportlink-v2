@@ -3,13 +3,12 @@ import axios from 'axios'
 import '../entrenamientos/entrenamientos.css'
 import './entrenadores.css'
 import Footer from '../footer/footer.jsx'
+import { IconoUbicacion } from '../iconos/IconoUbicacion.jsx'
+import { IconoFutbol } from '../iconos/IconoFutbol.jsx'
+import { IconoBuscador } from '../iconos/IconoBuscador.jsx'
+import { IconoMedalla } from '../iconos/IconoMedalla.jsx'
+import { IconoModalidad } from '../iconos/IconoModalidad.jsx'
 
-// Iconos
-import iconFutbol from '../assets/futbol.png'
-import iconUbicacion from '../assets/ubicacion.png'
-import iconModalidad from '../assets/modalidad.png'
-import iconMedalla from '../assets/medalla.png'
-import iconBuscador from '../assets/buscador.png'
 
 // Lista de deportes para el filtro (misma que PaginaEntrenamientos)
 const deportesDisponibles = [
@@ -102,7 +101,7 @@ function EntrenadoresView(props) {
 
   if (loading) {
     return (
-      <div className="pagina-entrenadores">
+      <div className="pagina-entrenamientos">
         <div className="entrenadores-loading-box">
           <div className="entrenadores-spinner"></div>
           <span>Cargando entrenadores...</span>
@@ -113,7 +112,7 @@ function EntrenadoresView(props) {
 
   if (error) {
     return (
-      <div className="pagina-entrenadores">
+      <div className="pagina-entrenamientos">
         <div className="entrenadores-error-box">
           <span style={{ fontSize: '48px' }}>⚠️</span>
           <p>{error}</p>
@@ -124,11 +123,11 @@ function EntrenadoresView(props) {
 
   return (
     <>
-      <div className="pagina-entrenadores">
-        <div className="entrenadores-layout">
+      <div className="pagina-entrenamientos">
+        <div className="entrenamientos-layout">
 
           {/* ═══════════════════════════════════════════════════
-              SIDEBAR FILTROS (misma estructura que entrenamientos)
+              SIDEBAR FILTROS
               ═══════════════════════════════════════════════════ */}
           <aside className="filtros-sidebar">
             <div>
@@ -142,10 +141,10 @@ function EntrenadoresView(props) {
                 className={`filtro-header ${sidebarExpandido.deporte ? 'abierto' : ''}`}
                 onClick={() => toggleSidebarSeccion('deporte')}
               >
-                <span><img src={iconFutbol} alt="Deporte" className="icon-small" /> Deportes</span>
+                <span><IconoFutbol size={16} color="currentColor" className="icon-small" /> Deportes</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </div>
-              {sidebarExpandido.deporte && (
+              <div className={`filtro-contenido-wrapper ${sidebarExpandido.deporte ? 'open' : ''}`}>
                 <div className="filtro-contenido">
                   <select
                     className="filtro-select"
@@ -158,7 +157,7 @@ function EntrenadoresView(props) {
                     ))}
                   </select>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Filtro Ubicación */}
@@ -167,10 +166,10 @@ function EntrenadoresView(props) {
                 className={`filtro-header ${sidebarExpandido.ubicacion ? 'abierto' : ''}`}
                 onClick={() => toggleSidebarSeccion('ubicacion')}
               >
-                <span><img src={iconUbicacion} alt="Ubicación" className="icon-small" /> Ubicación</span>
+                <span><IconoUbicacion size={16} color="currentColor" className="icon-small" /> Ubicación</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </div>
-              {sidebarExpandido.ubicacion && (
+              <div className={`filtro-contenido-wrapper ${sidebarExpandido.ubicacion ? 'open' : ''}`}>
                 <div className="filtro-contenido">
                   <input
                     type="text"
@@ -180,7 +179,7 @@ function EntrenadoresView(props) {
                     onChange={(e) => setFiltroUbicacion(e.target.value)}
                   />
                 </div>
-              )}
+              </div>
             </div>
 
             <button className="btn-aplicar-filtros" onClick={aplicarFiltros}>
@@ -194,26 +193,35 @@ function EntrenadoresView(props) {
           {/* ═══════════════════════════════════════════════════
               CONTENIDO PRINCIPAL
               ═══════════════════════════════════════════════════ */}
-          <main className="entrenadores-main">
+          <main className="entrenamientos-main">
 
-            {/* Header: Título + Buscador en la misma fila */}
-            <div className="entrenadores-header-row">
-              <h1 className="entrenadores-titulo-principal">Entrenadores</h1>
-              <div className="entrenadores-buscador">
-                <img src={iconBuscador} alt="Buscar" className="icon-small entrenadores-buscador-icono" />
-                <input
-                  type="text"
-                  className="entrenadores-buscador-input"
-                  placeholder="Buscar entrenadores, deportes..."
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                />
-              </div>
+            <div className="entrenamientos-header">
+              <h1 className="entrenamientos-titulo-principal">Entrenadores</h1>
+              <p className="entrenamientos-descripcion">
+                Encontrá el entrenador ideal para potenciar tu rendimiento deportivo.
+              </p>
+            </div>
+
+            {/* Barra de Búsqueda */}
+            <div className="buscador-container">
+              <IconoBuscador size={16} color="currentColor" className="icon-small buscador-img" />
+              <input
+                type="text"
+                className="buscador-input"
+                placeholder="Buscar entrenadores, deportes, ubicación..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+              />
             </div>
 
             {/* Grilla de tarjetas */}
             <div className="grid-entrenadores">
-              {entrenadoresFiltrados.map((Entrenador) => (
+              {entrenadoresFiltrados.length === 0 ? (
+                <div className="entrenadores-empty">
+                  <p>No se encontraron entrenadores con los filtros aplicados.</p>
+                </div>
+              ) : (
+                entrenadoresFiltrados.map((Entrenador) => (
                 <div key={Entrenador.identrenador} className="card-entrenador">
 
                   {/* ── Imagen (mitad superior) ── */}
@@ -243,13 +251,13 @@ function EntrenadoresView(props) {
                     <div className="card-entrenador-pills">
                       {Entrenador.deportes.map((d, idx) => (
                         <span key={idx} className="pill-info">
-                          <img src={iconMedalla} alt="" className="pill-icon" />
+                          <IconoMedalla size={14} color="currentColor" className="pill-icon" />
                           {d.deporte}
                         </span>
                       ))}
                       {Entrenador.experiencia && (
                         <span className="pill-info">
-                          <img src={iconModalidad} alt="" className="pill-icon" />
+                          <IconoModalidad size={14} color="currentColor" className="pill-icon" />
                           {Entrenador.experiencia}
                         </span>
                       )}
@@ -258,7 +266,7 @@ function EntrenadoresView(props) {
                     {/* Ubicación */}
                     {Entrenador.ubicacion && (
                       <p className="card-entrenador-ubicacion">
-                        <img src={iconUbicacion} alt="Ubicación" className="pill-icon" />
+                        <IconoUbicacion size={16} color="currentColor" className="pill-icon" />
                         {Entrenador.ubicacion}
                       </p>
                     )}
@@ -271,7 +279,8 @@ function EntrenadoresView(props) {
                   </div>
 
                 </div>
-              ))}
+                ))
+              )}
             </div>
 
           </main>

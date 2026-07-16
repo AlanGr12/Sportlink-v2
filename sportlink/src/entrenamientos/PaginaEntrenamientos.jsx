@@ -341,7 +341,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
               <span><IconoUbicacion size={16} color="currentColor" className="icon-small" /> Zona</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
-            {sidebarExpandido.zona && (
+            <div className={`filtro-contenido-wrapper ${sidebarExpandido.zona ? 'open' : ''}`}>
               <div className="filtro-contenido">
                 <input 
                   type="text" 
@@ -351,7 +351,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
                   onChange={(e) => setFiltroZona(e.target.value)}
                 />
               </div>
-            )}
+            </div>
           </div>
 
           {/* Filtro Modalidad/Deporte */}
@@ -363,7 +363,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
               <span><IconoModalidad size={16} color="currentColor" className="icon-small" /> Modalidad</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
-            {sidebarExpandido.modalidad && (
+            <div className={`filtro-contenido-wrapper ${sidebarExpandido.modalidad ? 'open' : ''}`}>
               <div className="filtro-contenido">
                 <select 
                   className="filtro-select"
@@ -375,7 +375,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
                   <option value="individual">Individual</option>
                 </select>
               </div>
-            )}
+            </div>
           </div>
 
           <div className="filtro-grupo">
@@ -386,7 +386,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
               <span><IconoFutbol size={16} color="currentColor" className="icon-small" /> Deporte</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
-            {sidebarExpandido.deporte && (
+            <div className={`filtro-contenido-wrapper ${sidebarExpandido.deporte ? 'open' : ''}`}>
               <div className="filtro-contenido">
                 <select 
                   className="filtro-select"
@@ -399,7 +399,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
                   ))}
                 </select>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Filtro Horario/Fecha */}
@@ -411,7 +411,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
               <span><IconoFecha size={16} color="currentColor" className="icon-small" /> Fechas</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
-            {sidebarExpandido.horario && (
+            <div className={`filtro-contenido-wrapper ${sidebarExpandido.horario ? 'open' : ''}`}>
               <div className="filtro-contenido">
                 <input 
                   type="date" 
@@ -426,7 +426,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
                   onChange={(e) => setFiltroFechaHasta(e.target.value)}
                 />
               </div>
-            )}
+            </div>
           </div>
 
           <button className="btn-aplicar-filtros" onClick={aplicarFiltros}>

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import Footer from '../footer/footer.jsx';
 import ModalEvento from './ModalEvento.jsx';
 import ModalDetallePrueba from './ModalDetallePrueba.jsx';
 import { IconoFecha } from '../iconos/IconoFecha.jsx';
@@ -9,6 +8,7 @@ import { IconoMedalla } from '../iconos/IconoMedalla.jsx';
 import { IconoEntrenamientos } from '../iconos/IconoEntrenamientos.jsx';
 import { IconoMensajes } from '../iconos/IconoMensajes.jsx';
 import './calendario.css';
+import Footer from '../footer/footer.jsx';
 
 const API = 'http://localhost:3000/api';
 
@@ -76,6 +76,30 @@ function obtenerColorPorTipo(tipo) {
   return COLOR_POR_TIPO[tipo?.toUpperCase()] || '#8b5cf6';
 }
 
+function esEventoPasado(fechaStr, horaStr) {
+  if (!fechaStr) return false;
+  const ahora = new Date();
+  
+  const anio = ahora.getFullYear();
+  const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+  const dia = String(ahora.getDate()).padStart(2, '0');
+  const hoyStr = `${anio}-${mes}-${dia}`;
+  
+  if (fechaStr < hoyStr) return true;
+  if (fechaStr > hoyStr) return false;
+  
+  // Si es hoy, comparar hora
+  if (!horaStr) return false;
+  const [hEvent, mEvent] = horaStr.split(':').map(Number);
+  const hNow = ahora.getHours();
+  const mNow = ahora.getMinutes();
+  
+  if (hEvent < hNow) return true;
+  if (hEvent === hNow && mEvent < mNow) return true;
+  
+  return false;
+}
+
 // ── Mapeo de evento del backend → objeto normalizado para el frontend ─────────
 function mapearEventoBackend(e) {
   let fechaStr = e.fecha;
@@ -131,9 +155,10 @@ function resolverUserId(usuarioObj) {
 function EventoCard({ ev, eliminando, onVerPrueba, onEditar, onEliminar }) {
   const esPersonalizado = ev.tipo?.toUpperCase() === 'PERSONALIZADO';
   const esPrueba        = ev.tipo?.toUpperCase() === 'PRUEBA';
+  const esPasado        = esEventoPasado(ev.fecha, ev.hora);
 
   return (
-    <div className="cal-panel-evento">
+    <div className={`cal-panel-evento ${esPasado ? 'cal-panel-evento--pasado' : ''}`}>
       {/* Imagen si tiene */}
       {ev.imagenPreview && (
         <div className="cal-panel-evento-img-wrap">
@@ -251,6 +276,9 @@ export default function Calendario(props) {
   const [eventos,         setEventos]         = useState({});   // { 'YYYY-MM-DD': [ev, ...] }
   const [cargandoEventos, setCargandoEventos] = useState(false);
   const [proximosVisibles, setProximosVisibles] = useState(3);
+  const [infoVisibles, setInfoVisibles] = useState(3);
+  const [infoAbierto, setInfoAbierto] = useState(true);
+  const [proximosAbierto, setProximosAbierto] = useState(true);
 
   // ── Estado de modales ────────────────────────────────────────────────────
   // 'libre' | 'diaBloqueado' | 'editar' | null
@@ -526,6 +554,8 @@ export default function Calendario(props) {
 
   const handleDiaClick = (dia) => {
     setDiaSeleccionado(dia);
+    setInfoVisibles(3);
+    setInfoAbierto(true);
     if (dropdownMes) setDropdownMes(false);
     if (dropdownAnio) setDropdownAnio(false);
   };
@@ -676,10 +706,11 @@ export default function Calendario(props) {
                           <div className="cal-celda-eventos">
                             {evsDia.slice(0, 2).map((ev, idx) => {
                               const tipoKey = ev.tipo?.toUpperCase() || 'PERSONALIZADO';
+                              const esPasado = esEventoPasado(ev.fecha, ev.hora);
                               return (
                                 <div key={ev.id ?? `${clave}-${idx}`} className="cal-celda-evento-wrapper">
                                   <div
-                                    className="cal-celda-evento-chip"
+                                    className={`cal-celda-evento-chip ${esPasado ? 'cal-celda-evento-chip--pasado' : ''}`}
                                     style={{
                                       background:   CHIP_BG_POR_TIPO[tipoKey]     || CHIP_BG_POR_TIPO.PERSONALIZADO,
                                       borderColor:  CHIP_BORDER_POR_TIPO[tipoKey] || CHIP_BORDER_POR_TIPO.PERSONALIZADO,
@@ -722,15 +753,26 @@ export default function Calendario(props) {
       {/* ── SIDEBAR DERECHA ── */}
       <aside className="cal-sidebar-right">
         {/* Panel día seleccionado */}
-        <div className="cal-panel-dia">
+        <div className={`cal-panel-dia ${infoAbierto ? 'cal-panel--open' : 'cal-panel--closed'}`}>
           <div className="cal-panel-header">
-            <div>
+            <div 
+              className="cal-panel-header-clickable" 
+              onClick={() => diaSeleccionado && setInfoAbierto(!infoAbierto)}
+              style={{ cursor: diaSeleccionado ? 'pointer' : 'default' }}
+            >
               <p className="cal-panel-fecha-label">
                 {diaSeleccionado 
                   ? `${nombreDiaSemana(diaSeleccionado)}, ${diaSeleccionado} de ${MESES[mesActual]} de ${anioActual}`
                   : "Selecciona un día"}
               </p>
-              <h2 className="cal-panel-titulo">INFO DEL DÍA</h2>
+              <h2 className="cal-panel-titulo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                INFO DEL DÍA
+                {diaSeleccionado && (
+                  <svg className={`cal-section-arrow ${infoAbierto ? 'open' : ''}`} viewBox="0 0 10 6" fill="none">
+                    <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                )}
+              </h2>
             </div>
             <button 
               className="cal-panel-agregar" 
@@ -742,21 +784,23 @@ export default function Calendario(props) {
             </button>
           </div>
 
-          {!diaSeleccionado ? (
-            <div className="cal-panel-vacio">
-              <p>Selecciona un día en el calendario para ver sus detalles.</p>
-            </div>
-          ) : cargandoEventos ? (
-            <div style={{ padding: '24px 0', textAlign: 'center', color: '#666', fontSize: '13px' }}>
-              Cargando eventos…
-            </div>
+          <div className={`cal-collapsible-wrapper ${infoAbierto ? 'open' : ''}`}>
+            <div className="cal-collapsible-content">
+              {!diaSeleccionado ? (
+                <div className="cal-panel-vacio">
+                  <p>Selecciona un día en el calendario para ver sus detalles.</p>
+                </div>
+              ) : cargandoEventos ? (
+                <div style={{ padding: '24px 0', textAlign: 'center', color: '#666', fontSize: '13px' }}>
+                  Cargando eventos…
+                </div>
               ) : eventosDelDia.length === 0 ? (
                 <div className="cal-panel-vacio">
                   <p>No hay eventos para este día.</p>
                 </div>
               ) : (
                 <div className="cal-panel-eventos">
-                  {eventosDelDia.map((ev, idx) => (
+                  {eventosDelDia.slice(0, infoVisibles).map((ev, idx) => (
                     <EventoCard
                       key={ev.id ?? idx}
                       ev={ev}
@@ -766,53 +810,98 @@ export default function Calendario(props) {
                       onEliminar={eliminarEvento}
                     />
                   ))}
+                  {(eventosDelDia.length > 3 || infoVisibles > 3) && (
+                    <div className="cal-pagination-container">
+                      {eventosDelDia.length > infoVisibles && (
+                        <button 
+                          className="cal-btn-ver-mas"
+                          onClick={() => setInfoVisibles(v => v + 5)}
+                        >
+                          Ver más
+                        </button>
+                      )}
+                      {infoVisibles > 3 && (
+                        <button 
+                          className="cal-btn-ver-menos"
+                          onClick={() => setInfoVisibles(3)}
+                        >
+                          Mostrar menos
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
+          </div>
+        </div>
 
-          {/* Próximos eventos */}
-          <section className="cal-proximos">
-            <h2 className="cal-proximos-titulo">PRÓXIMOS EVENTOS</h2>
-            {(() => {
-              const hoyStr = `${hoy.getFullYear()}-${padNum(hoy.getMonth()+1)}-${padNum(hoy.getDate())}`;
-              const proximos = Object.entries(eventos)
-                .filter(([fecha]) => fecha >= hoyStr)
-                .sort(([a],[b]) => a.localeCompare(b))
-                .flatMap(([, evs]) => evs);
+        {/* Próximos eventos */}
+        <section className={`cal-proximos ${proximosAbierto ? 'cal-panel--open' : 'cal-panel--closed'}`}>
+          <div className="cal-proximos-header" onClick={() => setProximosAbierto(!proximosAbierto)}>
+            <h2 className="cal-proximos-titulo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              PRÓXIMOS EVENTOS
+              <svg className={`cal-section-arrow ${proximosAbierto ? 'open' : ''}`} viewBox="0 0 10 6" fill="none">
+                <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </h2>
+          </div>
+          
+          <div className={`cal-collapsible-wrapper ${proximosAbierto ? 'open' : ''}`}>
+            <div className="cal-collapsible-content">
+              {(() => {
+                const hoyStr = `${hoy.getFullYear()}-${padNum(hoy.getMonth()+1)}-${padNum(hoy.getDate())}`;
+                const proximos = Object.entries(eventos)
+                  .filter(([fecha]) => fecha >= hoyStr)
+                  .sort(([a],[b]) => a.localeCompare(b))
+                  .flatMap(([, evs]) => evs);
 
-              return proximos.length === 0 ? (
-                <div className="cal-proximos-vacio">
-                  <p>No hay próximos eventos programados actualmente.</p>
-                </div>
-              ) : (
-                <div className="cal-proximos-lista" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {proximos.slice(0, proximosVisibles).map((ev, idx) => (
-                    <EventoCard
-                      key={ev.id ?? idx}
-                      ev={ev}
-                      eliminando={eliminandoId === ev.id}
-                      onVerPrueba={setPruebaDetalle}
-                      onEditar={abrirEdicion}
-                      onEliminar={eliminarEvento}
-                    />
-                  ))}
-                  {proximos.length > proximosVisibles && (
-                    <button 
-                      className="cal-btn-ver-mas"
-                      onClick={() => setProximosVisibles(v => v + 5)}
-                    >
-                      Ver más
-                    </button>
-                  )}
-                </div>
-              );
-            })()}
-          </section>
-
-        </aside>
+                return proximos.length === 0 ? (
+                  <div className="cal-proximos-vacio">
+                    <p>No hay próximos eventos programados actualmente.</p>
+                  </div>
+                ) : (
+                  <div className="cal-proximos-lista" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {proximos.slice(0, proximosVisibles).map((ev, idx) => (
+                      <EventoCard
+                        key={ev.id ?? idx}
+                        ev={ev}
+                        eliminando={eliminandoId === ev.id}
+                        onVerPrueba={setPruebaDetalle}
+                        onEditar={abrirEdicion}
+                        onEliminar={eliminarEvento}
+                      />
+                    ))}
+                    {(proximos.length > 3 || proximosVisibles > 3) && (
+                      <div className="cal-pagination-container">
+                        {proximos.length > proximosVisibles && (
+                          <button 
+                            className="cal-btn-ver-mas"
+                            onClick={() => setProximosVisibles(v => v + 5)}
+                          >
+                            Ver más
+                          </button>
+                        )}
+                        {proximosVisibles > 3 && (
+                          <button 
+                            className="cal-btn-ver-menos"
+                            onClick={() => setProximosVisibles(3)}
+                          >
+                            Mostrar menos
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </section>
+      </aside>
       </div>
 
-      <Footer />
+            <Footer />
 
       {/* ── Modales de creación / edición ── */}
       {modalTipo === 'libre' && (

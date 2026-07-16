@@ -75,7 +75,7 @@ function MenuPruebas({
           </span>
           <Chevron />
         </div>
-        {expandido.zona && (
+        <div className={`filtro-contenido-wrapper ${expandido.zona ? "open" : ""}`}>
           <div className="filtro-contenido">
             <select
               className="filtro-select"
@@ -91,7 +91,7 @@ function MenuPruebas({
               <option value="Interior">Interior</option>
             </select>
           </div>
-        )}
+        </div>
       </div>
 
       {/* ── CATEGORÍA (en lugar de Modalidad) ────────── */}
@@ -106,7 +106,7 @@ function MenuPruebas({
           </span>
           <Chevron />
         </div>
-        {expandido.categoria && (
+        <div className={`filtro-contenido-wrapper ${expandido.categoria ? "open" : ""}`}>
           <div className="filtro-contenido">
             <select
               className="filtro-select"
@@ -119,7 +119,7 @@ function MenuPruebas({
               <option value="Juveniles">Juveniles</option>
             </select>
           </div>
-        )}
+        </div>
       </div>
 
       {/* ── DEPORTE (lista completa de 15) ───────────── */}
@@ -134,7 +134,7 @@ function MenuPruebas({
           </span>
           <Chevron />
         </div>
-        {expandido.deporte && (
+        <div className={`filtro-contenido-wrapper ${expandido.deporte ? "open" : ""}`}>
           <div className="filtro-contenido">
             <select
               className="filtro-select"
@@ -149,7 +149,7 @@ function MenuPruebas({
               ))}
             </select>
           </div>
-        )}
+        </div>
       </div>
 
       {/* ── FECHAS ───────────────────────────────────── */}
@@ -164,7 +164,7 @@ function MenuPruebas({
           </span>
           <Chevron />
         </div>
-        {expandido.horario && (
+        <div className={`filtro-contenido-wrapper ${expandido.horario ? "open" : ""}`}>
           <div className="filtro-contenido">
             <input
               type="date"
@@ -179,7 +179,7 @@ function MenuPruebas({
               onChange={(e) => setFechaHasta(e.target.value)}
             />
           </div>
-        )}
+        </div>
       </div>
 
       <button className="btn-aplicar-filtros" onClick={onAplicar}>

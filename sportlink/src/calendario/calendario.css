@@ -27,23 +27,54 @@
 }
 
 @media (min-width: 1101px) {
-  .cal-left-block {
-    position: sticky;
-    top: 96px;
-    height: calc(100vh - 120px);
-    overflow-y: auto;
-    scrollbar-width: none;
+  .cal-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding-top: 80px; /* espacio para header fijo */
+    height: 100vh;
+    box-sizing: border-box;
+    overflow: hidden;
   }
-  .cal-left-block::-webkit-scrollbar {
-    display: none;
+  .cal-layout {
+    height: 100%;
+    grid-template-columns: 3fr 1fr;
+    align-items: stretch;
+    padding: 20px 32px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .cal-left-block {
+    position: static;
+    height: 100%;
+    overflow: hidden;
+  }
+  .cal-sidebar-right {
+    height: 100%;
+    overflow-y: auto;
+    padding-top: 0;
+    padding-bottom: 40px;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2a2c transparent;
+  }
+  .cal-sidebar-right::-webkit-scrollbar {
+    width: 6px;
+  }
+  .cal-sidebar-right::-webkit-scrollbar-thumb {
+    background-color: #2a2a2c;
+    border-radius: 3px;
   }
 }
 
 .cal-sidebar-right {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 12px; /* espacio muy chico entre cuadros */
   padding-top: 56px;
+  transition: gap 0.3s ease;
 }
 
 /* ── SIDEBAR ── */
@@ -291,12 +322,17 @@
 
 /* ── PANEL DÍA ── */
 .cal-panel-dia {
-  margin-top: 20px;
+  margin-top: 0;
   background: #141415;
   border: 1px solid #222224;
   border-radius: 10px;
   padding: 24px 28px;
   animation: panelSlide 0.18s ease;
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s;
+}
+
+.cal-panel-dia.cal-panel--closed {
+  padding-bottom: 20px;
 }
 
 @keyframes panelSlide {
@@ -309,6 +345,15 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 20px;
+  transition: margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cal-panel--closed .cal-panel-header {
+  margin-bottom: 0;
+}
+
+.cal-panel-header-clickable {
+  user-select: none;
 }
 
 .cal-panel-fecha-label {
@@ -453,16 +498,43 @@
 
 /* ── PRÓXIMOS EVENTOS ── */
 .cal-proximos {
-  margin-top: 48px;
+  margin-top: 0;
+  background: #141415;
+  border: 1px solid #222224;
+  border-radius: 10px;
+  padding: 24px 28px;
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s;
+}
+
+.cal-proximos.cal-panel--closed {
+  padding-bottom: 20px;
+}
+
+.cal-proximos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 20px;
+  transition: margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cal-panel--closed .cal-proximos-header {
+  margin-bottom: 0;
 }
 
 .cal-proximos-titulo {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.6rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
   color: #e8e8e8;
-  margin: 0 0 24px 0;
+  margin: 0;
+}
+
+.cal-proximos-header:hover .cal-proximos-titulo {
+  color: #23e7f5;
 }
 
 .cal-proximos-vacio {
@@ -744,7 +816,16 @@
   letter-spacing: 0.2px;
 }
 
-.cal-btn-ver-mas {
+.cal-pagination-container {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 14px;
+}
+
+.cal-btn-ver-mas,
+.cal-btn-ver-menos {
+  flex: 1;
   background: transparent;
   border: 1px solid #2a2a2c;
   color: #23e7f5;
@@ -754,14 +835,105 @@
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-  width: 100%;
-  margin-top: 8px;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.cal-btn-ver-mas:hover {
+.cal-btn-ver-mas:hover,
+.cal-btn-ver-menos:hover {
   background: rgba(35, 231, 245, 0.05);
   border-color: #23e7f5;
+}
+
+.cal-btn-ver-menos {
+  color: #a0aec0;
+  border-color: #2a2a2c;
+}
+
+.cal-btn-ver-menos:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: #4a5568;
+}
+
+/* Collapsible sections */
+.cal-section-arrow {
+  width: 10px;
+  height: 6px;
+  color: #555;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+  margin-left: 8px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.cal-section-arrow.open {
+  transform: rotate(180deg);
+  color: #23e7f5;
+}
+
+.cal-panel-header-clickable:hover .cal-section-arrow {
+  color: #23e7f5;
+}
+
+.cal-collapsible-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.cal-collapsible-wrapper.open {
+  grid-template-rows: 1fr;
+}
+
+.cal-collapsible-content {
+  min-height: 0;
+}
+
+.cal-panel-evento {
+  background: #0f1012;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s, opacity 0.2s;
+  animation: cardFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Past events visual indicator */
+.cal-panel-evento--pasado {
+  opacity: 0.55;
+  filter: grayscale(45%);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.cal-panel-evento--pasado:hover {
+  opacity: 0.85;
+  filter: grayscale(10%);
+}
+
+.cal-celda-evento-chip--pasado {
+  opacity: 0.5;
+  filter: grayscale(40%);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.cal-celda-evento-chip--pasado:hover {
+  opacity: 0.9;
+  filter: grayscale(0%);
 }
 
 /* ── RESPONSIVE ── */
