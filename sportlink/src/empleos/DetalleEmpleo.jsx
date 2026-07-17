@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { IconoUbicacion } from "../iconos/IconoUbicacion.jsx";
 import { IconoEmpleos } from "../iconos/IconoEmpleos.jsx";
@@ -80,9 +80,53 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
   const [enviando, setEnviando] = useState(false);
   const [errorCarga, setErrorCarga] = useState(null);
   const [toastMensaje, setToastMensaje] = useState(null);
+  const [exito, setExito] = useState(false);
+
+  // Estados para entrenadores inscritos
+  const [postulantes, setPostulantes] = useState([]);
+  const [postulantesLoading, setPostulantesLoading] = useState(false);
+  const [postulantesError, setPostulantesError] = useState("");
 
   const esEntrenador = usuario?.tipousuario === "entrenador";
   const idEntrenadorSesion = usuario?.identrenador || usuario?.idEntrenador;
+
+  // Obtener postulantes si el usuario es club
+  useEffect(() => {
+    if (usuario?.tipousuario !== "club" || !empleo?.idempleo) {
+      setPostulantes([]);
+      setPostulantesError("");
+      setPostulantesLoading(false);
+      return;
+    }
+
+    let montado = true;
+    const fetchPostulantes = async () => {
+      setPostulantesLoading(true);
+      setPostulantesError("");
+      try {
+        const res = await axios.get("http://localhost:3000/api/inscripcionesempleo", {
+          params: { idempleo: empleo.idempleo }
+        });
+        if (!montado) return;
+        // Filtrar postulaciones activas (estado === true)
+        const activas = Array.isArray(res.data)
+          ? res.data.filter(p => p.estado === true)
+          : [];
+        setPostulantes(activas);
+      } catch (err) {
+        console.error("[DetalleEmpleo] Error al buscar postulantes:", err);
+        if (montado) setPostulantesError("No se pudieron cargar los postulantes.");
+      } finally {
+        if (montado) setPostulantesLoading(false);
+      }
+    };
+
+    fetchPostulantes();
+
+    return () => {
+      montado = false;
+    };
+  }, [empleo?.idempleo, usuario]);
 
   const handlePostularseSubmit = async (e) => {
     e.preventDefault();
@@ -117,7 +161,7 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
       }
 
       setToastMensaje("¡Te has postulado con éxito!");
-      setModalAbierto(false);
+      setExito(true);
       setArchivoPDF(null);
       
       // Limpiar toast después de 4 segundos
@@ -247,6 +291,66 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
         </div>
       )}
 
+      {/* ── SECCIÓN DE POSTULANTES (solo visible para clubes) ── */}
+      {usuario?.tipousuario === "club" && (
+        <div className="detalle-empleo-seccion">
+          <h3 className="detalle-empleo-seccion-titulo">
+            <IconoEmpleos size={16} />
+            Postulantes Inscriptos ({postulantes.length})
+          </h3>
+          {postulantesLoading ? (
+            <div className="postulantes-loading">Cargando postulantes...</div>
+          ) : postulantesError ? (
+            <div className="form-error-banner">{postulantesError}</div>
+          ) : postulantes.length === 0 ? (
+            <div className="postulantes-vacio text-zinc-400 text-xs italic">Aún no hay entrenadores postulados.</div>
+          ) : (
+            <div className="postulantes-lista mt-3">
+              {postulantes.map((postulado, index) => {
+                const entrenador = postulado.entrenador || postulado.entrenadores || postulado;
+                const nombreCompleto = (entrenador?.nombre && entrenador?.apellido)
+                  ? `${entrenador.nombre} ${entrenador.apellido}`
+                  : (entrenador?.nombre || entrenador?.apellido || "Entrenador");
+
+                const deportes = Array.isArray(entrenador?.entrenadoresxdeportes)
+                  ? entrenador.entrenadoresxdeportes.map(d => d.deportes?.deporte || d.deporte).filter(Boolean).join(', ')
+                  : (entrenador?.deporte || "No especificado");
+
+                const cvUrl = entrenador?.cv || postulado?.cv;
+
+                return (
+                  <div key={entrenador?.identrenador || index} className="postulante-card mb-2" style={{ display: 'flex', alignItems: 'center', gap: '14px', backgroundColor: '#1a1d1e', border: '1px solid var(--border-light)', borderRadius: '6px', padding: '12px' }}>
+                    {entrenador?.fotoperfil ? (
+                      <img src={entrenador.fotoperfil} alt={nombreCompleto} className="postulante-foto" style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--primary)', flexShrink: 0 }} />
+                    ) : (
+                      <div className="postulante-foto-fallback" style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'var(--bg-card)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyCenter: 'center', fontWeight: 700, fontSize: '18px', border: '1.5px solid var(--border-light)', flexShrink: 0, justifyContent: 'center' }}>
+                        {nombreCompleto.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="postulante-info" style={{ flexGrow: 1, minWidth: 0 }}>
+                      <h4 className="postulante-nombre" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-white)', margin: '0 0 6px 0' }}>{nombreCompleto}</h4>
+                      <div className="postulante-detalles" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px' }}>
+                        <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}><span style={{ fontWeight: 600, color: 'var(--text-white)' }}>🏅 Deportes:</span> {deportes}</p>
+                        <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--text-white)' }}>📄 CV:</span>{" "}
+                          {cvUrl ? (
+                            <a href={cvUrl} target="_blank" rel="noopener noreferrer" className="text-[#00f3ff] hover:underline font-semibold" style={{ color: '#00f3ff', fontWeight: 600 }}>
+                              Ver PDF
+                            </a>
+                          ) : (
+                            "No adjuntado"
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── FOOTER CON BOTONES ─────────────────────────────── */}
       <div className="detalle-empleo-footer">
         <button className="btn-empleo" type="button">
@@ -261,7 +365,7 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
           <IconoCV size={14} />
           {" "}CV ADJUNTADO
         </button>
-        {yaPostulado ? (
+        {usuario?.tipousuario === "club" ? null : yaPostulado ? (
           <button className="btn-empleo btn-empleo-postularse opacity-50 cursor-not-allowed" type="button" disabled>
             YA POSTULADO
           </button>
@@ -277,6 +381,7 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
               setModalAbierto(true);
               setArchivoPDF(null);
               setErrorCarga(null);
+              setExito(false);
             }}
           >
             POSTULARSE
@@ -296,7 +401,7 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
 
       {/* ── POP-UP MODAL DE POSTULACIÓN ─────────────────────── */}
       {modalAbierto && (
-        <div className="modal-prueba-overlay" onClick={() => setModalAbierto(false)}>
+        <div className="modal-prueba-overlay" onClick={() => { setModalAbierto(false); setExito(false); }}>
           <div className="modal-prueba-contenedor" onClick={(e) => e.stopPropagation()}>
             
             {/* Header del modal */}
@@ -306,7 +411,7 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
               </h3>
               <button 
                 className="modal-prueba-cerrar" 
-                onClick={() => setModalAbierto(false)}
+                onClick={() => { setModalAbierto(false); setExito(false); }}
                 disabled={enviando}
               >
                 ×
@@ -315,174 +420,200 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
 
             {/* Cuerpo del modal */}
             <div className="modal-prueba-cuerpo">
-              
-              {/* Fachada o Logo del Club */}
-              {empleo.club?.fotoperfil ? (
-                <img
-                  src={empleo.club.fotoperfil}
-                  alt={empleo.club?.nombre || "Club"}
-                  className="modal-prueba-banner"
-                  style={{ objectFit: "contain", backgroundColor: "#161819" }}
-                />
-              ) : (
-                <div className="modal-prueba-banner-fallback">
-                  Sin logo disponible
-                </div>
-              )}
-
-              {/* Título de la vacante */}
-              <h2 className="modal-prueba-club">
-                {empleo.nombre || "Vacante sin título"}
-              </h2>
-              <p className="text-xs text-emerald-400 font-semibold uppercase tracking-wider" style={{ marginTop: "-12px" }}>
-                {empleo.club?.nombre || "Club Desconocido"}
-              </p>
-
-              {/* Grilla de especificaciones del empleo */}
-              <div className="modal-prueba-specs">
-                <div className="modal-prueba-spec-item">
-                  <span className="modal-prueba-spec-label">
-                    <IconoDeporte size={16} color="currentColor" />
-                    Deporte
-                  </span>
-                  <span className="modal-prueba-spec-valor">
-                    {empleo.deporte?.deporte || "No especificado"}
-                  </span>
-                </div>
-
-                <div className="modal-prueba-spec-item">
-                  <span className="modal-prueba-spec-label">
-                    <IconoReloj size={16} color="currentColor" />
-                    Jornada
-                  </span>
-                  <span className="modal-prueba-spec-valor">
-                    {empleo.horasreq != null ? `${empleo.horasreq} hs/semana` : "No especificada"}
-                  </span>
-                </div>
-
-                <div className="modal-prueba-spec-item">
-                  <span className="modal-prueba-spec-label">
-                    <IconoUbicacion size={16} color="currentColor" />
-                    Ubicación
-                  </span>
-                  <span className="modal-prueba-spec-valor">
-                    {empleo.club?.ubicacion || "No especificada"}
-                  </span>
-                </div>
-
-                <div className="modal-prueba-spec-item">
-                  <span className="modal-prueba-spec-label">
-                    <IconoEstrellas size={16} color="currentColor" />
-                    Habilidades
-                  </span>
-                  <span className="modal-prueba-spec-valor truncate" title={empleo.habilidadesreq || ""}>
-                    {empleo.habilidadesreq || "No especificadas"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Sección de Descripción */}
-              {empleo.acercaempleo && (
-                <>
-                  <p className="modal-prueba-descripcion-titulo">Acerca del empleo</p>
-                  <p className="modal-prueba-descripcion-texto">
-                    {empleo.acercaempleo}
-                  </p>
-                </>
-              )}
-
-              {/* Sección de Carga de CV */}
-              <form onSubmit={handlePostularseSubmit}>
-                <p className="modal-prueba-descripcion-titulo">Adjuntar currículum (PDF)</p>
-                
-                {/* Zona de arrastre compacta */}
-                <div 
-                  className={`border border-dashed rounded-lg p-5 flex flex-col items-center justify-center cursor-pointer transition-colors duration-200 mt-2 ${
-                    arrastrando 
-                      ? "border-[#00f3ff] bg-[#00f3ff]/5" 
-                      : "border-zinc-700 bg-[#161819] hover:border-zinc-500"
-                  }`}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setArrastrando(true);
-                  }}
-                  onDragLeave={() => setArrastrando(false)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setArrastrando(false);
-                    const file = e.dataTransfer.files[0];
-                    if (file) {
-                      if (file.type === "application/pdf") {
-                        setArchivoPDF(file);
-                        setErrorCarga(null);
-                      } else {
-                        setErrorCarga("Solo se permiten archivos PDF (.pdf)");
-                      }
-                    }
-                  }}
-                  onClick={() => document.getElementById("modal-input-cv").click()}
-                >
-                  <input 
-                    type="file" 
-                    id="modal-input-cv" 
-                    accept=".pdf" 
-                    className="hidden" 
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        if (file.type === "application/pdf") {
-                          setArchivoPDF(file);
-                          setErrorCarga(null);
-                        } else {
-                          setErrorCarga("Solo se permiten archivos PDF (.pdf)");
-                        }
-                      }
-                    }}
-                  />
-
-                  {/* Icono de nube reducido en escala para integrarse armoniosamente */}
-                  <svg className="w-7 h-7 text-zinc-500 mb-1" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"></path>
-                  </svg>
-
-                  <p className="text-xs text-zinc-300 text-center font-medium">
-                    {archivoPDF ? "CV Seleccionado" : "Hacé clic o arrastrá tu CV (PDF) acá"}
-                  </p>
-                  
-                  {archivoPDF && (
-                    <div className="mt-2 text-xs text-[#00f3ff] font-semibold truncate max-w-[280px] bg-[#00f3ff]/10 border border-[#00f3ff]/30 px-2.5 py-1 rounded">
-                      {archivoPDF.name}
-                    </div>
-                  )}
-                </div>
-
-                {/* Mensaje de Error dentro del Modal */}
-                {errorCarga && (
-                  <div className="form-error-banner mt-3">
-                    {errorCarga}
+              {exito ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '32px' }}>
+                  <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500 rounded-full flex items-center justify-center mb-4 shrink-0" style={{ width: '64px', height: '64px', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', flexShrink: 0 }}>
+                    <svg className="w-8 h-8 text-emerald-400 shrink-0" style={{ width: '32px', height: '32px', color: '#34d399', flexShrink: 0 }} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"></path>
+                    </svg>
                   </div>
-                )}
-
-                {/* Botones de acción inferiores */}
-                <div className="modal-prueba-acciones mt-4">
+                  <h3 className="text-xl font-bold text-white mb-2" style={{ fontSize: '20px', fontWeight: '700', color: '#ffffff', marginBottom: '8px' }}>¡Postulación Enviada!</h3>
+                  <p className="text-sm text-zinc-400 mb-6" style={{ fontSize: '14px', color: '#a1a1aa', marginBottom: '24px' }}>
+                    Te postulaste con éxito a la vacante <strong>{empleo.nombre}</strong>. El club recibirá tu currículum.
+                  </p>
                   <button 
                     type="button" 
-                    className="btn-cancelar" 
-                    onClick={() => setModalAbierto(false)}
-                    disabled={enviando}
-                    style={{ marginRight: "12px" }}
+                    className="btn-guardar px-6 py-2"
+                    style={{ padding: '10px 24px', fontSize: '13px', fontWeight: '700', borderRadius: '6px', cursor: 'pointer', border: 'none', backgroundColor: 'var(--primary)', color: '#000' }}
+                    onClick={() => {
+                      setModalAbierto(false);
+                      setExito(false);
+                    }}
                   >
-                    Cerrar
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="btn-guardar" 
-                    disabled={enviando || !archivoPDF}
-                  >
-                    {enviando ? "Enviando..." : "POSTULARSE"}
+                    ACEPTAR
                   </button>
                 </div>
-              </form>
+              ) : (
+                <>
+                  {/* Fachada o Logo del Club */}
+                  {empleo.club?.fotoperfil ? (
+                    <img
+                      src={empleo.club.fotoperfil}
+                      alt={empleo.club?.nombre || "Club"}
+                      className="modal-prueba-banner"
+                      style={{ objectFit: "contain", backgroundColor: "#161819" }}
+                    />
+                  ) : (
+                    <div className="modal-prueba-banner-fallback">
+                      Sin logo disponible
+                    </div>
+                  )}
+
+                  {/* Título de la vacante */}
+                  <h2 className="modal-prueba-club">
+                    {empleo.nombre || "Vacante sin título"}
+                  </h2>
+                  <p className="text-xs text-emerald-400 font-semibold uppercase tracking-wider" style={{ marginTop: "-12px" }}>
+                    {empleo.club?.nombre || "Club Desconocido"}
+                  </p>
+
+                  {/* Grilla de especificaciones del empleo */}
+                  <div className="modal-prueba-specs">
+                    <div className="modal-prueba-spec-item">
+                      <span className="modal-prueba-spec-label">
+                        <IconoDeporte size={16} color="currentColor" />
+                        Deporte
+                      </span>
+                      <span className="modal-prueba-spec-valor">
+                        {empleo.deporte?.deporte || "No especificado"}
+                      </span>
+                    </div>
+
+                    <div className="modal-prueba-spec-item">
+                      <span className="modal-prueba-spec-label">
+                        <IconoReloj size={16} color="currentColor" />
+                        Jornada
+                      </span>
+                      <span className="modal-prueba-spec-valor">
+                        {empleo.horasreq != null ? `${empleo.horasreq} hs/semana` : "No especificada"}
+                      </span>
+                    </div>
+
+                    <div className="modal-prueba-spec-item">
+                      <span className="modal-prueba-spec-label">
+                        <IconoUbicacion size={16} color="currentColor" />
+                        Ubicación
+                      </span>
+                      <span className="modal-prueba-spec-valor">
+                        {empleo.club?.ubicacion || "No especificada"}
+                      </span>
+                    </div>
+
+                    <div className="modal-prueba-spec-item">
+                      <span className="modal-prueba-spec-label">
+                        <IconoEstrellas size={16} color="currentColor" />
+                        Habilidades
+                      </span>
+                      <span className="modal-prueba-spec-valor truncate" title={empleo.habilidadesreq || ""}>
+                        {empleo.habilidadesreq || "No especificadas"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Sección de Descripción */}
+                  {empleo.acercaempleo && (
+                    <>
+                      <p className="modal-prueba-descripcion-titulo">Acerca del empleo</p>
+                      <p className="modal-prueba-descripcion-texto">
+                        {empleo.acercaempleo}
+                      </p>
+                    </>
+                  )}
+
+                  {/* Sección de Carga de CV */}
+                  <form onSubmit={handlePostularseSubmit}>
+                    <p className="modal-prueba-descripcion-titulo">Adjuntar currículum (PDF)</p>
+                    
+                    {/* Zona de arrastre compacta */}
+                    <div 
+                      className={`border border-dashed rounded-lg p-5 flex flex-col items-center justify-center cursor-pointer transition-colors duration-200 mt-2 ${
+                        arrastrando 
+                          ? "border-[#00f3ff] bg-[#00f3ff]/5" 
+                          : "border-zinc-700 bg-[#161819] hover:border-zinc-500"
+                      }`}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setArrastrando(true);
+                      }}
+                      onDragLeave={() => setArrastrando(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setArrastrando(false);
+                        const file = e.dataTransfer.files[0];
+                        if (file) {
+                          if (file.type === "application/pdf") {
+                            setArchivoPDF(file);
+                            setErrorCarga(null);
+                          } else {
+                            setErrorCarga("Solo se permiten archivos PDF (.pdf)");
+                          }
+                        }
+                      }}
+                      onClick={() => document.getElementById("modal-input-cv").click()}
+                    >
+                      <input 
+                        type="file" 
+                        id="modal-input-cv" 
+                        accept=".pdf" 
+                        className="hidden" 
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            if (file.type === "application/pdf") {
+                              setArchivoPDF(file);
+                              setErrorCarga(null);
+                            } else {
+                              setErrorCarga("Solo se permiten archivos PDF (.pdf)");
+                            }
+                          }
+                        }}
+                      />
+
+                      {/* Icono de nube reducido en escala para integrarse armoniosamente */}
+                      <svg className="w-7 h-7 text-zinc-500 mb-1" style={{ width: '28px', height: '28px', flexShrink: 0 }} fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"></path>
+                      </svg>
+
+                      <p className="text-xs text-zinc-300 text-center font-medium">
+                        {archivoPDF ? "CV Seleccionado" : "Hacé clic o arrastrá tu CV (PDF) acá"}
+                      </p>
+                      
+                      {archivoPDF && (
+                        <div className="mt-2 text-xs text-[#00f3ff] font-semibold truncate max-w-[280px] bg-[#00f3ff]/10 border border-[#00f3ff]/30 px-2.5 py-1 rounded">
+                          {archivoPDF.name}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Mensaje de Error dentro del Modal */}
+                    {errorCarga && (
+                      <div className="form-error-banner mt-3">
+                        {errorCarga}
+                      </div>
+                    )}
+
+                    {/* Botones de acción inferiores */}
+                    <div className="modal-prueba-acciones mt-4">
+                      <button 
+                        type="button" 
+                        className="btn-cancelar" 
+                        onClick={() => { setModalAbierto(false); setExito(false); }}
+                        disabled={enviando}
+                        style={{ marginRight: "12px" }}
+                      >
+                        Cerrar
+                      </button>
+                      <button 
+                        type="submit" 
+                        className="btn-guardar" 
+                        disabled={enviando || !archivoPDF}
+                      >
+                        {enviando ? "Enviando..." : "POSTULARSE"}
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
             </div>
           </div>
         </div>

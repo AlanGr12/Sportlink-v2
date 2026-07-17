@@ -20,6 +20,44 @@ function Empleos({ cambiarVista, usuario }) {
   // ── Empleo seleccionado ────────────────────────────────────
   const [empleoSeleccionado, setEmpleoSeleccionado] = useState(null);
   const [postulaciones, setPostulaciones] = useState([]);
+  const [idclubResuelto, setIdclubResuelto] = useState(null);
+
+  const esClub = usuario?.tipousuario === "club";
+
+  useEffect(() => {
+    const idusuario = usuario?.idusuario || usuario?.idUsuario || usuario?.id;
+    if (usuario?.tipousuario !== "club" || !idusuario) return;
+
+    let montado = true;
+    axios.get(`http://localhost:3000/api/login/perfil/${idusuario}`)
+      .then((res) => {
+        if (!montado) return;
+        const perfil = res.data;
+        const candidatos = [
+          perfil?.idclub,
+          perfil?.idClub,
+          perfil?.id_club,
+          perfil?.clubId,
+          perfil?.club?.idclub,
+          perfil?.club?.idClub,
+          perfil?.club?.id,
+          perfil?.data?.idclub,
+          perfil?.data?.club?.idclub,
+        ];
+        for (const c of candidatos) {
+          const n = Number(c);
+          if (!isNaN(n) && n > 0) {
+            setIdclubResuelto(n);
+            return;
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("[Empleos] Error al obtener perfil del club:", err);
+      });
+
+    return () => { montado = false; };
+  }, [usuario]);
 
   useEffect(() => {
     let montado = true;
@@ -84,6 +122,13 @@ function Empleos({ cambiarVista, usuario }) {
 
   // ── Filtrado local ─────────────────────────────────────────
   const empleosFiltrados = empleos.filter((empleo) => {
+    // Si el usuario es un CLUB, solo mostrar ofertas publicadas por su propio idclub
+    if (esClub) {
+      if (!idclubResuelto || Number(empleo.idclub) !== Number(idclubResuelto)) {
+        return false;
+      }
+    }
+
     // Búsqueda por texto (nombre del empleo o nombre del club)
     const textoBusqueda = busqueda.toLowerCase();
     const coincideBusqueda =
