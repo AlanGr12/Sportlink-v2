@@ -264,11 +264,11 @@
   border-radius: 50%;
   overflow: hidden;
   background-color: #1a1d1e;
-  border: 1.5px solid #00e5ff;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #00e5ff;
+  color: #88888b;
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
   font-size: 16px;
@@ -309,17 +309,14 @@
 
 .header-user-role-badge {
   display: inline-block;
-  background-color: rgba(0, 229, 255, 0.08);
-  border: 1px solid rgba(0, 229, 255, 0.15);
-  color: #00e5ff;
-  font-size: 9px;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 4px;
+  color: #88888b;
+  font-size: 10px;
+  font-weight: 700;
   letter-spacing: 0.05em;
-  margin-top: 4px;
+  margin-top: 3px;
   align-self: flex-start;
   font-family: 'Space Grotesk', sans-serif;
+  text-transform: uppercase;
 }
 
 .dropdown-link-icon {
