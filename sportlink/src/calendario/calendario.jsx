@@ -155,10 +155,9 @@ function resolverUserId(usuarioObj) {
 function EventoCard({ ev, eliminando, onVerPrueba, onEditar, onEliminar }) {
   const esPersonalizado = ev.tipo?.toUpperCase() === 'PERSONALIZADO';
   const esPrueba        = ev.tipo?.toUpperCase() === 'PRUEBA';
-  const esPasado        = esEventoPasado(ev.fecha, ev.hora);
 
   return (
-    <div className={`cal-panel-evento ${esPasado ? 'cal-panel-evento--pasado' : ''}`}>
+    <div className="cal-panel-evento">
       {/* Imagen si tiene */}
       {ev.imagenPreview && (
         <div className="cal-panel-evento-img-wrap">
@@ -560,6 +559,18 @@ export default function Calendario(props) {
     if (dropdownAnio) setDropdownAnio(false);
   };
 
+  const irAHoy = () => {
+    const today = new Date();
+    setMesActual(today.getMonth());
+    setAnioActual(today.getFullYear());
+    setDiaSeleccionado(today.getDate());
+    setInfoVisibles(3);
+    setInfoAbierto(true);
+    if (dropdownMes) setDropdownMes(false);
+    if (dropdownAnio) setDropdownAnio(false);
+  };
+
+
   const totalCeldas = Math.ceil((offset + totalDias) / 7) * 7;
   const celdas = Array.from({ length: totalCeldas }, (_, i) => {
     const dia = i - offset + 1;
@@ -674,6 +685,7 @@ export default function Calendario(props) {
             </div>
 
             <div className="cal-nav-btns">
+              <button className="cal-nav-btn cal-nav-btn-hoy" onClick={irAHoy} type="button">HOY</button>
               <button className="cal-nav-btn" onClick={irMesAnterior}>‹</button>
               <button className="cal-nav-btn" onClick={irMesSiguiente}>›</button>
             </div>

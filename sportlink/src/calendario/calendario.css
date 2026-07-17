@@ -226,6 +226,17 @@
   border-color: #23e7f5;
 }
 
+.cal-nav-btn-hoy {
+  width: auto;
+  padding: 0 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-family: 'Space Grotesk', sans-serif;
+  text-transform: uppercase;
+}
+
+
 /* ── GRILLA ── */
 .cal-grid-wrapper {
   border: 1px solid #1e1e20;
