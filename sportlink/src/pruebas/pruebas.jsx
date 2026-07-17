@@ -582,23 +582,6 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
   //FALTA CAMBIAR : LOS FILTRAR ZONA Y FILTRAR DEPORTE TIENEN QUE SER LOS MISMO QUE LOS ARRAYS DE REGISTRAR JUGADOR
 
-  // ── Restricción de acceso para entrenadores ───────────────
-  if (esEntrenador) {
-    return (
-      <div className="contenedor-pruebas" style={{ alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center", padding: "60px 24px", maxWidth: "480px", margin: "0 auto" }}>
-          <p style={{ fontSize: "48px", marginBottom: "16px" }}>🚫</p>
-          <h2 style={{ color: "var(--primary)", fontFamily: "var(--font-family)", fontSize: "20px", marginBottom: "12px" }}>
-            Acceso restringido
-          </h2>
-          <p style={{ color: "var(--text-muted)", fontFamily: "var(--font-family)", fontSize: "14px", lineHeight: "1.6" }}>
-            Esta sección es exclusiva para jugadores. Los entrenadores no pueden acceder a las pruebas deportivas.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   // ── Render ────────────────────────────────────────────────
   return (
     <>
