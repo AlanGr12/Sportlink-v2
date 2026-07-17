@@ -52,7 +52,28 @@ function App() {
       }
     }
 
+    const fetchIdEntrenador = async () => {
+      if (!usuario) return
+      if (usuario.identrenador || usuario.idEntrenador) return
+      if (usuario.tipousuario !== 'entrenador') return
+      const idusuario = usuario.idusuario || usuario.idUsuario || usuario.id || null
+      if (!idusuario) return
+
+      try {
+        const response = await axios.get('http://localhost:3000/api/entrenadores')
+        const entrenador = Array.isArray(response.data)
+          ? response.data.find((e) => e.idusuario === idusuario)
+          : null
+        if (entrenador?.identrenador) {
+          actualizarUsuario({ ...usuario, identrenador: entrenador.identrenador })
+        }
+      } catch (err) {
+        console.error('No se pudo obtener identrenador para el usuario entrenador:', err)
+      }
+    }
+
     fetchIdJugador()
+    fetchIdEntrenador()
   }, [usuario])
 
   const renderContenido = () => {

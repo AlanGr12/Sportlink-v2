@@ -19,6 +19,29 @@ function Empleos({ cambiarVista, usuario }) {
 
   // ── Empleo seleccionado ────────────────────────────────────
   const [empleoSeleccionado, setEmpleoSeleccionado] = useState(null);
+  const [postulaciones, setPostulaciones] = useState([]);
+
+  useEffect(() => {
+    let montado = true;
+    const obtenerPostulaciones = async () => {
+      const idEntrenador = usuario?.identrenador || usuario?.idEntrenador;
+      if (!idEntrenador) return;
+      try {
+        const response = await axios.get("http://localhost:3000/api/inscripcionesempleo");
+        if (!montado) return;
+        const filtradas = Array.isArray(response.data)
+          ? response.data.filter(i => Number(i.identrenador) === Number(idEntrenador) && i.estado === true)
+          : [];
+        setPostulaciones(filtradas);
+      } catch (err) {
+        console.error("[Empleos] Error al cargar postulaciones del entrenador:", err);
+      }
+    };
+    obtenerPostulaciones();
+    return () => {
+      montado = false;
+    };
+  }, [usuario]);
 
   // ── Filtros ────────────────────────────────────────────────
   const [busqueda, setBusqueda] = useState("");
@@ -158,7 +181,12 @@ function Empleos({ cambiarVista, usuario }) {
 
           {/* ── COLUMNA DERECHA ─────────────────────────────── */}
           <div className="empleos-col-derecha">
-            <DetalleEmpleo empleo={empleoSeleccionado} />
+            <DetalleEmpleo
+              empleo={empleoSeleccionado}
+              usuario={usuario}
+              yaPostulado={postulaciones.some(p => p.idempleo === empleoSeleccionado?.idempleo)}
+              onPostulacionExitosa={(nueva) => setPostulaciones([...postulaciones, nueva])}
+            />
           </div>
 
         </div>
