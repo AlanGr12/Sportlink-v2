@@ -7,17 +7,26 @@ function Registrar({ onSiguiente, onLogin }) {
   const [contraseña, setContraseña] = useState('')
   const [confirmarContraseña, setConfirmarContraseña] = useState('')
   const [email, setEmail] = useState('')
+  const [error, setError] = useState('')
 
   function handleSiguiente() {
     if (!email || !contraseña || !confirmarContraseña) {
-      alert('Por favor completá todos los campos')
+      setError('Por favor completá todos los campos.')
       return
     }
     if (contraseña !== confirmarContraseña) {
-      alert('Las contraseñas no coinciden')
+      setError('Las contraseñas no coinciden.')
       return
     }
+    setError('')
     onSiguiente({ email, contraseña })
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSiguiente()
+    }
   }
 
   return (
@@ -48,6 +57,18 @@ function Registrar({ onSiguiente, onLogin }) {
             Registro de usuario.
           </p>
 
+          {/* Banner de error profesional */}
+          {error && (
+            <div className="registrar-error-banner">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
+
           <label className="etiqueta">
             EMAIL
           </label>
@@ -57,7 +78,11 @@ function Registrar({ onSiguiente, onLogin }) {
             type="email"
             placeholder="user@gmail.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              setError('')
+            }}
+            onKeyDown={handleKeyDown}
           />
 
           <label className="etiqueta">
@@ -69,7 +94,11 @@ function Registrar({ onSiguiente, onLogin }) {
             type="password"
             placeholder="••••••••"
             value={contraseña}
-            onChange={(e) => setContraseña(e.target.value)}
+            onChange={(e) => {
+              setContraseña(e.target.value)
+              setError('')
+            }}
+            onKeyDown={handleKeyDown}
           />
 
           <label className="etiqueta">
@@ -81,7 +110,11 @@ function Registrar({ onSiguiente, onLogin }) {
             type="password"
             placeholder="••••••••"
             value={confirmarContraseña}
-            onChange={(e) => setConfirmarContraseña(e.target.value)}
+            onChange={(e) => {
+              setConfirmarContraseña(e.target.value)
+              setError('')
+            }}
+            onKeyDown={handleKeyDown}
           />
 
           <button

@@ -46,6 +46,8 @@ function RegistroClub({ onRegistro }) {
   })
   const [fotoperfil, setFotoperfil] = useState(null)
   const [errors, setErrors] = useState({})
+  const [cargando, setCargando] = useState(false)
+  const [errorGlobal, setErrorGlobal] = useState('')
 
   function cambiarForm(e) {
     const { name, value } = e.target
@@ -54,6 +56,7 @@ function RegistroClub({ onRegistro }) {
   }
 
   function cambiarDeporte(idDeporte) {
+    if (cargando) return
     if (form.deportes.includes(idDeporte)) {
       setForm({ ...form, deportes: form.deportes.filter(id => id !== idDeporte) })
     } else {
@@ -63,6 +66,8 @@ function RegistroClub({ onRegistro }) {
   }
 
   async function registro() {
+    if (cargando) return
+
     const newErrors = {}
     if (!form.email) newErrors.email = 'Este campo es obligatorio'
     if (!form.contrasenia) newErrors.contrasenia = 'Este campo es obligatorio'
@@ -71,7 +76,13 @@ function RegistroClub({ onRegistro }) {
     if (form.deportes.length === 0) newErrors.deportes = 'Seleccioná al menos un deporte'
 
     setErrors(newErrors)
-    if (Object.keys(newErrors).length > 0) return
+    if (Object.keys(newErrors).length > 0) {
+      setErrorGlobal('Por favor completá los campos requeridos correctamente.')
+      return
+    }
+
+    setCargando(true)
+    setErrorGlobal('')
 
     try {
       const formData = new FormData()
@@ -86,11 +97,24 @@ function RegistroClub({ onRegistro }) {
       }
 
       const response = await axios.post('http://localhost:3000/api/clubes/registro', formData)
-      alert('Club registrado correctamente')
       if (onRegistro) onRegistro(response.data)
     } catch (error) {
       console.error(error)
-      alert(error.response?.data?.error || 'Error al registrar club')
+      setErrorGlobal(error.response?.data?.error || 'Ocurrió un error al registrar el club. Intentá de nuevo.')
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      if (e.target.tagName.toLowerCase() === 'textarea') {
+        return
+      }
+      e.preventDefault()
+      if (!cargando) {
+        registro()
+      }
     }
   }
 
@@ -114,7 +138,17 @@ function RegistroClub({ onRegistro }) {
 
       </div>
 
-      <div className="registro-card">
+      <div className="registro-card" onKeyDown={handleKeyDown}>
+        {errorGlobal && (
+          <div className="sl-error-banner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{errorGlobal}</span>
+          </div>
+        )}
 
         {/* COLUMNA IZQUIERDA */}
         <div className="registro-seccion">
@@ -133,6 +167,7 @@ function RegistroClub({ onRegistro }) {
             placeholder="Tu club"
             value={form.nombre}
             onChange={cambiarForm}
+            disabled={cargando}
           />
           {errors.nombre && (
             <span className="registro-error">{errors.nombre}</span>
@@ -148,6 +183,7 @@ function RegistroClub({ onRegistro }) {
               name="ubicacion"
               value={form.ubicacion}
               onChange={cambiarForm}
+              disabled={cargando}
             >
               <option value="" disabled hidden>
                 Seleccioná tu barrio
@@ -184,6 +220,7 @@ function RegistroClub({ onRegistro }) {
                     : ''
                 }`}
                 onClick={() => cambiarDeporte(deporte.id)}
+                disabled={cargando}
               >
                 {deporte.nombre}
               </button>
@@ -207,6 +244,7 @@ function RegistroClub({ onRegistro }) {
             value={form.descripcion}
             onChange={cambiarForm}
             maxLength={500}
+            disabled={cargando}
           />
 
           <span className="registro-char-count">
@@ -235,6 +273,7 @@ function RegistroClub({ onRegistro }) {
             placeholder="club@email.com"
             value={form.email}
             onChange={cambiarForm}
+            disabled={cargando}
           />
 
           {errors.email && (
@@ -254,6 +293,7 @@ function RegistroClub({ onRegistro }) {
             placeholder="••••••••"
             value={form.contrasenia}
             onChange={cambiarForm}
+            disabled={cargando}
           />
 
           {errors.contrasenia && (
@@ -269,6 +309,7 @@ function RegistroClub({ onRegistro }) {
           <label
             className="registro-upload-area"
             htmlFor="rc-file-upload"
+            style={{ pointerEvents: cargando ? 'none' : 'auto' }}
           >
             {fotoperfil ? (
               <img
@@ -309,6 +350,7 @@ function RegistroClub({ onRegistro }) {
               setFotoperfil(e.target.files[0])
             }
             style={{ display: 'none' }}
+            disabled={cargando}
           />
 
         </div>
@@ -320,8 +362,9 @@ function RegistroClub({ onRegistro }) {
         <button
           className="registro-btn-siguiente"
           onClick={registro}
+          disabled={cargando}
         >
-          REGISTRAR CLUB
+          {cargando ? 'REGISTRANDO...' : 'REGISTRAR CLUB'}
         </button>
 
       </div>

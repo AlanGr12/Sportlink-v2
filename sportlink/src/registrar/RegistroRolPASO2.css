@@ -269,6 +269,20 @@
   transform: translateY(-1px);
 }
 
+.sr-submit-btn:disabled {
+  background-color: #333333;
+  color: #666666;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.sr-submit-btn:disabled:hover {
+  background-color: #333333;
+  box-shadow: none;
+  transform: none;
+}
+
+
 
 /* ---------- Marcador de Pasos de Progreso ---------- */
 .sr-step-container {

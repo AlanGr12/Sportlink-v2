@@ -10,6 +10,7 @@ import Header from './header/header.jsx'
 import Calendario from './calendario/calendario.jsx'
 import Pruebas from './pruebas/pruebas.jsx'
 import PaginaEntrenamientos from './entrenamientos/PaginaEntrenamientos.jsx'
+import Empleos from './empleos/Empleos.jsx'
 
 function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -109,6 +110,10 @@ function App() {
 
     if (vista === 'entrenamientos') {
       return <PaginaEntrenamientos cambiarVista={setVista} usuario={usuario} />
+    }
+
+    if (vista === 'empleos') {
+      return <Empleos cambiarVista={setVista} usuario={usuario} />
     }
 
     return <Landing cambiarVista={setVista} usuario={usuario} />

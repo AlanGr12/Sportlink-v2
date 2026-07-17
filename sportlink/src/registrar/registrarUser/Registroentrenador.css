@@ -457,3 +457,43 @@
   animation-delay: 0.3s; /* Retraso de 300ms para efecto escalonado */
 }
 
+/* Banner de error general profesional */
+.sl-error-banner {
+  grid-column: 1 / -1; /* Ocupa todo el ancho */
+  background-color: rgba(239, 68, 68, 0.12);
+  border: 1px solid #ef4444;
+  border-radius: 4px;
+  color: #ef4444;
+  padding: 14px 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  font-family: 'Manrope', sans-serif;
+  margin-bottom: 20px;
+  animation: introFadeBlur 0.3s ease forwards;
+}
+
+.rj-btn-siguiente:disabled {
+  background-color: #333;
+  color: #666;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.rj-btn-siguiente:disabled:hover {
+  background-color: #333;
+  box-shadow: none;
+  transform: none;
+}
+
+.rj-input:disabled,
+.rj-select:disabled,
+.rj-textarea:disabled,
+.rj-upload-area:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+

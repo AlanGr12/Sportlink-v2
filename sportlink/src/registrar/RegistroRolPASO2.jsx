@@ -27,12 +27,19 @@ function Registrar({ onRegistro, datosBase }) {
     setTipo(rolSeleccionado)
   }
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSiguiente()
+    }
+  }
+
 
   return (
     <>
       <Header />
      
-      <main className="sr-main">
+      <main className="sr-main" onKeyDown={handleKeyDown} tabIndex={0} style={{ outline: 'none' }}>
         {/* Encabezado Animado */}
         <div className="sr-hero rj-animate-hero">
           <img src={logoSportlink} alt="Sportlink Logo" className="sr-logo-top" />
@@ -127,7 +134,7 @@ function Registrar({ onRegistro, datosBase }) {
 
 
             {/* Acciones del Formulario */}
-            <button className="sr-submit-btn" onClick={handleSiguiente}>
+            <button className="sr-submit-btn" onClick={handleSiguiente} disabled={!rolSeleccionado}>
               SIGUIENTE
             </button>
 

@@ -339,3 +339,41 @@
   animation: introFadeBlur .8s cubic-bezier(.25,1,.5,1) forwards;
   animation-delay: .3s;
 }
+
+/* Banner de error general profesional */
+.sl-error-banner {
+  grid-column: 1 / -1; /* Ocupa las dos columnas de la tarjeta */
+  background-color: rgba(239, 68, 68, 0.12);
+  border: 1px solid #ef4444;
+  border-radius: 4px;
+  color: #ef4444;
+  padding: 14px 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  font-family: 'Manrope', sans-serif;
+  animation: introFadeBlur 0.3s ease forwards;
+}
+
+.registro-btn-siguiente:disabled {
+  background-color: #333;
+  color: #666;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.registro-btn-siguiente:disabled:hover {
+  background-color: #333;
+  box-shadow: none;
+  transform: none;
+}
+
+.registro-input:disabled,
+.registro-select:disabled,
+.registro-textarea:disabled,
+.registro-deporte-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

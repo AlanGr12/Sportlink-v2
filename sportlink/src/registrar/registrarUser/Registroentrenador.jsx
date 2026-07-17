@@ -39,6 +39,8 @@ function RegistroEntrenador({ onRegistro }) {
   const [dia, setDia] = useState("")
   const [mes, setMes] = useState("")
   const [anio, setAnio] = useState("")
+  const [cargando, setCargando] = useState(false)
+  const [errorGlobal, setErrorGlobal] = useState('')
 
   function cambiarForm(e) {
     const { name, value } = e.target
@@ -82,6 +84,8 @@ function RegistroEntrenador({ onRegistro }) {
   }
 
   async function registro() {
+    if (cargando) return
+
     const newErrors = {}
     if (!form.nombre) newErrors.nombre = "Este campo es obligatorio"
     if (!form.apellido) newErrors.apellido = "Este campo es obligatorio"
@@ -96,7 +100,13 @@ function RegistroEntrenador({ onRegistro }) {
     if (!form.fechanacimiento) newErrors.fechanacimiento = "Este campo es obligatorio"
 
     setErrors(newErrors)
-    if (Object.keys(newErrors).length > 0) return
+    if (Object.keys(newErrors).length > 0) {
+      setErrorGlobal('Por favor completá los campos requeridos correctamente.')
+      return
+    }
+
+    setCargando(true)
+    setErrorGlobal('')
 
     try {
       const formData = new FormData()
@@ -122,11 +132,24 @@ function RegistroEntrenador({ onRegistro }) {
         formData
       )
 
-      alert('Registro exitoso')
       if (onRegistro) onRegistro(response.data)
     } catch (error) {
       console.error(error)
-      alert(error.response?.data?.error || 'Error al registrar entrenador')
+      setErrorGlobal(error.response?.data?.error || 'Ocurrió un error al registrar el entrenador. Intentá de nuevo.')
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      if (e.target.tagName.toLowerCase() === 'textarea') {
+        return
+      }
+      e.preventDefault()
+      if (!cargando) {
+        registro()
+      }
     }
   }
 
@@ -145,7 +168,18 @@ function RegistroEntrenador({ onRegistro }) {
           </p>
         </div>
 
-        <div className="rj-card rj-animate-content">
+        <div className="rj-card rj-animate-content" onKeyDown={handleKeyDown}>
+          {errorGlobal && (
+            <div className="sl-error-banner">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>{errorGlobal}</span>
+            </div>
+          )}
+
           <div className="rj-form-grid">
 
             {/* COLUMNA IZQUIERDA */}
@@ -155,20 +189,20 @@ function RegistroEntrenador({ onRegistro }) {
 
               <div className="rj-field">
                 <label className="rj-label">NOMBRE</label>
-                <input className="rj-input" name="nombre" type="text" placeholder="Ej. Juan" value={form.nombre} onChange={cambiarForm} />
+                <input className="rj-input" name="nombre" type="text" placeholder="Ej. Juan" value={form.nombre} onChange={cambiarForm} disabled={cargando} />
                 {errors.nombre && <span className="rj-error">{errors.nombre}</span>}
               </div>
 
               <div className="rj-field">
                 <label className="rj-label">APELLIDO</label>
-                <input className="rj-input" name="apellido" type="text" placeholder="Ej. Perez" value={form.apellido} onChange={cambiarForm} />
+                <input className="rj-input" name="apellido" type="text" placeholder="Ej. Perez" value={form.apellido} onChange={cambiarForm} disabled={cargando} />
                 {errors.apellido && <span className="rj-error">{errors.apellido}</span>}
               </div>
 
               <div className="rj-field">
                 <label className="rj-label">UBICACIÓN (BARRIO / ZONA)</label>
                 <div className="rj-select-wrapper">
-                  <select className="rj-select" name="ubicacion" value={form.ubicacion} onChange={cambiarForm}>
+                  <select className="rj-select" name="ubicacion" value={form.ubicacion} onChange={cambiarForm} disabled={cargando}>
                     <option value="" disabled hidden>Seleccioná tu barrio</option>
                     {barriosArgentina.map((barrio, index) => (
                       <option key={index} value={barrio}>{barrio}</option>
@@ -181,13 +215,13 @@ function RegistroEntrenador({ onRegistro }) {
 
               <div className="rj-field">
                 <label className="rj-label">EMAIL</label>
-                <input className="rj-input" name="email" type="email" placeholder="entrenador@sportlink.com" value={form.email} onChange={cambiarForm} />
+                <input className="rj-input" name="email" type="email" placeholder="entrenador@sportlink.com" value={form.email} onChange={cambiarForm} disabled={cargando} />
                 {errors.email && <span className="rj-error">{errors.email}</span>}
               </div>
 
               <div className="rj-field">
                 <label className="rj-label">CONTRASEÑA</label>
-                <input className="rj-input" name="contrasenia" type="password" placeholder="••••••••" value={form.contrasenia} onChange={cambiarForm} />
+                <input className="rj-input" name="contrasenia" type="password" placeholder="••••••••" value={form.contrasenia} onChange={cambiarForm} disabled={cargando} />
                 {errors.contrasenia && <span className="rj-error">{errors.contrasenia}</span>}
               </div>
 
@@ -195,7 +229,7 @@ function RegistroEntrenador({ onRegistro }) {
                 <label className="rj-label">NÚMERO TELEFÓNICO</label>
                 <div className="rj-phone-row">
                   <span className="rj-phone-prefix">+54</span>
-                  <input className="rj-input rj-input-phone" name="telefono" type="text" placeholder="11 2345 6789" value={form.telefono} onChange={cambiarForm} />
+                  <input className="rj-input rj-input-phone" name="telefono" type="text" placeholder="11 2345 6789" value={form.telefono} onChange={cambiarForm} disabled={cargando} />
                 </div>
                 {errors.telefono && <span className="rj-error">{errors.telefono}</span>}
               </div>
@@ -203,15 +237,15 @@ function RegistroEntrenador({ onRegistro }) {
               <div className="rj-field">
                 <label className="rj-label">FECHA DE NACIMIENTO</label>
                 <div className="rj-date-row">
-                  <select className="rj-select rj-date-select" value={dia} onChange={(e) => handleDateChange("dia", e.target.value)}>
+                  <select className="sl-select-custom rj-select rj-date-select" value={dia} onChange={(e) => handleDateChange("dia", e.target.value)} disabled={cargando}>
                     <option value="">Día</option>
                     {getDayOptions().map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
-                  <select className="rj-select rj-date-select" value={mes} onChange={(e) => handleDateChange("mes", e.target.value)}>
+                  <select className="sl-select-custom rj-select rj-date-select" value={mes} onChange={(e) => handleDateChange("mes", e.target.value)} disabled={cargando}>
                     <option value="">Mes</option>
                     {getMonthOptions().map((m) => <option key={m} value={m}>{m}</option>)}
                   </select>
-                  <select className="rj-select rj-date-select" value={anio} onChange={(e) => handleDateChange("anio", e.target.value)}>
+                  <select className="sl-select-custom rj-select rj-date-select" value={anio} onChange={(e) => handleDateChange("anio", e.target.value)} disabled={cargando}>
                     <option value="">Año</option>
                     {getYearOptions().map((y) => <option key={y} value={y}>{y}</option>)}
                   </select>
@@ -228,7 +262,7 @@ function RegistroEntrenador({ onRegistro }) {
               <div className="rj-field">
                 <label className="rj-label">TÍTULO PROFESIONAL</label>
                 <div className="rj-select-wrapper">
-                  <select className="rj-select" name="titulo" value={form.titulo} onChange={cambiarForm}>
+                  <select className="rj-select" name="titulo" value={form.titulo} onChange={cambiarForm} disabled={cargando}>
                     <option value="">Seleccioná un título</option>
                     <option value="Licenciado en Ed. Física">Licenciado en Ed. Física</option>
                     <option value="Entrenador Nacional">Entrenador Nacional</option>
@@ -244,7 +278,7 @@ function RegistroEntrenador({ onRegistro }) {
               <div className="rj-field">
                 <label className="rj-label">ESPECIALIDAD (DEPORTE)</label>
                 <div className="rj-select-wrapper">
-                  <select className="rj-select" name="iddeporte" value={form.iddeporte} onChange={cambiarForm}>
+                  <select className="rj-select" name="iddeporte" value={form.iddeporte} onChange={cambiarForm} disabled={cargando}>
                     <option value="">Seleccioná un deporte</option>
                     <option value="1">Fútbol</option>
                     <option value="2">Basket</option>
@@ -270,7 +304,7 @@ function RegistroEntrenador({ onRegistro }) {
               <div className="rj-field">
                 <label className="rj-label">AÑOS DE EXPERIENCIA</label>
                 <div className="rj-select-wrapper">
-                  <select className="rj-select" name="experiencia" value={form.experiencia} onChange={cambiarForm}>
+                  <select className="rj-select" name="experiencia" value={form.experiencia} onChange={cambiarForm} disabled={cargando}>
                     <option value="">Seleccioná experiencia</option>
                     <option value="0-2 años">0-2 años</option>
                     <option value="3-5 años">3-5 años</option>
@@ -285,7 +319,7 @@ function RegistroEntrenador({ onRegistro }) {
               <div className="rj-field">
                 <label className="rj-label">¿TENÉS CLUB ACTUALMENTE?</label>
                 <div className="rj-select-wrapper">
-                  <select className="rj-select" name="tieneclub" value={form.tieneclub} onChange={cambiarForm}>
+                  <select className="rj-select" name="tieneclub" value={form.tieneclub} onChange={cambiarForm} disabled={cargando}>
                     <option value="false">No, agente libre / independiente</option>
                     <option value="true">Sí, vinculado a una institución</option>
                   </select>
@@ -295,7 +329,7 @@ function RegistroEntrenador({ onRegistro }) {
 
               <div className="rj-field">
                 <label className="rj-label">FOTO DE PERFIL</label>
-                <label className="rj-upload-area" htmlFor="re-file-upload">
+                <label className="rj-upload-area" htmlFor="re-file-upload" style={{ pointerEvents: cargando ? 'none' : 'auto', opacity: cargando ? 0.5 : 1 }}>
                   {fotoperfil ? (
                     <img src={URL.createObjectURL(fotoperfil)} alt="Preview" className="rj-upload-preview" />
                   ) : (
@@ -316,6 +350,7 @@ function RegistroEntrenador({ onRegistro }) {
                   accept="image/jpeg,image/png,image/webp"
                   onChange={(e) => setFotoperfil(e.target.files[0])}
                   style={{ display: "none" }}
+                  disabled={cargando}
                 />
               </div>
 
@@ -328,6 +363,7 @@ function RegistroEntrenador({ onRegistro }) {
                   value={form.descripcion}
                   onChange={cambiarForm}
                   maxLength={500}
+                  disabled={cargando}
                 />
                 <span className="rj-char-count">{form.descripcion.length} / 500</span>
               </div>
@@ -339,6 +375,7 @@ function RegistroEntrenador({ onRegistro }) {
                     type="button"
                     className={`rj-gender-btn ${form.genero === "Masculino" ? "rj-gender-btn--active" : ""}`}
                     onClick={() => { setForm((p) => ({ ...p, genero: "Masculino" })); setErrors((p) => ({ ...p, genero: "" })) }}
+                    disabled={cargando}
                   >
                     MASCULINO
                   </button>
@@ -346,6 +383,7 @@ function RegistroEntrenador({ onRegistro }) {
                     type="button"
                     className={`rj-gender-btn ${form.genero === "Femenino" ? "rj-gender-btn--active" : ""}`}
                     onClick={() => { setForm((p) => ({ ...p, genero: "Femenino" })); setErrors((p) => ({ ...p, genero: "" })) }}
+                    disabled={cargando}
                   >
                     FEMENINO
                   </button>
@@ -358,8 +396,8 @@ function RegistroEntrenador({ onRegistro }) {
         </div>
 
         <div className="rj-footer-cta rj-animate-content">
-          <button className="rj-submit-btn" onClick={registro}>
-            REGISTRARSE
+          <button className="rj-submit-btn" onClick={registro} disabled={cargando}>
+            {cargando ? 'REGISTRANDO...' : 'REGISTRARSE'}
           </button>
           <div className="rj-step-info">
             <span className="rj-step-text">PASO 2/2</span>

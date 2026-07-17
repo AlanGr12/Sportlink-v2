@@ -136,7 +136,11 @@ const Header = (props) => {
       case 'entrenador':
         return (
           <>
-            <div className="header-dropdown-item">
+            <div 
+              className="header-dropdown-item"
+              onClick={() => { props.cambiarVista('empleos'); setDropdownOpen(false); }}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="header-dropdown-icon">
                 <IconoEmpleos size={22} color="currentColor" className="header-dropdown-img-icon" />
               </div>
@@ -176,7 +180,11 @@ const Header = (props) => {
       case 'club':
         return (
           <>
-            <div className="header-dropdown-item">
+            <div 
+              className="header-dropdown-item"
+              onClick={() => { props.cambiarVista('empleos'); setDropdownOpen(false); }}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="header-dropdown-icon">
                 <IconoEmpleos size={22} color="currentColor" className="header-dropdown-img-icon" />
               </div>
