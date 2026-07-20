@@ -554,6 +554,8 @@ const PaginaEntrenamientos = ({ usuario }) => {
             <div className="modal-cuerpo">
               <DetalleEntrenamiento
                 entrenamiento={entrenamientoSeleccionado}
+                usuario={usuario}
+                idjugador={idJugadorReal}
                 onCerrar={() => setModalDetalleAbierto(false)}
               />
             </div>
