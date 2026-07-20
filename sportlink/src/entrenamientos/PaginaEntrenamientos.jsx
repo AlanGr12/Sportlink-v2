@@ -143,13 +143,17 @@ const PaginaEntrenamientos = ({ usuario }) => {
       entrenadorId: usuario?.tipousuario === 'entrenador' ? usuario.id : undefined,
     };
 
-    // Decidir URL: si es jugador y no se pidió "mostrar todas", filtrar por deporte
-    const filtrarPorDeporte = !usarGeneral && !!idJugadorReal;
-    const url = filtrarPorDeporte
-      ? `${API_BASE}/deporte`
-      : API_BASE;
-    if (filtrarPorDeporte) {
-      params.idJugador = idJugadorReal;
+    // Decidir URL según el rol del usuario
+    let url = API_BASE;
+    if (usuario?.tipousuario === 'entrenador') {
+      url = `${API_BASE}/mios`;
+      params.identrenador = usuario.id || usuario.identrenador; // Asegurar el parámetro requerido
+    } else {
+      const filtrarPorDeporte = !usarGeneral && !!idJugadorReal;
+      if (filtrarPorDeporte) {
+        url = `${API_BASE}/deporte`;
+        params.idJugador = idJugadorReal;
+      }
     }
 
     // Headers de autenticación / contexto para jugadores y entrenadores
