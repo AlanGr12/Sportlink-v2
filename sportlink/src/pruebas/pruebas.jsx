@@ -29,6 +29,7 @@ function Pruebas({ idJugador, usuario }) {
   // ── Modal de detalle ──────────────────────────────────────
   const [pruebaSeleccionada, setPruebaSeleccionada] = useState(null);
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [mostrarExitoModal, setMostrarExitoModal] = useState(false);
 
   // ── Modal de creación (solo rol club) ─────────────────────
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
@@ -107,6 +108,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
     setInscripcionError("");
     setInscripcionLoading(false);
     setVerificandoInscripcion(false);
+    setMostrarExitoModal(false);
   };
 
   useEffect(() => {
@@ -348,6 +350,8 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
   "Te has inscripto correctamente a la prueba."
 );
       setIsInscripto(true);
+      setMostrarExitoModal(true);
+      
       setPruebas((prevPruebas) => prevPruebas.map((prueba) => {
         if (obtenerIdPrueba(prueba) !== idPruebaNum) return prueba;
 
@@ -942,6 +946,35 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
             </div>
           </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── MODAL DE ÉXITO DE PRUEBA ──────────────────────────── */}
+      {mostrarExitoModal && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+           <div className="bg-[#111] p-8 rounded-xl text-center text-white border border-green-500 max-w-[400px] w-[90%] shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+              {/* Icono check verde */}
+              <div className="text-green-500 text-6xl mb-4 font-bold flex justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              <h2 className="text-2xl font-bold mb-2">¡Inscripción Exitosa!</h2>
+              <p className="text-gray-300 mb-6">Te has inscripto correctamente a esta prueba.</p>
+              
+              {/* Botón cierre cian */}
+              <button 
+                onClick={() => {
+                  setMostrarExitoModal(false);
+                  cerrarModal();
+                }} 
+                className="w-full bg-[#00f0ff] hover:bg-[#00c0cc] text-black font-bold py-3 px-6 rounded-lg transition-colors duration-200"
+              >
+                  ENTENDIDO
+              </button>
+           </div>
         </div>,
         document.body
       )}

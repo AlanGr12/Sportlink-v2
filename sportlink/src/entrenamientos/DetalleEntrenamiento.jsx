@@ -26,9 +26,38 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar }) =
   const esEntrenador = tipoUsuario === 'entrenador';
 
   const [idjugadorResuelto, setIdjugadorResuelto] = useState(() => {
-      const id = Number(idjugador || usuario?.idjugador || usuario?.idJugador || usuario?.jugador?.idjugador || usuario?.jugadorId || usuario?.id);
+      const idUs = usuario?.idusuario || usuario?.idUsuario || usuario?.id;
+      // calendarios u otros pueden mandar idusuario por accidente como idjugador prop.
+      const propValida = (idjugador && Number(idjugador) !== Number(idUs)) ? idjugador : null;
+      const id = Number(propValida || usuario?.idjugador || usuario?.idJugador || usuario?.jugador?.idjugador);
       return !isNaN(id) && id > 0 ? id : null;
   });
+
+  // Efecto para resolver idjugador si solo tenemos idusuario
+  useEffect(() => {
+    const idUs = usuario?.idusuario || usuario?.idUsuario;
+    if (!esJugador || !idUs || idjugadorResuelto) return;
+    
+    let cancelado = false;
+    axios.get(`http://localhost:3000/api/login/perfil/${idUs}`)
+      .then(res => {
+        if (cancelado) return;
+        const perfil = res.data;
+        const candidatos = [
+          perfil?.idjugador, perfil?.idJugador, perfil?.jugador?.idjugador,
+          perfil?.data?.idjugador, perfil?.data?.jugador?.idjugador
+        ];
+        for (const c of candidatos) {
+          const n = Number(c);
+          if (!isNaN(n) && n > 0) {
+            setIdjugadorResuelto(n);
+            break;
+          }
+        }
+      }).catch(err => console.error("Error obteniendo perfil de jugador:", err));
+      
+    return () => { cancelado = true; };
+  }, [esJugador, idjugadorResuelto, usuario]);
 
   const identrenamiento = entrenamiento?.identrenamientos || entrenamiento?.identrenamiento || entrenamiento?.id;
 
