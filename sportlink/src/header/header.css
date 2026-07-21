@@ -87,6 +87,23 @@
   color: var(--header-accent-color);
 }
 
+.header-nav-link--active {
+  color: var(--header-accent-color) !important;
+  position: relative;
+}
+
+.header-nav-link--active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: var(--header-accent-color);
+  border-radius: 2px;
+  box-shadow: 0 0 6px var(--header-accent-color);
+}
+
 /* ICONO DE FLECHA EN EXPLORAR */
 .header-arrow {
   width: 14px;

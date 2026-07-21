@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Registrar from './registrar/registrar.jsx'
 import RegistroRol from './registrar/RegistroRolPASO2.jsx'
 
-function RegistroFlow({ onRegistro, onLogin }) {
+function RegistroFlow({ onRegistro }) {
+  const navigate = useNavigate()
   const [paso, setPaso] = useState(1)
-  const [datosBase, setDatosBase] = useState(null) // guarda email + contraseña del paso 1
+  const [datosBase, setDatosBase] = useState(null)
 
   if (paso === 1) {
     return (
@@ -13,7 +15,6 @@ function RegistroFlow({ onRegistro, onLogin }) {
           setDatosBase(datos)
           setPaso(2)
         }}
-        onLogin={onLogin}
       />
     )
   }
@@ -22,11 +23,13 @@ function RegistroFlow({ onRegistro, onLogin }) {
     return (
       <RegistroRol
         datosBase={datosBase}
-        onRegistro={onRegistro}
+        onRegistro={(user) => {
+          if (onRegistro) onRegistro(user)
+          navigate('/')
+        }}
       />
     )
   }
-  // datosBase se pasa siempre para que cada paso 3 (jugador, entrenador, club) lo reciba
 
   return null
 }

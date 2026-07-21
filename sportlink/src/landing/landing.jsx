@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './landing.css';
 import Footer from '../footer/footer.jsx';
 import fotolanding from '../assets/fotolanding.png';
@@ -16,7 +17,8 @@ import riestra from '../assets/riestra.png';
 import estudiantes from '../assets/estudiantes.png';
 import calendar from '../assets/calendar.png';
 
-const Landing = (props) => {
+const Landing = ({ usuario }) => {
+  const navigate = useNavigate();
   return (
     <>
       <main>
@@ -57,15 +59,15 @@ const Landing = (props) => {
             </p>
 
             <div className="banner-ctas">
-              {!props.usuario && (
-                <button className="btn-banner" onClick={() => props.cambiarVista('login')}>
+              {!usuario && (
+                <button className="btn-banner" onClick={() => navigate('/login')}>
                   UNIRSE A SPORTLINK
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </button>
               )}
-              <button className="btn-banner-ghost" onClick={() => props.cambiarVista('entrenadores')}>
+              <button className="btn-banner-ghost" onClick={() => navigate('/entrenadores')}>
                 Explorar entrenadores
               </button>
             </div>
@@ -254,7 +256,7 @@ const Landing = (props) => {
               <p>Notificaciones a tu buzón</p>
             </div>
 
-            <button className="btn-dashboard" onClick={() => props.cambiarVista('calendario')}>
+            <button className="btn-dashboard" onClick={() => navigate('/calendario')}>
               IR A MI CALENDARIO
             </button>
           </div>

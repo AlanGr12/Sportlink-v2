@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import './login.css'
 import logoSportlink from '../assets/logoSportlink.png'
 import Footer from '../footer/footer.jsx'
 
-function Login({ onLogin, onRegistro }) {
+function Login({ onLogin }) {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [contraseña, setContraseña] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -29,6 +31,7 @@ function Login({ onLogin, onRegistro }) {
       )
 
       onLogin(response.data)
+      navigate('/')
 
     } catch (error) {
       console.error(error)
@@ -118,7 +121,7 @@ function Login({ onLogin, onRegistro }) {
             No tenés cuenta?{' '}
             <a
               className="enlace"
-              onClick={cargando ? null : onRegistro}
+              onClick={cargando ? undefined : () => navigate('/registro')}
               style={{ cursor: cargando ? 'not-allowed' : 'pointer' }}
             >
               Registrate

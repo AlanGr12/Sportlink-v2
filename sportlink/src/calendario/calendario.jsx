@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ModalEvento from './ModalEvento.jsx';
 import ModalDetallePrueba from './ModalDetallePrueba.jsx';
@@ -282,15 +283,15 @@ function EventoCard({ ev, eliminando, onVerPrueba, onVerEntrenamiento, onVerEmpl
   );
 }
 
-export default function Calendario(props) {
-  const usuario = props.usuario || JSON.parse(localStorage.getItem('usuario') || 'null');
+export default function Calendario({ usuario }) {
+  const navigate = useNavigate();
 
   /** Wrapper que usa la función pura con el usuario actual del componente */
   const obtenerUserId = () => resolverUserId(usuario);
 
   useEffect(() => {
-    if (!usuario) props.cambiarVista('login');
-  }, [usuario, props]);
+    if (!usuario) navigate('/login');
+  }, [usuario]);
 
   const hoy = new Date();
   const [mesActual,       setMesActual]       = useState(hoy.getMonth());

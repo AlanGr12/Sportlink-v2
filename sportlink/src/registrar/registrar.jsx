@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './registrar.css'
 import logoSportlink from '../assets/logoSportlink.png'
 import Footer from '../footer/footer.jsx'
 
-function Registrar({ onSiguiente, onLogin }) {
+function Registrar({ onSiguiente }) {
+  const navigate = useNavigate()
   const [contraseña, setContraseña] = useState('')
   const [confirmarContraseña, setConfirmarContraseña] = useState('')
   const [email, setEmail] = useState('')
@@ -128,7 +130,7 @@ function Registrar({ onSiguiente, onLogin }) {
             ¿Ya tenés cuenta?{' '}
             <a
               className="enlace"
-              onClick={onLogin}
+              onClick={() => navigate('/login')}
               style={{ cursor: 'pointer' }}
             >
               Iniciá sesión
