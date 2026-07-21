@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import ModalEvento from './ModalEvento.jsx';
 import ModalDetallePrueba from './ModalDetallePrueba.jsx';
+import DetalleEntrenamiento from '../entrenamientos/DetalleEntrenamiento.jsx';
+import DetalleEmpleo from '../empleos/DetalleEmpleo.jsx';
+import '../entrenamientos/PaginaEntrenamientos.css';
 import { IconoFecha } from '../iconos/IconoFecha.jsx';
 import { IconoUbicacion } from '../iconos/IconoUbicacion.jsx';
 import { IconoMedalla } from '../iconos/IconoMedalla.jsx';
@@ -112,10 +115,13 @@ function mapearEventoBackend(e) {
     hora:            e.horaInicio ? e.horaInicio.slice(0, 5) : '',
     idPrueba:        e.idPrueba        || null,
     idEntrenamiento: e.idEntrenamiento || null,
+    idInscripcionEmpleo: e.idinscripcionempleo || null,
     nombre:          e.titulo     || '',
     descripcion:     e.descripcion || '',
     imagenPreview:   e.imagen     || null,
     datosPrueba:     e._datosPrueba || null, // viene enriquecido desde el service
+    datosEntrenamiento: e._datosEntrenamiento || null,
+    datosEmpleo:     e._datosEmpleo || null,
     ubicacion:       null,
     creador:         null,
   };
@@ -152,9 +158,11 @@ function resolverUserId(usuarioObj) {
   }
 }
 
-function EventoCard({ ev, eliminando, onVerPrueba, onEditar, onEliminar }) {
+function EventoCard({ ev, eliminando, onVerPrueba, onVerEntrenamiento, onVerEmpleo, onEditar, onEliminar }) {
   const esPersonalizado = ev.tipo?.toUpperCase() === 'PERSONALIZADO';
   const esPrueba        = ev.tipo?.toUpperCase() === 'PRUEBA';
+  const esEntrenamiento = ev.tipo?.toUpperCase() === 'ENTRENAMIENTO';
+  const esEmpleo        = ev.tipo?.toUpperCase() === 'EMPLEO';
 
   return (
     <div className="cal-panel-evento">
@@ -230,6 +238,26 @@ function EventoCard({ ev, eliminando, onVerPrueba, onEditar, onEliminar }) {
             </button>
           )}
 
+          {/* Botón "Ver entrenamiento" */}
+          {esEntrenamiento && ev.datosEntrenamiento && (
+            <button
+              className="cal-panel-evento-btn"
+              onClick={() => onVerEntrenamiento && onVerEntrenamiento(ev.datosEntrenamiento)}
+            >
+              VER ENTRENAMIENTO
+            </button>
+          )}
+
+          {/* Botón "Ver empleo" */}
+          {esEmpleo && ev.datosEmpleo && (
+            <button
+              className="cal-panel-evento-btn"
+              onClick={() => onVerEmpleo && onVerEmpleo(ev.datosEmpleo)}
+            >
+              VER EMPLEO
+            </button>
+          )}
+
           {/* Botones Editar / Eliminar — SOLO eventos personalizados */}
           {esPersonalizado && ev.id && onEditar && onEliminar && (
             <>
@@ -284,6 +312,8 @@ export default function Calendario(props) {
   const [modalTipo,             setModalTipo]             = useState(null);
   const [eventoEditando,        setEventoEditando]        = useState(null);
   const [pruebaDetalle,         setPruebaDetalle]         = useState(null);
+  const [entrenamientoDetalle,  setEntrenamientoDetalle]  = useState(null);
+  const [empleoDetalle,         setEmpleoDetalle]         = useState(null);
   const [eliminandoId,          setEliminandoId]          = useState(null);
 
   const abrirModalLibre = () => { setEventoEditando(null); setModalTipo('libre'); };
@@ -364,18 +394,34 @@ export default function Calendario(props) {
           if (ev.datosPrueba) {
             ev.ubicacion = ev.datosPrueba.zona || ev.datosPrueba.club?.ubicacion || null;
             ev.creador   = ev.datosPrueba.club?.nombre || null;
+          } else if (ev.idPrueba) {
+            // Fetch adicional (ej. para Clubes)
+            try {
+              const resP = await axios.get(`${API}/pruebas/${ev.idPrueba}`);
+              ev.datosPrueba = resP.data;
+              ev.ubicacion = ev.datosPrueba.zona || ev.datosPrueba.club?.ubicacion || null;
+              ev.creador   = ev.datosPrueba.club?.nombre || null;
+            } catch {}
           }
         } else if (ev.tipo === 'ENTRENAMIENTO') {
           // Si no viene nombre del backend, intentar un fetch liviano
-          if (!ev.nombre && ev.idEntrenamiento) {
+          if (ev.idEntrenamiento) {
             try {
               const resE = await axios.get(`${API}/entrenamientos/${ev.idEntrenamiento}`);
               const ent = resE.data;
-              ev.nombre    = ent.titulo || 'Entrenamiento';
+              if (!ev.nombre) ev.nombre = ent.titulo || 'Entrenamiento';
               ev.descripcion = ent.descripcion || ev.descripcion;
               ev.imagenPreview = ent.imagen || ev.imagenPreview;
               ev.ubicacion = ent.ubicacion || null;
-            } catch { ev.nombre = 'Entrenamiento'; }
+              ev.datosEntrenamiento = ent;
+            } catch { if (!ev.nombre) ev.nombre = 'Entrenamiento'; }
+          }
+        } else if (ev.tipo === 'EMPLEO') {
+          if (ev.idInscripcionEmpleo) {
+            try {
+              const resE = await axios.get(`${API}/empleo/${ev.idInscripcionEmpleo}`);
+              ev.datosEmpleo = resE.data;
+            } catch {}
           }
         }
         // PERSONALIZADO: nombre y descripcion ya vienen desde el backend (campo titulo)
@@ -818,6 +864,8 @@ export default function Calendario(props) {
                       ev={ev}
                       eliminando={eliminandoId === ev.id}
                       onVerPrueba={setPruebaDetalle}
+                      onVerEntrenamiento={setEntrenamientoDetalle}
+                      onVerEmpleo={setEmpleoDetalle}
                       onEditar={abrirEdicion}
                       onEliminar={eliminarEvento}
                     />
@@ -880,6 +928,8 @@ export default function Calendario(props) {
                         ev={ev}
                         eliminando={eliminandoId === ev.id}
                         onVerPrueba={setPruebaDetalle}
+                        onVerEntrenamiento={setEntrenamientoDetalle}
+                        onVerEmpleo={setEmpleoDetalle}
                         onEditar={abrirEdicion}
                         onEliminar={eliminarEvento}
                       />
@@ -948,6 +998,44 @@ export default function Calendario(props) {
           onCerrar={() => setPruebaDetalle(null)}
           usuario={usuario}
         />
+      )}
+
+      {/* Modal Detalle de Entrenamiento */}
+      {entrenamientoDetalle && (
+        <div className="modal-overlay" onClick={() => setEntrenamientoDetalle(null)}>
+          <div className="modal-contenedor" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-titulo">Detalles del Entrenamiento</h3>
+              <button className="btn-cerrar-modal" onClick={() => setEntrenamientoDetalle(null)}>×</button>
+            </div>
+            <div className="modal-cuerpo">
+              <DetalleEntrenamiento
+                entrenamiento={entrenamientoDetalle}
+                usuario={usuario}
+                idjugador={obtenerUserId()}
+                onCerrar={() => setEntrenamientoDetalle(null)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detalle de Empleo */}
+      {empleoDetalle && (
+        <div className="modal-overlay" onClick={() => setEmpleoDetalle(null)}>
+          <div className="modal-contenedor" onClick={(e) => e.stopPropagation()} style={{ padding: 0 }}>
+            <div className="modal-header" style={{ padding: '20px 24px', borderBottom: '1px solid #333' }}>
+              <h3 className="modal-titulo">Detalles de la Oferta Laboral</h3>
+              <button className="btn-cerrar-modal" onClick={() => setEmpleoDetalle(null)}>×</button>
+            </div>
+            <div className="modal-cuerpo" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+              <DetalleEmpleo
+                empleo={empleoDetalle}
+                usuario={usuario}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

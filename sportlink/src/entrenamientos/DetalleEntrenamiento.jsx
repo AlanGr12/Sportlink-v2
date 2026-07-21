@@ -32,6 +32,17 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar }) =
 
   const identrenamiento = entrenamiento?.identrenamientos || entrenamiento?.identrenamiento || entrenamiento?.id;
 
+  // Bloquear scroll del body al mostrar modal de éxito
+  useEffect(() => {
+    if (mostrarToastExito) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [mostrarToastExito]);
+
   // 1. Obtener postulantes si es Entrenador
   useEffect(() => {
     if (!esEntrenador || !identrenamiento) return;
@@ -159,24 +170,27 @@ console.log(entrenamiento)
   return (
     <>
       {mostrarToastExito && (
-        <div className="modal-exito-overlay" style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', zIndex: 9999
-        }}>
-           <div className="modal-exito-caja" style={{
-               backgroundColor: '#111', padding: '30px', borderRadius: '12px',
-               textAlign: 'center', color: '#fff', border: '1px solid #00f0ff',
-               maxWidth: '400px', width: '90%'
-           }}>
-              <div style={{ fontSize: '48px', color: '#00f0ff', marginBottom: '15px' }}>✓</div>
-              <h2 style={{ margin: '0 0 10px', fontSize: '24px' }}>¡Inscripción Exitosa!</h2>
-              <p style={{ color: '#ccc', marginBottom: '20px' }}>Te has inscripto correctamente a este entrenamiento.</p>
-              <button onClick={() => setMostrarToastExito(false)} style={{
-                  backgroundColor: '#00f0ff', color: '#000', padding: '10px 20px',
-                  border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', width: '100%'
-              }}>
-                  Entendido
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+           <div className="bg-[#111] p-8 rounded-xl text-center text-white border border-green-500 max-w-[400px] w-[90%] shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+              {/* Icono check verde */}
+              <div className="text-green-500 text-6xl mb-4 font-bold flex justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              <h2 className="text-2xl font-bold mb-2">¡Inscripción Exitosa!</h2>
+              <p className="text-gray-300 mb-6">Te has inscripto correctamente a este entrenamiento.</p>
+              
+              {/* Botón cierre cian */}
+              <button 
+                onClick={() => {
+                  setMostrarToastExito(false);
+                  if (onCerrar) onCerrar();
+                }} 
+                className="w-full bg-[#00f0ff] hover:bg-[#00c0cc] text-black font-bold py-3 px-6 rounded-lg transition-colors duration-200"
+              >
+                  ENTENDIDO
               </button>
            </div>
         </div>
