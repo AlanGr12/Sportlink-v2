@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../axiosConfig.js';
 import fallbackFutbol from '../assets/entrenador1.png';
 import fallbackBasket from '../assets/entrenador2.png';
 import fallbackDefault from '../assets/entrenador3.png';
@@ -39,7 +39,7 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar }) =
     if (!esJugador || !idUs || idjugadorResuelto) return;
     
     let cancelado = false;
-    axios.get(`http://localhost:3000/api/login/perfil/${idUs}`)
+    api.get(`/api/login/perfil/${idUs}`)
       .then(res => {
         if (cancelado) return;
         const perfil = res.data;
@@ -79,7 +79,7 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar }) =
     const fetchPostulantes = async () => {
       setPostulantesLoading(true);
       try {
-        const res = await axios.get(`http://localhost:3000/api/inscripcionesentrenamientos?identrenamiento=${identrenamiento}`);
+        const res = await api.get(`/api/inscripcionesentrenamientos?identrenamiento=${identrenamiento}`);
         if (!cancelado) {
            setPostulantes(Array.isArray(res.data) ? res.data : []);
         }
@@ -100,7 +100,7 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar }) =
       const verificar = async () => {
           setVerificandoInscripcion(true);
           try {
-              const res = await axios.get(`http://localhost:3000/api/inscripcionesentrenamientos?identrenamiento=${identrenamiento}`);
+              const res = await api.get(`/api/inscripcionesentrenamientos?identrenamiento=${identrenamiento}`);
               if (cancelado) return;
               const lista = Array.isArray(res.data) ? res.data : [];
               const yaInscrito = lista.some(item => {
@@ -126,7 +126,7 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar }) =
       setInscripcionError("");
       setInscripcionLoading(true);
       try {
-          await axios.post("http://localhost:3000/api/inscripcionesentrenamientos", {
+          await api.post("/api/inscripcionesentrenamientos", {
               identrenamiento,
               idjugador: idjugadorResuelto
           });

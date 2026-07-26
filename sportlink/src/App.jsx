@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
-import axios from 'axios'
+import api from './axiosConfig.js'
 
 import Login from './log in/Login.jsx'
 import RegistroFlow from './RegistroFlow.jsx'
@@ -79,6 +79,12 @@ function PublicOnlyRoute({ usuario, children }) {
 
 // ── Componente principal ─────────────────────────────────────────────────────
 function App() {
+  /**
+   * El backend ahora responde { token, perfil } en el login.
+   * Guardamos "usuario" en localStorage con el contenido de "perfil"
+   * y "token" por separado.  El interceptor de axiosConfig.js lee
+   * localStorage.getItem('token') en cada petición automáticamente.
+   */
   const [usuario, setUsuario] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('usuario') || 'null')
@@ -87,13 +93,30 @@ function App() {
     }
   })
 
-  const actualizarUsuario = (user) => {
-    if (user) {
-      localStorage.setItem('usuario', JSON.stringify(user))
-    } else {
+  /**
+   * actualizarUsuario — acepta dos formas:
+   *   1. actualizarUsuario({ token, perfil })  → respuesta del backend login
+   *   2. actualizarUsuario(perfilPlano)         → ya extraído (registro, enriquecimiento)
+   *   3. actualizarUsuario(null)               → logout
+   */
+  const actualizarUsuario = (input) => {
+    if (!input) {
       localStorage.removeItem('usuario')
+      localStorage.removeItem('token')
+      setUsuario(null)
+      return
     }
-    setUsuario(user)
+
+    // Detectar si viene envuelto en { token, perfil } (nueva respuesta del backend)
+    if (input.token && input.perfil) {
+      localStorage.setItem('token', input.token)
+      localStorage.setItem('usuario', JSON.stringify(input.perfil))
+      setUsuario(input.perfil)
+    } else {
+      // Perfil plano (enriquecimiento de idjugador, identrenador, etc.)
+      localStorage.setItem('usuario', JSON.stringify(input))
+      setUsuario(input)
+    }
   }
 
   // Enriquecer el objeto usuario con idjugador / identrenador si no los tiene
@@ -105,7 +128,8 @@ function App() {
       const idusuario = usuario.idusuario || usuario.idUsuario || usuario.id || null
       if (!idusuario) return
       try {
-        const response = await axios.get('http://localhost:3000/api/jugadores')
+        // api usa el interceptor de axiosConfig: adjunta el Bearer token automáticamente
+        const response = await api.get('/api/jugadores')
         const jugador = Array.isArray(response.data)
           ? response.data.find((j) => j.idusuario === idusuario)
           : null
@@ -124,7 +148,7 @@ function App() {
       const idusuario = usuario.idusuario || usuario.idUsuario || usuario.id || null
       if (!idusuario) return
       try {
-        const response = await axios.get('http://localhost:3000/api/entrenadores')
+        const response = await api.get('/api/entrenadores')
         const entrenador = Array.isArray(response.data)
           ? response.data.find((e) => e.idusuario === idusuario)
           : null
@@ -162,10 +186,7 @@ function App() {
             path="/login"
             element={
               <PublicOnlyRoute usuario={usuario}>
-                <Login
-                  onLogin={(user) => actualizarUsuario(user)}
-                  onRegistro={null}
-                />
+                <Login onLogin={(data) => actualizarUsuario(data)} />
               </PublicOnlyRoute>
             }
           />
@@ -174,10 +195,7 @@ function App() {
             path="/registro"
             element={
               <PublicOnlyRoute usuario={usuario}>
-                <RegistroFlow
-                  onRegistro={(user) => actualizarUsuario(user)}
-                  onLogin={null}
-                />
+                <RegistroFlow onRegistro={(data) => actualizarUsuario(data)} />
               </PublicOnlyRoute>
             }
           />

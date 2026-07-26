@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../axiosConfig.js";
 import { IconoUbicacion } from "../iconos/IconoUbicacion.jsx";
 import { IconoEmpleos } from "../iconos/IconoEmpleos.jsx";
 import { IconoFecha } from "../iconos/IconoFecha.jsx";
@@ -104,7 +104,7 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
       setPostulantesLoading(true);
       setPostulantesError("");
       try {
-        const res = await axios.get("http://localhost:3000/api/inscripcionesempleo", {
+        const res = await api.get("/api/inscripcionesempleo", {
           params: { idempleo: empleo.idempleo }
         });
         if (!montado) return;
@@ -149,7 +149,7 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
     formData.append("cv", archivoPDF);
 
     try {
-      const response = await axios.post("http://localhost:3000/api/inscripcionesempleo/postularse", formData, {
+      const response = await api.post("/api/inscripcionesempleo/postularse", formData, {
         headers: {
           "Content-Type": "multipart/form-data"
         }

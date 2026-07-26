@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import api from '../../../axiosConfig.js'
 import './RegistroClub.css'
 import Header from "../../header/header.jsx"
 import Footer from "../../footer/footer.jsx"
@@ -96,7 +96,7 @@ function RegistroClub({ onRegistro }) {
         formData.append('fotoperfil', fotoperfil)
       }
 
-      const response = await axios.post('http://localhost:3000/api/clubes/registro', formData)
+      const response = await api.post('/api/clubes/registro', formData)
       if (onRegistro) onRegistro(response.data)
     } catch (error) {
       console.error(error)

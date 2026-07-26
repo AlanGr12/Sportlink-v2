@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../axiosConfig.js'
 import './login.css'
 import logoSportlink from '../assets/logoSportlink.png'
 import Footer from '../footer/footer.jsx'
@@ -22,15 +22,9 @@ function Login({ onLogin }) {
     setError('')
 
     try {
-      const response = await axios.post(
-        'http://localhost:3000/api/login',
-        {
-          email,
-          contraseña
-        }
-      )
-
-      onLogin(response.data)
+      // El backend devuelve { token, perfil } — lo pasamos completo a App.jsx
+      const response = await api.post('/api/login', { email, contraseña })
+      onLogin(response.data)  // App.actualizarUsuario desempaqueta token y perfil
       navigate('/')
 
     } catch (error) {

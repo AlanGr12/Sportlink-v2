@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import api from '../../axiosConfig.js'
 import '../entrenamientos/entrenamientos.css'
 import './entrenadores.css'
 import Footer from '../footer/footer.jsx'
@@ -55,7 +55,7 @@ function EntrenadoresView(props) {
   useEffect(() => {
     async function obtenerEntrenadores() {
       try {
-        const response = await axios.get('http://localhost:3000/api/Entrenadores')
+        const response = await api.get('/api/Entrenadores')
         setEntrenadores(response.data)
       } catch (err) {
         console.error(err)

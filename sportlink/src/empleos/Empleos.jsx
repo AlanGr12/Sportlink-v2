@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../axiosConfig.js";
 
 import MenuEmpleos from "./MenuEmpleos";
 import ListaEmpleos from "./ListaEmpleos";
@@ -29,7 +29,7 @@ function Empleos({ cambiarVista, usuario }) {
     if (usuario?.tipousuario !== "club" || !idusuario) return;
 
     let montado = true;
-    axios.get(`http://localhost:3000/api/login/perfil/${idusuario}`)
+    api.get(`/api/login/perfil/${idusuario}`)
       .then((res) => {
         if (!montado) return;
         const perfil = res.data;
@@ -65,7 +65,7 @@ function Empleos({ cambiarVista, usuario }) {
       const idEntrenador = usuario?.identrenador || usuario?.idEntrenador;
       if (!idEntrenador) return;
       try {
-        const response = await axios.get("http://localhost:3000/api/inscripcionesempleo");
+        const response = await api.get("/api/inscripcionesempleo");
         if (!montado) return;
         const filtradas = Array.isArray(response.data)
           ? response.data.filter(i => Number(i.identrenador) === Number(idEntrenador) && i.estado === true)
@@ -95,7 +95,7 @@ function Empleos({ cambiarVista, usuario }) {
       setCargando(true);
       setError(null);
       try {
-        const response = await axios.get("http://localhost:3000/api/empleo");
+        const response = await api.get("/api/empleo");
         if (cancelado) return;
 
         // Filtrar solo empleos activos (estado === true)

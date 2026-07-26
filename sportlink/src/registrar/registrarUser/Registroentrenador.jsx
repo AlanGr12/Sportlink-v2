@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import api from '../../../axiosConfig.js'
 import "./Registroentrenador.css"
 import Header from "../../header/header.jsx"
 import Footer from "../../footer/footer.jsx"
@@ -127,8 +127,8 @@ function RegistroEntrenador({ onRegistro }) {
         formData.append('fotoperfil', fotoperfil)
       }
 
-      const response = await axios.post(
-        'http://localhost:3000/api/entrenadores/registro',
+      const response = await api.post(
+        '/api/entrenadores/registro',
         formData
       )
 

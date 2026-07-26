@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import api from '../../axiosConfig.js'
 import './jugadores.css'
 import Footer from '../footer/footer.jsx';
 
@@ -11,7 +11,7 @@ function JugadoresView(props) {
   useEffect(() => {
     async function obtenerJugadores() {
       try {
-        const response = await axios.get('http://localhost:3000/api/jugadores')
+        const response = await api.get('/api/jugadores')
         setJugadores(response.data)
       } catch (err) {
         console.error(err)

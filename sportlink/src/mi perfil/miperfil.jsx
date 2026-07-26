@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import axios from 'axios';
+import api from '../axiosConfig.js';
 import './miperfil.css';
 import Footer from '../footer/footer.jsx';
 
@@ -64,8 +64,8 @@ const MiPerfil = (props) => {
   const [formEdicion, setFormEdicion] = useState({});
   const [toastMensaje, setToastMensaje] = useState('');
 
-  // Fuente de verdad de App.jsx, con localStorage como fallback
-  const usuario = props.usuario || JSON.parse(localStorage.getItem('usuario') || 'null');
+  // Usuario viene del prop (App.jsx es la fuente de verdad de sesión)
+  const usuario = props.usuario;
   const idUsuario = usuario?.idusuario;
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../axiosConfig.js';
 import ModalEvento from './ModalEvento.jsx';
 import ModalDetallePrueba from './ModalDetallePrueba.jsx';
 import DetalleEntrenamiento from '../entrenamientos/DetalleEntrenamiento.jsx';
@@ -376,9 +376,7 @@ export default function Calendario({ usuario }) {
     console.log('[Calendario] cargarEventos: userId resuelto =', userId);
     setCargandoEventos(true);
     try {
-      const res = await axios.get(`${API}/calendario`, {
-        headers: { 'X-User-Id': String(userId) }
-      });
+      const res = await api.get(`${API}/calendario`);
 
       const eventosMapeados = {};
 
@@ -457,14 +455,12 @@ export default function Calendario({ usuario }) {
 
       if (payload.id && modalTipo === 'editar') {
         // ── EDITAR ──
-        const res = await axios.put(`${API}/calendario/${payload.id}`, {
+        const res = await api.put(`${API}/calendario/${payload.id}`, {
           fecha:       payload.fecha,
           horainicio:  payload.hora,
           titulo:      payload.nombre,
           descripcion: payload.descripcion,
           imagen:      payload.imagenPreview,
-        }, {
-          headers: { 'X-User-Id': String(userId) }
         });
 
         const evActualizado = {
@@ -482,7 +478,7 @@ export default function Calendario({ usuario }) {
         reemplazarEventoLocal(evActualizado);
       } else {
         // ── CREAR ──
-        const res = await axios.post(`${API}/calendario`, {
+        const res = await api.post(`${API}/calendario`, {
           idusuario:   userId,
           tipo:        'PERSONALIZADO',
           fecha:       payload.fecha,
@@ -491,8 +487,6 @@ export default function Calendario({ usuario }) {
           titulo:      payload.nombre,
           descripcion: payload.descripcion,
           imagen:      payload.imagenPreview,
-        }, {
-          headers: { 'X-User-Id': String(userId) }
         });
 
         const backendEv = res.data;
@@ -546,9 +540,7 @@ export default function Calendario({ usuario }) {
 
     setEliminandoId(ev.id);
     try {
-      await axios.delete(`${API}/calendario/${ev.id}`, {
-        headers: { 'X-User-Id': String(userId) }
-      });
+      await api.delete(`${API}/calendario/${ev.id}`);
       eliminarEventoLocal(ev.id, ev.fecha);
     } catch (err) {
       console.error('Error al eliminar evento:', err);

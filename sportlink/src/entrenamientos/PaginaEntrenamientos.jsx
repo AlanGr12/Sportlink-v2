@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import axios from 'axios';
+import api from '../axiosConfig.js';
 import ListaEntrenamientos from './ListaEntrenamientos';
 import FormularioEntrenamiento from './FormularioEntrenamiento';
 import DetalleEntrenamiento from './DetalleEntrenamiento';
@@ -55,15 +55,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
   const [busqueda, setBusqueda] = useState('');
   const [mostrarTodas, setMostrarTodas] = useState(false);
 
-  // ── Usuario / idJugador (misma lógica que pruebas.jsx) ────
-  const usuarioAlmacenado = (() => {
-    try {
-      return JSON.parse(localStorage.getItem('usuario') || 'null');
-    } catch {
-      return null;
-    }
-  })();
-
+  // Usuario viene del prop (App.jsx maneja la fuente de verdad)
   const idJugadorReal =
     usuario?.idjugador ||
     usuario?.idJugador ||
@@ -71,12 +63,6 @@ const PaginaEntrenamientos = ({ usuario }) => {
     usuario?.jugador?.idJugador ||
     usuario?.jugadorId ||
     usuario?.jugador?.id ||
-    usuarioAlmacenado?.idjugador ||
-    usuarioAlmacenado?.idJugador ||
-    usuarioAlmacenado?.jugador?.idjugador ||
-    usuarioAlmacenado?.jugador?.idJugador ||
-    usuarioAlmacenado?.jugadorId ||
-    usuarioAlmacenado?.jugador?.id ||
     null;
 
   // Expandir filtros en Sidebar (Estilo acordeón de la imagen)
@@ -108,11 +94,10 @@ const PaginaEntrenamientos = ({ usuario }) => {
       // cuando la petición es GET usamos `axios.get(url, { params, headers })`.
       const method = (options.method || 'GET').toString().toUpperCase();
       if (method === 'GET') {
-        return await axios.get(url, { params: options.params, headers: options.headers });
+        return await api.get(url, { params: options.params });
       }
-      // Para otros métodos usamos axios.request con el config completo
       const config = { url, ...options };
-      return await axios.request(config);
+      return await api.request(config);
     } catch (err) {
       const status = err.response ? err.response.status : null;
       if (status && status >= 500 && reintentosRestantes > 0) {
@@ -156,10 +141,8 @@ const PaginaEntrenamientos = ({ usuario }) => {
       }
     }
 
-    // Headers de autenticación / contexto para jugadores y entrenadores
+    // Headers — el Bearer token se inyecta automáticamente por el interceptor de axiosConfig
     const headers = {};
-    if (usuario?.token) headers.Authorization = `Bearer ${usuario.token}`;
-    if (usuario?.id) headers['X-User-Id'] = String(usuario.id);
     if (usuario?.tipousuario) headers['X-User-Type'] = usuario.tipousuario;
 
     // Usaremos fetchConReintento con headers explícitos (axios.get/axios.request internamente)
@@ -171,8 +154,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
     });
 
     try {
-      // Petición directa usando axios.get
-      const res = await axios.get(url, { params, headers });
+      const res = await api.get(url, { params });
       if (res.data && res.data.items) {
         const items = res.data.items.map(normalize);
         setEntrenamientos(items);
@@ -214,10 +196,8 @@ const PaginaEntrenamientos = ({ usuario }) => {
 
   // Manejo de Creación / Edición
   const handleGuardarEntrenamiento = async (datos, archivoAdjunto) => {
-    // Headers para la petición (autenticación/contexto)
+    // Bearer token se inyecta automáticamente por el interceptor de axiosConfig
     const headers = {};
-    if (usuario?.token) headers.Authorization = `Bearer ${usuario.token}`;
-    if (usuario?.id) headers['X-User-Id'] = String(usuario.id);
     if (usuario?.tipousuario) headers['X-User-Type'] = usuario.tipousuario;
 
     try {
@@ -272,12 +252,11 @@ const PaginaEntrenamientos = ({ usuario }) => {
   const handleBorrarEntrenamiento = async (id) => {
     if (!window.confirm('¿Estás seguro de que deseas eliminar este entrenamiento?')) return;
 
-    try {
-      const headers = {};
-      if (usuario?.token) headers.Authorization = `Bearer ${usuario.token}`;
-      if (usuario?.id) headers['X-User-Id'] = String(usuario.id);
-      if (usuario?.tipousuario) headers['X-User-Type'] = usuario.tipousuario;
+    // Bearer token se inyecta automáticamente por el interceptor de axiosConfig
+    const headers = {};
+    if (usuario?.tipousuario) headers['X-User-Type'] = usuario.tipousuario;
 
+    try {
       if (!String(id).startsWith('entreno-')) {
         await fetchConReintento(`${API_BASE}/${id}`, { method: 'DELETE', headers });
       }
@@ -289,6 +268,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
       mostrarToast('Error al eliminar entrenamiento. Revisá la consola.', 'error');
     }
   };
+
 
   const aplicarFiltros = () => {
     setPage(1);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import axios from 'axios';
+
 
 // Los mismos iconos que usa pruebas.jsx
 import iconoMedalla   from '../assets/medalla.png';

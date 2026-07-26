@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import axios from "axios";
+import api from "../axiosConfig.js";
 import MenuPruebas from "./menuPruebas";
 import PruebasHeader from "./pruebasHeader";
 import FormularioPrueba from "./FormularioPrueba";
@@ -35,16 +35,8 @@ function Pruebas({ idJugador, usuario }) {
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
 
   // ── Usuario ───────────────────────────────────────────────
-  const usuarioAlmacenado = (() => {
-    try {
-      return JSON.parse(localStorage.getItem("usuario") || "null");
-    } catch {
-      return null;
-    }
-  })();
-
-  // El prop `usuario` tiene prioridad; si no llega, usamos localStorage
-  const usuarioEfectivo = usuario || usuarioAlmacenado;
+  // Usuario viene del prop (App.jsx es la fuente de verdad de sesión)
+  const usuarioEfectivo = usuario;
 
   const idJugadorReal =
     idJugador ||
@@ -54,13 +46,8 @@ function Pruebas({ idJugador, usuario }) {
     usuarioEfectivo?.jugador?.idJugador ||
     usuarioEfectivo?.jugadorId ||
     usuarioEfectivo?.jugador?.id ||
-    usuarioAlmacenado?.idjugador ||
-    usuarioAlmacenado?.idJugador ||
-    usuarioAlmacenado?.jugador?.idjugador ||
-    usuarioAlmacenado?.jugador?.idJugador ||
-    usuarioAlmacenado?.jugadorId ||
-    usuarioAlmacenado?.jugador?.id ||
     null;
+
 
   // idclub resuelto asíncronamente via /api/login/perfil/:idusuario
   const [idclubResuelto, setIdclubResuelto] = useState(null);
@@ -140,7 +127,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
       }
 
       try {
-        const response = await axios.get("http://localhost:3000/api/inscripcionesprueba", {
+        const response = await api.get("/api/inscripcionesprueba", {
           params: { idjugador: idjugadorResuelto, idprueba: idPruebaNum }
         });
 
@@ -182,7 +169,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
       setPostulantesLoading(true);
       setPostulantesError("");
       try {
-        const response = await axios.get("http://localhost:3000/api/inscripcionesprueba", {
+        const response = await api.get("/api/inscripcionesprueba", {
           params: { idprueba: idPruebaNum }
         });
         if (cancelado) return;
@@ -338,8 +325,8 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
     setInscripcionLoading(true);
     try {
-      await axios.post(
-        "http://localhost:3000/api/inscripcionesprueba",
+      await api.post(
+        "/api/inscripcionesprueba",
         body,
         { headers: { "Content-Type": "application/json" } }
       );
@@ -410,7 +397,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
     if (!esClub || !idusuario) return;
 
     let montado = true;
-    axios.get(`http://localhost:3000/api/login/perfil/${idusuario}`)
+    api.get(`/api/login/perfil/${idusuario}`)
       .then((res) => {
         if (!montado) return;
         const perfil = res.data;
@@ -447,7 +434,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
     if (!esJugador || !idusuario) return;
 
     let montado = true;
-    axios.get(`http://localhost:3000/api/login/perfil/${idusuario}`)
+    api.get(`/api/login/perfil/${idusuario}`)
       .then((res) => {
         if (!montado) return;
         const perfil = res.data;
@@ -500,10 +487,10 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
     try {
       const filtrarPorDeporte = !(forceGeneral || !idJugadorReal);
       const url = filtrarPorDeporte
-        ? "http://localhost:3000/api/pruebas/deporte"
-        : "http://localhost:3000/api/pruebas";
+        ? "/api/pruebas/deporte"
+        : "/api/pruebas";
       const config = filtrarPorDeporte ? { params: { idJugador: idJugadorReal } } : {};
-      const response = await axios.get(url, config);
+      const response = await api.get(url, config);
       setPruebas(response.data);
 
       // Capturar el deporte del usuario a partir de la primera respuesta filtrada
