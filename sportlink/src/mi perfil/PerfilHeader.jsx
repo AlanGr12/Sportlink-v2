@@ -1,4 +1,6 @@
 import React from 'react';
+import { IconoDeportes } from '../iconos/IconoDeportes.jsx';
+import Avatar from '../components/Avatar.jsx';
 import './PerfilHeader.css';
 
 /*
@@ -53,13 +55,13 @@ const PerfilHeader = ({ perfil }) => {
       <div className="perfil-header-main-content">
         <div className="perfil-header-left">
           <div className="perfil-photo-wrapper">
-            {perfil?.fotoperfil ? (
-              <img src={perfil.fotoperfil} alt={nombreCompleto} className="perfil-photo-img" />
-            ) : (
-              <div className="perfil-initials-avatar">
-                {(nombre || perfil?.email || 'U').charAt(0).toUpperCase()}
-              </div>
-            )}
+            <Avatar 
+              src={perfil?.fotoperfil} 
+              nombre={nombreCompleto || perfil?.email || 'Usuario'} 
+              size="120px" 
+              className="perfil-photo-img" 
+              style={{ border: 'none', background: '#333' }}
+            />
             <span className="online-status-dot"></span>
           </div>
 

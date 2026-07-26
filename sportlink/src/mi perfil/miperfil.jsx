@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import api from '../axiosConfig.js';
+import Avatar from '../components/Avatar.jsx';
 import './miperfil.css';
 import Footer from '../footer/footer.jsx';
 
@@ -66,7 +67,7 @@ const MiPerfil = (props) => {
 
   // Usuario viene del prop (App.jsx es la fuente de verdad de sesión)
   const usuario = props.usuario;
-  const idUsuario = usuario?.idusuario;
+  const idUsuario = usuario?.idusuario || usuario?.idUsuario || usuario?.id;
 
   useEffect(() => {
     let montado = true;
@@ -80,7 +81,7 @@ const MiPerfil = (props) => {
 
       setCargando(true);
       try {
-        const res = await axios.get(`http://localhost:3000/api/login/perfil/${idUsuario}`);
+        const res = await api.get(`/api/login/perfil/${idUsuario}`);
         if (montado) {
           setPerfil(res.data || null);
           setErrorMensaje(null);
@@ -222,13 +223,13 @@ const MiPerfil = (props) => {
             <div className="profile-header-main">
               <div className="profile-avatar-area">
                 <div className="profile-avatar-border-svg">
-                  {perfil?.fotoperfil ? (
-                    <img src={perfil.fotoperfil} alt={nombreCompleto} className="profile-avatar-img" />
-                  ) : (
-                    <div className="profile-avatar-fallback">
-                      {nombre.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <Avatar 
+                    src={perfil?.fotoperfil} 
+                    nombre={nombreCompleto || perfil?.email || nombre} 
+                    size="130px" 
+                    className="profile-avatar-img" 
+                    style={{ border: 'none', background: '#333' }}
+                  />
                 </div>
                 <span className="profile-online-badge" />
               </div>

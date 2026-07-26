@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, NavLink } from 'react-router-dom';
+import Avatar from '../components/Avatar.jsx';
 import './header.css';
 import logoSportlink from '../assets/logoSportlink.png';
 import { IconoMensajes } from '../iconos/IconoMensajes.jsx';
@@ -222,29 +223,15 @@ const Header = ({ usuario, onLogout }) => {
 
               {/* Avatar / perfil */}
               <div className="header-profile-container" ref={avatarRef}>
-                <button className="header-avatar-toggle" onClick={toggleAvatarDropdown}>
-                  <div className="header-avatar" style={{ overflow: 'hidden', padding: 0 }}>
-                    {usuario.fotoperfil ? (
-                      <img
-                        src={usuario.fotoperfil}
-                        alt={usuario.nombre || 'Foto de perfil'}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }}
-                      />
-                    ) : (
-                      usuario.nombre?.charAt(0).toUpperCase()
-                    )}
-                  </div>
+                <button className="header-avatar-toggle" onClick={toggleAvatarDropdown} style={{border: 'none', background: 'transparent', padding: 0}}>
+                  <Avatar src={usuario.fotoperfil} nombre={usuario.nombre || usuario.email} size={40} />
                 </button>
 
                 {avatarDropdownOpen && (
                   <div className="header-avatar-dropdown">
                     <div className="header-user-info-box">
-                      <div className="header-user-avatar-preview">
-                        {usuario.fotoperfil ? (
-                          <img src={usuario.fotoperfil} alt={usuario.nombre} />
-                        ) : (
-                          usuario.nombre?.charAt(0).toUpperCase()
-                        )}
+                      <div className="header-user-avatar-preview" style={{border: 'none', background: 'transparent'}}>
+                        <Avatar src={usuario.fotoperfil} nombre={usuario.nombre || usuario.email} size={48} />
                       </div>
                       <div className="header-user-info-text">
                         <span className="header-user-fullname">

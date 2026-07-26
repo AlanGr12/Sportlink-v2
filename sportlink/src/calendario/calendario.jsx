@@ -396,7 +396,7 @@ export default function Calendario({ usuario }) {
           } else if (ev.idPrueba) {
             // Fetch adicional (ej. para Clubes)
             try {
-              const resP = await axios.get(`${API}/pruebas/${ev.idPrueba}`);
+              const resP = await api.get(`/api/pruebas/${ev.idPrueba}`);
               ev.datosPrueba = resP.data;
               ev.ubicacion = ev.datosPrueba.zona || ev.datosPrueba.club?.ubicacion || null;
               ev.creador   = ev.datosPrueba.club?.nombre || null;
@@ -406,7 +406,7 @@ export default function Calendario({ usuario }) {
           // Si no viene nombre del backend, intentar un fetch liviano
           if (ev.idEntrenamiento) {
             try {
-              const resE = await axios.get(`${API}/entrenamientos/${ev.idEntrenamiento}`);
+              const resE = await api.get(`/api/entrenamientos/${ev.idEntrenamiento}`);
               const ent = resE.data;
               if (!ev.nombre) ev.nombre = ent.titulo || 'Entrenamiento';
               ev.descripcion = ent.descripcion || ev.descripcion;
@@ -418,7 +418,7 @@ export default function Calendario({ usuario }) {
         } else if (ev.tipo === 'EMPLEO') {
           if (ev.idInscripcionEmpleo) {
             try {
-              const resE = await axios.get(`${API}/empleo/${ev.idInscripcionEmpleo}`);
+              const resE = await api.get(`/api/empleo/${ev.idInscripcionEmpleo}`);
               ev.datosEmpleo = resE.data;
             } catch {}
           }

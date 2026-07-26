@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import api from '../../axiosConfig.js'
+import api from '../axiosConfig.js'
 import '../entrenamientos/entrenamientos.css'
 import './entrenadores.css'
 import Footer from '../footer/footer.jsx'
+import Avatar from '../components/Avatar.jsx'
 import { IconoUbicacion } from '../iconos/IconoUbicacion.jsx'
 import { IconoFutbol } from '../iconos/IconoFutbol.jsx'
 import { IconoBuscador } from '../iconos/IconoBuscador.jsx'
@@ -226,11 +227,12 @@ function EntrenadoresView(props) {
 
                   {/* ── Imagen (mitad superior) ── */}
                   <div className="card-entrenador-imagen">
-                    {Entrenador.fotoperfil ? (
-                      <img src={Entrenador.fotoperfil} alt={Entrenador.nombre} />
-                    ) : (
-                      <div className="card-entrenador-sin-foto">Sin foto</div>
-                    )}
+                    <Avatar 
+                      src={Entrenador.fotoperfil} 
+                      nombre={Entrenador.nombre} 
+                      size="100%" 
+                      style={{ borderRadius: 0, fontSize: '4rem' }} 
+                    />
                     <div className="card-entrenador-imagen-overlay" aria-hidden="true" />
                     {Entrenador.tieneclub && (
                       <span className="badge-recomendado">RECOMENDADO</span>

@@ -221,7 +221,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
 
         try {
           const uploadHeaders = { 'Content-Type': 'multipart/form-data', ...headers };
-          const adjuntoRes = await axios.post(`${API_BASE}/${guardado.id}/adjuntos`, formData, {
+          const adjuntoRes = await api.post(`${API_BASE}/${guardado.id}/adjuntos`, formData, {
             headers: uploadHeaders
           });
           mostrarToast('¡Archivo adjunto subido con éxito!');

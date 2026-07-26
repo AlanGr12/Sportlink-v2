@@ -1,5 +1,5 @@
 import { useState } from "react";
-import api from "../../../axiosConfig.js";
+import api from "../../axiosConfig.js";
 import "./RegistrojugadorPASO3.css";
 import Header from "../../header/header.jsx";
 import Footer from "../../footer/footer.jsx";

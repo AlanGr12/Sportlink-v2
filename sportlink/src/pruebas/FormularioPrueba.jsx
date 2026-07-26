@@ -1,4 +1,5 @@
 import { useState } from "react";
+import api from "../axiosConfig.js";
 
 // ── Deportes disponibles (mismo listado que FormularioEntrenamiento) ──────────
 const deportesDisponibles = [
@@ -115,17 +116,10 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
         formData.append("imagen", IMAGEN_DEFAULT);
       }
 
-      const res = await fetch("http://localhost:3000/api/pruebas/crearPrueba", {
-        method: "POST",
-        body: formData,
-        // NO establecer Content-Type manualmente; el navegador pone
-        // multipart/form-data con el boundary correcto automáticamente.
-      });
+      // NO establecer Content-Type manualmente; axios lo hace automáticamente
+      const res = await api.post("/api/pruebas/crearPrueba", formData);
 
-      if (!res.ok) {
-        const texto = await res.text();
-        throw new Error(texto || `Error ${res.status}`);
-      }
+      // Si axios no tira catch, asumimos que res.status es 2xx
 
       onGuardado(); // Notifica al padre para cerrar modal y recargar lista
     } catch (err) {

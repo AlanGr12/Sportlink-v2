@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import api from '../../axiosConfig.js'
+import api from '../axiosConfig.js'
 import './jugadores.css'
 import Footer from '../footer/footer.jsx';
+import Avatar from '../components/Avatar.jsx';
 
 function JugadoresView(props) {
   const [jugadores, setJugadores] = useState([])
@@ -44,13 +45,13 @@ function JugadoresView(props) {
           {jugadores.map((jugador) => (
             <div key={jugador.idjugador} className="card-jugador">
 
-              {jugador.fotoperfil && (
-                <img
-                  src={jugador.fotoperfil}
-                  alt={jugador.nombre}
-                  className="foto-jugador"
-                />
-              )}
+              <Avatar 
+                src={jugador.fotoperfil} 
+                nombre={jugador.nombre} 
+                size="100%" 
+                className="foto-jugador" 
+                style={{ borderRadius: 0, fontSize: '4rem', aspectRatio: '1/1' }} 
+              />
 
               <h2>{jugador.nombre} {jugador.apellido}</h2>
 
