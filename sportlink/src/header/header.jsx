@@ -193,8 +193,8 @@ const Header = ({ usuario, onLogout }) => {
           {estaLogueado ? (
             <>
               <div className="header-icons-container" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                {/* Mensajes (placeholder sin ruta dedicada aún) */}
-                <button className="header-action-btn" onClick={() => {}}>
+                {/* Mensajes */}
+                <button className={`header-action-btn ${location.pathname.startsWith('/mensajes') ? 'active' : ''}`} onClick={() => ir('/mensajes')}>
                   <IconoMensajes size={22} color="#ffffff" className="header-svg-icon" />
                 </button>
 

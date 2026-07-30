@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../axiosConfig.js'
 import '../entrenamientos/entrenamientos.css'
 import './entrenadores.css'
@@ -31,9 +32,11 @@ const deportesDisponibles = [
 ]
 
 function EntrenadoresView(props) {
+  const navigate = useNavigate()
   const [Entrenadores, setEntrenadores] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [contactando, setContactando] = useState(null) // id del entrenador que está siendo contactado
 
   // Filtros
   const [busqueda, setBusqueda] = useState('')
@@ -98,6 +101,29 @@ function EntrenadoresView(props) {
     setBusqueda('')
     setFiltroDeporte('')
     setFiltroUbicacion('')
+  }
+
+  // Botón Contactar: crea o recupera la conversación privada y navega al chat
+  const handleContactar = async (entrenador) => {
+    if (!props.usuario) {
+      navigate('/login')
+      return
+    }
+    if (contactando === entrenador.identrenador) return // evitar doble clic
+
+    setContactando(entrenador.identrenador)
+    try {
+      const { data: conversacion } = await api.post('/api/conversaciones/privada', {
+        idusuarioReceptor: entrenador.idusuario
+      })
+      // Navegamos a /mensajes y pasamos la conversación como state para abrirla directamente
+      navigate('/mensajes', { state: { conversacionInicial: conversacion } })
+    } catch (err) {
+      console.error('Error al contactar entrenador:', err)
+      alert('No se pudo iniciar la conversación. Intentá de nuevo.')
+    } finally {
+      setContactando(null)
+    }
   }
 
   if (loading) {
@@ -277,7 +303,13 @@ function EntrenadoresView(props) {
                   {/* ── Botones de acción ── */}
                   <div className="card-entrenador-acciones">
                     <button className="btn-entrenador-perfil">Perfil</button>
-                    <button className="btn-entrenador-contactar">Contactar</button>
+                    <button
+                      className="btn-entrenador-contactar"
+                      onClick={() => handleContactar(Entrenador)}
+                      disabled={contactando === Entrenador.identrenador}
+                    >
+                      {contactando === Entrenador.identrenador ? 'Conectando...' : 'Contactar'}
+                    </button>
                   </div>
 
                 </div>

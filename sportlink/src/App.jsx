@@ -13,6 +13,7 @@ import Calendario from './calendario/calendario.jsx'
 import Pruebas from './pruebas/pruebas.jsx'
 import PaginaEntrenamientos from './entrenamientos/PaginaEntrenamientos.jsx'
 import Empleos from './empleos/Empleos.jsx'
+import MensajesView from './mensajes/MensajesView.jsx'
 
 // ── Página 404 ───────────────────────────────────────────────────────────────
 function NotFound404() {
@@ -220,6 +221,17 @@ function App() {
             element={
               <ProtectedRoute usuario={usuario}>
                 <MiPerfil usuario={usuario} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mensajes"
+            element={
+              <ProtectedRoute usuario={usuario}>
+                {/* Mensajes ocupa toda la pantalla disponible bajo el header fijo (80px) */}
+                <div style={{ paddingTop: '80px', height: '100vh', overflow: 'hidden', boxSizing: 'border-box' }}>
+                  <MensajesView usuario={usuario} conversacionInicial={null} />
+                </div>
               </ProtectedRoute>
             }
           />
