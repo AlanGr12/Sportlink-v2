@@ -19,32 +19,26 @@ const deportesDisponibles = [
   { id: 15, nombre: 'Golf' }
 ];
 
-
-
-const FormularioEntrenamiento = ({ 
-  entrenamiento, 
-  usuarioActual, 
-  onGuardar, 
-  onCancelar 
+const FormularioEntrenamiento = ({
+  entrenamiento,
+  usuarioActual,
+  onGuardar,
+  onCancelar
 }) => {
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [fechaHora, setFechaHora] = useState('');
-  const [duracionMinutos, setDuracionMinutos] = useState(60);
+  const [fechaentr, setFechaentr] = useState('');
   const [ubicacion, setUbicacion] = useState('');
-  const [tipo, setTipo] = useState(deportesDisponibles[0].id);
-  const [intensidad, setIntensidad] = useState('media');
-  const [modalidad, setModalidad] = useState('grupal');
-  
-  // Recurrente
-  const [esRecurrente, setEsRecurrente] = useState(false);
-  const [frecuencia, setFrecuencia] = useState('semanal');
-  const [diasSeleccionados, setDiasSeleccionados] = useState([]);
+  const [iddeporte, setIddeporte] = useState(deportesDisponibles[0].id);
+  const [precio, setPrecio] = useState(0);
+  const [cantidad, setCantidad] = useState(1);
+  const [genero, setGenero] = useState('Mixto');
+  const [nivel, setNivel] = useState('Principiante');
+  const [estado, setEstado] = useState(true);
 
-  // Adjunto opcional
+  // Adjunto (imagen requerida por el backend)
   const [archivo, setArchivo] = useState(null);
-  const [archivoCargando, setArchivoCargando] = useState(false);
-  const [archivoUrl, setArchivoUrl] = useState('');
+  const [imagenUrlExistente, setImagenUrlExistente] = useState('');
 
   // Errores locales y del backend
   const [errores, setErrores] = useState({});
@@ -54,97 +48,69 @@ const FormularioEntrenamiento = ({
     if (entrenamiento) {
       setTitulo(entrenamiento.titulo || '');
       setDescripcion(entrenamiento.descripcion || '');
-      // Formatear fecha para el input datetime-local
-      if (entrenamiento.fechaHora) {
-        const d = new Date(entrenamiento.fechaHora);
-        const pad = (n) => String(n).padStart(2, '0');
-        const formatted = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        setFechaHora(formatted);
-      } else {
-        setFechaHora('');
-      }
-      setDuracionMinutos(entrenamiento.duracionMinutos || 60);
+      setFechaentr(entrenamiento.fechaentr ? entrenamiento.fechaentr.substring(0, 10) : '');
       setUbicacion(entrenamiento.ubicacion || '');
-      // intentar cargar por id o por nombre
-      if (entrenamiento.tipoId) {
-        setTipo(Number(entrenamiento.tipoId));
-      } else if (entrenamiento.tipo) {
-        const encontrado = deportesDisponibles.find(d => d.nombre.toLowerCase() === String(entrenamiento.tipo).toLowerCase());
-        setTipo(encontrado ? encontrado.id : deportesDisponibles[0].id);
-      } else {
-        setTipo(deportesDisponibles[0].id);
-      }
-      setIntensidad(entrenamiento.intensidad || 'media');
-      setModalidad(entrenamiento.modalidad || 'grupal');
-      
-      if (entrenamiento.recurrente && entrenamiento.recurrente.frecuencia) {
-        setEsRecurrente(true);
-        setFrecuencia(entrenamiento.recurrente.frecuencia);
-        setDiasSeleccionados(entrenamiento.recurrente.dias || []);
-      } else {
-        setEsRecurrente(false);
-        setFrecuencia('semanal');
-        setDiasSeleccionados([]);
-      }
-      if (entrenamiento.adjunto) {
-        setArchivoUrl(entrenamiento.adjunto);
-      }
+      setIddeporte(entrenamiento.iddeporte || entrenamiento.deporte?.iddeporte || deportesDisponibles[0].id);
+      setPrecio(entrenamiento.precio ?? 0);
+      setCantidad(entrenamiento.cantidad ?? 1);
+      setGenero(entrenamiento.genero || 'Mixto');
+      setNivel(entrenamiento.nivel || 'Principiante');
+      setEstado(typeof entrenamiento.estado === 'boolean' ? entrenamiento.estado : true);
+      setImagenUrlExistente(entrenamiento.imagen || '');
     } else {
-      // Valores por defecto
+      // Valores por defecto para creación
       setTitulo('');
       setDescripcion('');
       const manana = new Date();
       manana.setDate(manana.getDate() + 1);
-      manana.setHours(10, 0, 0, 0);
       const pad = (n) => String(n).padStart(2, '0');
-      const formatted = `${manana.getFullYear()}-${pad(manana.getMonth() + 1)}-${pad(manana.getDate())}T${pad(manana.getHours())}:${pad(manana.getMinutes())}`;
-      setFechaHora(formatted);
-      setDuracionMinutos(90);
+      setFechaentr(`${manana.getFullYear()}-${pad(manana.getMonth() + 1)}-${pad(manana.getDate())}`);
       setUbicacion('Cancha 1');
-      setTipo(deportesDisponibles[0].id);
-      setIntensidad('media');
-      setModalidad('grupal');
-      setEsRecurrente(false);
-      setFrecuencia('semanal');
-      setDiasSeleccionados([]);
-      setArchivoUrl('');
+      setIddeporte(deportesDisponibles[0].id);
+      setPrecio(0);
+      setCantidad(1);
+      setGenero('Mixto');
+      setNivel('Principiante');
+      setEstado(true);
+      setImagenUrlExistente('');
     }
+    setArchivo(null);
   }, [entrenamiento]);
 
   const validarFormulario = () => {
     const nuevosErrores = {};
-    
+
     if (!titulo || titulo.trim().length < 3) {
       nuevosErrores.titulo = 'El título debe tener al menos 3 caracteres';
     }
-
-    if (!fechaHora) {
-      nuevosErrores.fechaHora = 'La fecha y hora es requerida';
-    } else {
-      const fechaSel = new Date(fechaHora);
-      if (fechaSel < new Date() && !entrenamiento) {
-        nuevosErrores.fechaHora = 'La fecha y hora debe ser posterior al momento actual';
-      }
+    if (!descripcion || descripcion.trim().length === 0) {
+      nuevosErrores.descripcion = 'La descripción es obligatoria';
     }
-
-    if (!duracionMinutos || Number(duracionMinutos) <= 0) {
-      nuevosErrores.duracionMinutos = 'La duración debe ser un número mayor a 0';
+    if (!fechaentr) {
+      nuevosErrores.fechaentr = 'La fecha es requerida';
     }
-
-    if (esRecurrente && diasSeleccionados.length === 0) {
-      nuevosErrores.recurrente = 'Debe seleccionar al menos un día para la recurrencia';
+    if (!ubicacion || ubicacion.trim().length === 0) {
+      nuevosErrores.ubicacion = 'La ubicación es obligatoria';
+    }
+    if (precio === '' || Number(precio) < 0) {
+      nuevosErrores.precio = 'El precio debe ser un número mayor o igual a 0';
+    }
+    if (!cantidad || Number(cantidad) <= 0) {
+      nuevosErrores.cantidad = 'La cantidad debe ser un número mayor a 0';
+    }
+    if (!genero) {
+      nuevosErrores.genero = 'El género es obligatorio';
+    }
+    if (!nivel) {
+      nuevosErrores.nivel = 'El nivel es obligatorio';
+    }
+    // La imagen es obligatoria en el backend salvo que ya exista una (edición)
+    if (!archivo && !imagenUrlExistente) {
+      nuevosErrores.archivo = 'La imagen es obligatoria';
     }
 
     setErrores(nuevosErrores);
     return Object.keys(nuevosErrores).length === 0;
-  };
-
-  const toggleDia = (diaNum) => {
-    if (diasSeleccionados.includes(diaNum)) {
-      setDiasSeleccionados(diasSeleccionados.filter(d => d !== diaNum));
-    } else {
-      setDiasSeleccionados([...diasSeleccionados, diaNum]);
-    }
   };
 
   const handleArchivoChange = (e) => {
@@ -158,45 +124,38 @@ const FormularioEntrenamiento = ({
     if (!validarFormulario()) return;
 
     setLoading(true);
-    const tipoObj = deportesDisponibles.find(d => Number(d.id) === Number(tipo));
-    const data = {
-      titulo,
-      descripcion,
-      fechaHora: new Date(fechaHora).toISOString(),
-      duracionMinutos: Number(duracionMinutos),
-      entrenadorId: usuarioActual?.id || 'ent-123',
-      clubId: usuarioActual?.clubId || 'club-1',
-      tipoId: Number(tipo),
-      tipo: tipoObj ? tipoObj.nombre : '',
-      intensidad,
-      modalidad,
-      ubicacion,
-      jugadores: entrenamiento?.jugadores || [],
-    };
 
-    if (esRecurrente) {
-      data.recurrente = {
-        frecuencia,
-        dias: diasSeleccionados
-      };
-    } else {
-      data.recurrente = null;
+    // FormData real, para que viaje junto con el archivo (multer lo espera así)
+    const formData = new FormData();
+    formData.append('titulo', titulo);
+    formData.append('descripcion', descripcion);
+    formData.append('fechaentr', fechaentr);
+    formData.append('ubicacion', ubicacion);
+    formData.append('iddeporte', iddeporte);
+    formData.append('precio', precio);
+    formData.append('cantidad', cantidad);
+    formData.append('genero', genero);
+    formData.append('nivel', nivel);
+    formData.append('estado', estado);
+
+    // identrenador: si el usuario logueado ya trae su id de entrenador, se manda.
+    // Si no, el backend lo resuelve solo a partir del token (ver nota en la respuesta).
+    if (usuarioActual?.identrenador) {
+      formData.append('identrenador', usuarioActual.identrenador);
     }
 
-    if (archivoUrl) {
-      data.adjunto = archivoUrl;
+    if (archivo) {
+      formData.append('imagen', archivo);
+    } else if (imagenUrlExistente) {
+      formData.append('imagen', imagenUrlExistente);
     }
 
     try {
-      await onGuardar(data, archivo);
+      await onGuardar(formData);
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.errors) {
-        // Mapear respuestas 400 del backend a campos
-        const backendErrores = {};
-        err.response.data.errors.forEach(e => {
-          backendErrores[e.campo] = e.mensaje;
-        });
-        setErrores(backendErrores);
+      const mensajeBackend = err.response?.data?.error;
+      if (mensajeBackend) {
+        setErrores({ general: mensajeBackend });
       } else {
         setErrores({ general: 'Ocurrió un error al procesar el entrenamiento en el servidor.' });
       }
@@ -204,16 +163,6 @@ const FormularioEntrenamiento = ({
       setLoading(false);
     }
   };
-
-  const diasSemana = [
-    { num: 1, label: 'L' },
-    { num: 2, label: 'Ma' },
-    { num: 3, label: 'Mi' },
-    { num: 4, label: 'J' },
-    { num: 5, label: 'V' },
-    { num: 6, label: 'S' },
-    { num: 7, label: 'D' }
-  ];
 
   return (
     <form className="formulario-entrenamiento" onSubmit={handleSubmit}>
@@ -224,9 +173,9 @@ const FormularioEntrenamiento = ({
       {/* Título */}
       <div className="form-grupo">
         <label className="form-label">Título del Entrenamiento<span>*</span></label>
-        <input 
-          type="text" 
-          className="form-input" 
+        <input
+          type="text"
+          className="form-input"
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
           placeholder="ej. Circuito de fuerza y potencia táctica"
@@ -237,187 +186,176 @@ const FormularioEntrenamiento = ({
 
       {/* Descripción */}
       <div className="form-grupo">
-        <label className="form-label">Descripción / Objetivos</label>
-        <textarea 
-          className="form-textarea" 
+        <label className="form-label">Descripción / Objetivos<span>*</span></label>
+        <textarea
+          className="form-textarea"
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
           placeholder="Describe la rutina, ejercicios y metas del entrenamiento"
+          required
         />
+        {errores.descripcion && <span className="error-feedback">{errores.descripcion}</span>}
       </div>
 
-      {/* Fila doble: FechaHora y Duración */}
+      {/* Fila doble: Fecha y Ubicación */}
       <div className="form-fila-doble">
         <div className="form-grupo">
-          <label className="form-label">Fecha y Hora<span>*</span></label>
-          <input 
-            type="datetime-local" 
-            className="form-input" 
-            value={fechaHora}
-            onChange={(e) => setFechaHora(e.target.value)}
+          <label className="form-label">Fecha del Entrenamiento<span>*</span></label>
+          <input
+            type="date"
+            className="form-input"
+            value={fechaentr}
+            onChange={(e) => setFechaentr(e.target.value)}
             required
           />
-          {errores.fechaHora && <span className="error-feedback">{errores.fechaHora}</span>}
+          {errores.fechaentr && <span className="error-feedback">{errores.fechaentr}</span>}
         </div>
 
         <div className="form-grupo">
-          <label className="form-label">Duración (minutos)<span>*</span></label>
-          <input 
-            type="number" 
-            className="form-input" 
-            value={duracionMinutos}
-            onChange={(e) => setDuracionMinutos(Number(e.target.value))}
+          <label className="form-label">Ubicación / Cancha<span>*</span></label>
+          <input
+            type="text"
+            className="form-input"
+            value={ubicacion}
+            onChange={(e) => setUbicacion(e.target.value)}
+            placeholder="ej. Cancha Auxiliar N° 2"
+            required
+          />
+          {errores.ubicacion && <span className="error-feedback">{errores.ubicacion}</span>}
+        </div>
+      </div>
+
+      {/* Fila doble: Precio y Cantidad (cupo) */}
+      <div className="form-fila-doble">
+        <div className="form-grupo">
+          <label className="form-label">Precio<span>*</span></label>
+          <input
+            type="number"
+            className="form-input"
+            value={precio}
+            onChange={(e) => setPrecio(e.target.value)}
+            min="0"
+            required
+          />
+          {errores.precio && <span className="error-feedback">{errores.precio}</span>}
+        </div>
+
+        <div className="form-grupo">
+          <label className="form-label">Cupo (cantidad de jugadores)<span>*</span></label>
+          <input
+            type="number"
+            className="form-input"
+            value={cantidad}
+            onChange={(e) => setCantidad(e.target.value)}
             min="1"
             required
           />
-          {errores.duracionMinutos && <span className="error-feedback">{errores.duracionMinutos}</span>}
+          {errores.cantidad && <span className="error-feedback">{errores.cantidad}</span>}
         </div>
       </div>
 
-      {/* Fila doble: Tipo de Deporte e Intensidad */}
+      {/* Fila doble: Deporte y Nivel */}
       <div className="form-fila-doble">
         <div className="form-grupo">
-          <label className="form-label">Deporte / Categoría</label>
-          <select 
-            className="form-select" 
-            value={tipo}
-            onChange={(e) => setTipo(Number(e.target.value))}
+          <label className="form-label">Deporte</label>
+          <select
+            className="form-select"
+            value={iddeporte}
+            onChange={(e) => setIddeporte(Number(e.target.value))}
           >
-              {deportesDisponibles.map(d => (
-                <option key={d.id} value={d.id}>{d.nombre}</option>
-              ))}
+            {deportesDisponibles.map(d => (
+              <option key={d.id} value={d.id}>{d.nombre}</option>
+            ))}
           </select>
         </div>
 
         <div className="form-grupo">
-          <label className="form-label">Intensidad</label>
-          <select 
-            className="form-select" 
-            value={intensidad}
-            onChange={(e) => setIntensidad(e.target.value)}
+          <label className="form-label">Nivel<span>*</span></label>
+          <select
+            className="form-select"
+            value={nivel}
+            onChange={(e) => setNivel(e.target.value)}
           >
-            <option value="baja">Baja</option>
-            <option value="media">Media</option>
-            <option value="alta">Alta</option>
+            <option value="Principiante">Principiante</option>
+            <option value="Intermedio">Intermedio</option>
+            <option value="Avanzado">Avanzado</option>
           </select>
+          {errores.nivel && <span className="error-feedback">{errores.nivel}</span>}
         </div>
       </div>
 
-      {/* Modalidad (Grupal / Individual) */}
+      {/* Género */}
       <div className="form-grupo">
-        <label className="form-label">Modalidad</label>
+        <label className="form-label">Género<span>*</span></label>
         <select
           className="form-select"
-          value={modalidad}
-          onChange={(e) => setModalidad(e.target.value)}
+          value={genero}
+          onChange={(e) => setGenero(e.target.value)}
         >
-          <option value="grupal">Grupal</option>
-          <option value="individual">Individual</option>
+          <option value="Mixto">Mixto</option>
+          <option value="Masculino">Masculino</option>
+          <option value="Femenino">Femenino</option>
         </select>
+        {errores.genero && <span className="error-feedback">{errores.genero}</span>}
       </div>
 
-      {/* Ubicación */}
-      <div className="form-grupo">
-        <label className="form-label">Ubicación / Cancha</label>
-        <input 
-          type="text" 
-          className="form-input" 
-          value={ubicacion}
-          onChange={(e) => setUbicacion(e.target.value)}
-          placeholder="ej. Cancha Auxiliar N° 2, Av. del Libertador 4200"
-        />
-      </div>
-
-      {/* Recurrencia */}
+      {/* Estado (activo/inactivo) */}
       <div className="form-grupo">
         <div className="checkbox-row">
-          <input 
-            type="checkbox" 
-            id="esRecurrente" 
-            checked={esRecurrente}
-            onChange={(e) => setEsRecurrente(e.target.checked)}
+          <input
+            type="checkbox"
+            id="estadoActivo"
+            checked={estado}
+            onChange={(e) => setEstado(e.target.checked)}
             className="checkbox-input"
           />
-          <label htmlFor="esRecurrente" className="form-label checkbox-label">Es un entrenamiento recurrente</label>
+          <label htmlFor="estadoActivo" className="form-label checkbox-label">Entrenamiento activo</label>
         </div>
-
-        {esRecurrente && (
-          <div className="recurrente-opciones">
-            <div className="form-grupo">
-              <label className="form-label">Frecuencia</label>
-              <select 
-                className="form-select" 
-                value={frecuencia}
-                onChange={(e) => setFrecuencia(e.target.value)}
-              >
-                <option value="diaria">Diaria</option>
-                <option value="semanal">Semanal</option>
-                <option value="mensual">Mensual</option>
-              </select>
-            </div>
-
-            <div className="form-grupo">
-              <label className="form-label">Días de la Semana</label>
-              <div className="dias-semana-selector">
-                {diasSemana.map(d => (
-                  <button
-                    key={d.num}
-                    type="button"
-                    className={`dia-btn ${diasSeleccionados.includes(d.num) ? 'seleccionado' : ''}`}
-                    onClick={() => toggleDia(d.num)}
-                  >
-                    {d.label}
-                  </button>
-                ))}
-              </div>
-              {errores.recurrente && <span className="error-feedback">{errores.recurrente}</span>}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Subida de Adjunto */}
+      {/* Imagen (obligatoria) */}
       <div className="form-grupo">
-        <label className="form-label">Documento o Adjunto (Opcional)</label>
-        
-        {archivoUrl ? (
+        <label className="form-label">Imagen del Entrenamiento<span>*</span></label>
+
+        {imagenUrlExistente && !archivo ? (
           <div className="adjunto-info">
-            <span className="adjunto-nombre">📂 {archivoUrl.split('/').pop()}</span>
-            <button 
-              type="button" 
+            <span className="adjunto-nombre">📂 {imagenUrlExistente.split('/').pop()}</span>
+            <button
+              type="button"
               className="btn-eliminar-adjunto"
-              onClick={() => setArchivoUrl('')}
+              onClick={() => setImagenUrlExistente('')}
             >
-              Eliminar
+              Reemplazar
             </button>
           </div>
         ) : (
           <label className="file-upload-box">
-            <input 
-              type="file" 
-              onChange={handleArchivoChange} 
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+            <input
+              type="file"
+              onChange={handleArchivoChange}
+              accept=".png,.jpg,.jpeg,.webp"
             />
             <div className="file-upload-icon">📤</div>
             <div className="file-upload-text">
-              {archivo ? `Archivo seleccionado: ${archivo.name}` : 'Haz clic para adjuntar material táctico o rutina (PDF, Doc, Imagen)'}
+              {archivo ? `Archivo seleccionado: ${archivo.name}` : 'Haz clic para subir la imagen del entrenamiento'}
             </div>
           </label>
         )}
+        {errores.archivo && <span className="error-feedback">{errores.archivo}</span>}
       </div>
 
       {/* Acciones */}
       <div className="form-acciones">
-        <button 
-          type="button" 
-          className="btn-cancelar" 
+        <button
+          type="button"
+          className="btn-cancelar"
           onClick={onCancelar}
           disabled={loading}
         >
           Cancelar
         </button>
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           className="btn-guardar"
           disabled={loading}
         >

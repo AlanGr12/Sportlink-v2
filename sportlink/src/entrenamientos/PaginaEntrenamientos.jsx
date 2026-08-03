@@ -195,52 +195,32 @@ const PaginaEntrenamientos = ({ usuario }) => {
   }, [cargarEntrenamientos]);
 
   // Manejo de Creación / Edición
-  const handleGuardarEntrenamiento = async (datos, archivoAdjunto) => {
-    // Bearer token se inyecta automáticamente por el interceptor de axiosConfig
-    const headers = {};
-    if (usuario?.tipousuario) headers['X-User-Type'] = usuario.tipousuario;
+  const handleGuardarEntrenamiento = async (formData) => {
+  const headers = { 'Content-Type': 'multipart/form-data' };
+  if (usuario?.tipousuario) headers['X-User-Type'] = usuario.tipousuario;
 
-    try {
-      let res;
-      if (entrenamientoSeleccionado && entrenamientoSeleccionado.id && !entrenamientoSeleccionado.id.startsWith('entreno-')) {
-        // Actualizar PUT
-        res = await fetchConReintento(`${API_BASE}/${entrenamientoSeleccionado.id}`, { method: 'PUT', data: datos, headers });
-        mostrarToast('¡Entrenamiento actualizado correctamente!');
-      } else {
-        // Crear POST
-        res = await fetchConReintento(API_BASE, { method: 'POST', data: datos, headers });
-        mostrarToast('¡Entrenamiento creado con éxito!', 'success');
-      }
-
-      const guardado = res.data;
-
-      // Subir adjunto si existe archivo
-      if (archivoAdjunto && guardado && guardado.id) {
-        const formData = new FormData();
-        formData.append('file', archivoAdjunto);
-
-        try {
-          const uploadHeaders = { 'Content-Type': 'multipart/form-data', ...headers };
-          const adjuntoRes = await api.post(`${API_BASE}/${guardado.id}/adjuntos`, formData, {
-            headers: uploadHeaders
-          });
-          mostrarToast('¡Archivo adjunto subido con éxito!');
-          guardado.adjunto = adjuntoRes.data.url;
-        } catch (uploadErr) {
-          console.error('Error al subir adjunto:', uploadErr);
-          mostrarToast('Entrenamiento guardado, pero falló la subida del adjunto.', 'warning');
-        }
-      }
-
-      setModalAbierto(false);
-      setEntrenamientoSeleccionado(null);
-      cargarEntrenamientos();
-    } catch (err) {
-      console.error('Error guardando entrenamiento en API:', err);
-      setError(err.response?.data?.message || err.message || 'Error guardando entrenamiento');
-      mostrarToast('Error al guardar entrenamiento. Revisá la consola.', 'error');
+  try {
+    let res;
+    if (entrenamientoSeleccionado && entrenamientoSeleccionado.id && !entrenamientoSeleccionado.id.startsWith('entreno-')) {
+      // Actualizar PUT
+      res = await fetchConReintento(`${API_BASE}/${entrenamientoSeleccionado.id}`, { method: 'PUT', data: formData, headers });
+      mostrarToast('¡Entrenamiento actualizado correctamente!');
+    } else {
+      // Crear POST
+      res = await fetchConReintento(API_BASE, { method: 'POST', data: formData, headers });
+      mostrarToast('¡Entrenamiento creado con éxito!', 'success');
     }
-  };
+
+    setModalAbierto(false);
+    setEntrenamientoSeleccionado(null);
+    cargarEntrenamientos();
+  } catch (err) {
+    console.error('Error guardando entrenamiento en API:', err.response?.data || err.message);
+    setError(err.response?.data?.error || err.message || 'Error guardando entrenamiento');
+    mostrarToast('Error al guardar entrenamiento. Revisá la consola.', 'error');
+    throw err; // re-lanzamos para que el form muestre el error.general también
+  }
+};
 
   const toggleSidebarSeccion = (seccion) => {
     setSidebarExpandido(prev => ({
