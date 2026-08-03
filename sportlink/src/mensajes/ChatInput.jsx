@@ -13,7 +13,7 @@ const SendIcon = () => (
   </svg>
 )
 
-export default function ChatInput({ onSend }) {
+export default function ChatInput({ onSend, onTyping }) {
   const [texto, setTexto] = useState('')
 
   const handleSend = (e) => {
@@ -35,6 +35,11 @@ export default function ChatInput({ onSend }) {
     }
   }
 
+  const handleChange = (e) => {
+    setTexto(e.target.value)
+    if (onTyping) onTyping()
+  }
+
   return (
     <form className="mensajes-input-area" onSubmit={handleSend}>
       {/* Botón clip (adjuntar) — solo visual por ahora */}
@@ -48,7 +53,7 @@ export default function ChatInput({ onSend }) {
         className="mensajes-input-field"
         placeholder="Type a message..."
         value={texto}
-        onChange={(e) => setTexto(e.target.value)}
+        onChange={handleChange}
         onKeyDown={handleKeyDown}
         autoComplete="off"
       />

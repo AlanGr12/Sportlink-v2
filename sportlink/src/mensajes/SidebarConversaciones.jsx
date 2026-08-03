@@ -40,7 +40,7 @@ function formatearFechaRelativa(fechaString) {
   return dias[date.getDay()]
 }
 
-export default function SidebarConversaciones({ conversaciones, conversacionActiva, setConversacionActiva, loading }) {
+export default function SidebarConversaciones({ usuario, onlineUsers, conversaciones, conversacionActiva, setConversacionActiva, loading }) {
   const [busqueda, setBusqueda] = useState('')
 
   const conversacionesFiltradas = conversaciones.filter((c) => {
@@ -91,8 +91,17 @@ export default function SidebarConversaciones({ conversaciones, conversacionActi
         {conversacionesFiltradas.map((c) => {
           const isActive = conversacionActiva?.idconversacion === c.idconversacion
           const { nombre, foto, rol } = getDetallesContacto(c)
-          const preview = c.ultimoMensaje?.contenido || 'No hay mensajes aún'
           const hora = formatearFechaRelativa(c.ultimoMensaje?.createdat)
+          
+          const miIdUsuario = usuario?.idusuario || usuario?.id
+          let preview = c.ultimoMensaje?.contenido || 'No hay mensajes aún'
+          if (c.ultimoMensaje && Number(c.ultimoMensaje.idusuarioemisor) === Number(miIdUsuario)) {
+            preview = 'Tú: ' + preview
+          }
+
+          const hasUnread = c.noleidos > 0
+
+          const isOnline = c.tipo === 'PRIVADA' && onlineUsers && onlineUsers.has(String(c.otroParticipante?.idusuario))
 
           return (
             <div
@@ -101,14 +110,17 @@ export default function SidebarConversaciones({ conversaciones, conversacionActi
               onClick={() => setConversacionActiva(c)}
             >
               {/* Avatar circular */}
-              <Avatar src={foto} nombre={nombre} size={42} />
+              <div style={{ position: 'relative' }}>
+                <Avatar src={foto} nombre={nombre} size={42} />
+                {isOnline && <div className="online-indicator" />}
+              </div>
 
               {/* Info */}
               <div className="mensajes-item-info">
                 {/* Fila 1: nombre + badge + hora */}
                 <div className="mensajes-item-row1">
                   <div className="mensajes-item-name-group">
-                    <span className="mensajes-item-name">{nombre}</span>
+                    <span className={`mensajes-item-name${hasUnread ? ' unread' : ''}`}>{nombre}</span>
                     {rol && (
                       <span className={rolBadgeClass(rol)}>
                         {rol.toUpperCase()}
@@ -119,7 +131,10 @@ export default function SidebarConversaciones({ conversaciones, conversacionActi
                 </div>
 
                 {/* Fila 2: preview del último mensaje */}
-                <div className="mensajes-item-preview">{preview}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="mensajes-item-preview">{preview}</div>
+                  {hasUnread && <div className="mensajes-unread-badge">{c.noleidos}</div>}
+                </div>
               </div>
             </div>
           )

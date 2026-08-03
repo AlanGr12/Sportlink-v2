@@ -66,10 +66,34 @@ function buildMensajesConSeparadores(mensajes) {
   return items
 }
 
-export default function PanelChat({ usuario, conversacionActiva, actualizarUltimoMensaje }) {
+const DoubleCheck = ({ leido }) => (
+  <svg 
+    width="15" height="15" viewBox="0 0 24 24" 
+    fill="none" 
+    stroke={leido ? "var(--sportlink-cyan, #00f0ff)" : "rgba(255,255,255,0.5)"} 
+    strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+    style={{ marginLeft: '4px', verticalAlign: 'middle', display: 'inline-block', marginBottom: '1px' }}
+  >
+    <polyline points="7 12 11 16 19 8" />
+    <polyline points="2 12 6 16 14 8" />
+  </svg>
+)
+
+export default function PanelChat({ usuario, onlineUsers, conversacionActiva, actualizarUltimoMensaje, marcarComoLeida }) {
   const [mensajes, setMensajes] = useState([])
   const [loading, setLoading] = useState(false)
   const historialRef = useRef(null)
+  const [typingUser, setTypingUser] = useState(null)
+  const typingTimeoutRef = useRef(null)
+  const canalRealtimeRef = useRef(null)
+  const lastTypingSent = useRef(0)
+
+  // Guardamos las callbacks del padre en refs para poder usarlas
+  // dentro de los efectos sin necesidad de incluirlas en las dependencias
+  const actualizarUltimoMensajeRef = useRef(actualizarUltimoMensaje)
+  const marcarComoLeidaRef = useRef(marcarComoLeida)
+  useEffect(() => { actualizarUltimoMensajeRef.current = actualizarUltimoMensaje }, [actualizarUltimoMensaje])
+  useEffect(() => { marcarComoLeidaRef.current = marcarComoLeida }, [marcarComoLeida])
 
   // Auto-scroll al fondo
   const scrollToBottom = () => {
@@ -82,53 +106,94 @@ export default function PanelChat({ usuario, conversacionActiva, actualizarUltim
     scrollToBottom()
   }, [mensajes])
 
-  // Carga historial + suscripción Realtime
+  // ── EFECTO 1: Carga HTTP del historial ──
+  // Depende SOLO del id primitivo. Se ejecuta exactamente una vez por conversación.
+  const idActivo = conversacionActiva?.idconversacion ?? null
+
   useEffect(() => {
-    let canalRealtime = null
+    setMensajes([])
+    setTypingUser(null)
+    clearTimeout(typingTimeoutRef.current)
 
-    const fetchMensajes = async (id) => {
-      setLoading(true)
-      try {
-        const { data } = await api.get(`/api/conversaciones/${id}/mensajes?limite=100`)
-        setMensajes(data || [])
-      } catch (err) {
+    if (!idActivo) {
+      setLoading(false)
+      return
+    }
+
+    let activo = true
+    setLoading(true)
+
+    api.get(`/api/conversaciones/${idActivo}/mensajes?limite=100`)
+      .then(({ data }) => {
+        if (activo) setMensajes(data || [])
+      })
+      .catch((err) => {
         console.error('Error cargando mensajes:', err)
-      } finally {
-        setLoading(false)
+        if (activo) setMensajes([])
+      })
+      .finally(() => {
+        if (activo) setLoading(false)
+      })
+
+    // Marcar como leído (fire-and-forget, no altera conversacionActiva)
+    api.post(`/api/conversaciones/${idActivo}/leer`)
+      .then(() => { if (activo) marcarComoLeidaRef.current?.(idActivo) })
+      .catch((err) => console.error('Error marcando como leído:', err))
+
+    return () => { activo = false }
+  }, [idActivo])
+
+  // ── EFECTO 2: Suscripción Realtime (separada del HTTP) ──
+  // Depende SOLO del id primitivo. Gestiona el canal sin re-disparar el fetch.
+  useEffect(() => {
+    if (!idActivo) {
+      if (canalRealtimeRef.current) {
+        supabase.removeChannel(canalRealtimeRef.current)
+        canalRealtimeRef.current = null
       }
+      return
     }
 
-    if (conversacionActiva) {
-      const id = conversacionActiva.idconversacion
-      fetchMensajes(id)
+    const miId = String(usuario?.idusuario || usuario?.id)
 
-      canalRealtime = supabase
-        .channel(`chat-${id}`)
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'mensajes', filter: `idconversacion=eq.${id}` },
-          (payload) => {
-            const nuevoMensaje = payload.new
-            setMensajes((prev) => {
-              if (prev.some((m) => m.idmensaje === nuevoMensaje.idmensaje)) return prev
-              return [...prev, nuevoMensaje]
-            })
-            actualizarUltimoMensaje(id, nuevoMensaje)
-          }
-        )
-        .subscribe()
-    } else {
-      setMensajes([])
-    }
+    const canal = supabase
+      .channel(`chat-${idActivo}`, { config: { broadcast: { self: false } } })
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'mensajes', filter: `idconversacion=eq.${idActivo}` },
+        (payload) => {
+          const nuevoMensaje = payload.new
+          setMensajes((prev) => {
+            if (prev.some((m) => m.idmensaje === nuevoMensaje.idmensaje)) return prev
+            return [...prev, nuevoMensaje]
+          })
+          actualizarUltimoMensajeRef.current?.(idActivo, nuevoMensaje)
+        }
+      )
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        if (String(payload.payload.idusuario) !== miId) {
+          setTypingUser(payload.payload.nombre)
+          clearTimeout(typingTimeoutRef.current)
+          typingTimeoutRef.current = setTimeout(() => setTypingUser(null), 2500)
+        }
+      })
+      .subscribe()
+
+    canalRealtimeRef.current = canal
 
     return () => {
-      if (canalRealtime) supabase.removeChannel(canalRealtime)
+      clearTimeout(typingTimeoutRef.current)
+      supabase.removeChannel(canal)
+      canalRealtimeRef.current = null
     }
-  }, [conversacionActiva])
+  }, [idActivo])
 
   // Envío con update optimista
   const handleEnviarMensaje = async (contenido) => {
     if (!conversacionActiva) return
+    
+    setTypingUser(null)
+    clearTimeout(typingTimeoutRef.current)
     const id = conversacionActiva.idconversacion
     const tempId = -Date.now()
     const mensajeOptimista = {
@@ -150,6 +215,22 @@ export default function PanelChat({ usuario, conversacionActiva, actualizarUltim
     } catch (err) {
       console.error('Error enviando mensaje:', err)
       setMensajes((prev) => prev.filter((m) => m.idmensaje !== tempId))
+    }
+  }
+
+  const handleTyping = () => {
+    if (!canalRealtimeRef.current || !conversacionActiva) return
+    const now = Date.now()
+    if (now - lastTypingSent.current > 1500) {
+      canalRealtimeRef.current.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: {
+          idusuario: usuario.idusuario || usuario.id,
+          nombre: usuario.nombre || 'Usuario'
+        }
+      })
+      lastTypingSent.current = now
     }
   }
 
@@ -180,6 +261,7 @@ export default function PanelChat({ usuario, conversacionActiva, actualizarUltim
   const { nombre, foto, rol } = getDetallesContacto(conversacionActiva)
   const miIdUsuario = usuario?.idusuario || usuario?.id
   const items = buildMensajesConSeparadores(mensajes)
+  const isOnline = conversacionActiva.tipo === 'PRIVADA' && onlineUsers && onlineUsers.has(String(conversacionActiva.otroParticipante?.idusuario))
 
   /* ────────── RENDER: chat activo ────────── */
   return (
@@ -194,6 +276,7 @@ export default function PanelChat({ usuario, conversacionActiva, actualizarUltim
               {rol.toUpperCase()}
             </div>
           )}
+          {isOnline && <div className="mensajes-panel-online-text">En línea</div>}
         </div>
       </div>
 
@@ -220,14 +303,24 @@ export default function PanelChat({ usuario, conversacionActiva, actualizarUltim
           return (
             <div key={item.key} className={`mensaje-burbuja-container ${esPropio ? 'propio' : 'ajeno'}`}>
               <div className="mensaje-burbuja">{msg.contenido}</div>
-              <div className="mensaje-hora">{formatearHora(msg.createdat)}</div>
+              <div className="mensaje-hora">
+                {formatearHora(msg.createdat)}
+                {esPropio && <DoubleCheck leido={msg.leido} />}
+              </div>
             </div>
           )
         })}
       </div>
 
+      {/* ── Indicador de escribiendo ── */}
+      {typingUser && (
+        <div className="typing-indicator">
+          {typingUser} está escribiendo<span className="typing-dots"></span>
+        </div>
+      )}
+
       {/* ── Input fijo abajo ── */}
-      <ChatInput onSend={handleEnviarMensaje} />
+      <ChatInput onSend={handleEnviarMensaje} onTyping={handleTyping} />
     </main>
   )
 }
