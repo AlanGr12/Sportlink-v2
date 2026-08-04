@@ -9,7 +9,35 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Clase del badge de rol para el header del panel
+// ── Iconos SVG ──────────────────────────────────────────────
+
+const PhoneIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.2H6.6a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.8 9.91a16 16 0 0 0 6.29 6.29l1.06-1.06a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+  </svg>
+)
+
+const SearchIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"/>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+)
+
+const MoreIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+  </svg>
+)
+
+const EmptyMessageIcon = () => (
+  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+)
+
+// ── Helpers ─────────────────────────────────────────────────
+
 function rolBadgeClass(rol) {
   if (!rol) return 'mensajes-panel-rol-badge'
   const r = rol.toLowerCase()
@@ -19,16 +47,11 @@ function rolBadgeClass(rol) {
   return 'mensajes-panel-rol-badge grupo'
 }
 
-// Formatea hora corta: "10:35 AM"
 function formatearHora(fechaString) {
   if (!fechaString) return ''
-  return new Date(fechaString).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return new Date(fechaString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-// Retorna una etiqueta legible de fecha para el separador
 function etiquetaFecha(fechaString) {
   const date = new Date(fechaString)
   const hoy = new Date()
@@ -40,8 +63,8 @@ function etiquetaFecha(fechaString) {
     a.getMonth() === b.getMonth() &&
     a.getFullYear() === b.getFullYear()
 
-  if (mismaFecha(date, hoy)) return 'TODAY'
-  if (mismaFecha(date, ayer)) return 'YESTERDAY'
+  if (mismaFecha(date, hoy)) return 'HOY'
+  if (mismaFecha(date, ayer)) return 'AYER'
   return date.toLocaleDateString('es-AR', {
     day: 'numeric',
     month: 'long',
@@ -49,11 +72,9 @@ function etiquetaFecha(fechaString) {
   }).toUpperCase()
 }
 
-// Genera la lista de items con separadores de fecha intercalados
 function buildMensajesConSeparadores(mensajes) {
   const items = []
   let ultimaFecha = null
-
   for (const msg of mensajes) {
     const fechaStr = etiquetaFecha(msg.createdat)
     if (fechaStr !== ultimaFecha) {
@@ -62,22 +83,37 @@ function buildMensajesConSeparadores(mensajes) {
     }
     items.push({ type: 'message', data: msg, key: msg.idmensaje })
   }
-
   return items
 }
 
+// Doble check de lectura
 const DoubleCheck = ({ leido }) => (
-  <svg 
-    width="15" height="15" viewBox="0 0 24 24" 
-    fill="none" 
-    stroke={leido ? "var(--sportlink-cyan, #00f0ff)" : "rgba(255,255,255,0.5)"} 
+  <svg
+    width="14" height="14" viewBox="0 0 24 24"
+    fill="none"
+    stroke={leido ? '#2DEFF2' : 'rgba(0,0,0,0.35)'}
     strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-    style={{ marginLeft: '4px', verticalAlign: 'middle', display: 'inline-block', marginBottom: '1px' }}
+    style={{ display: 'inline-block', verticalAlign: 'middle' }}
   >
     <polyline points="7 12 11 16 19 8" />
     <polyline points="2 12 6 16 14 8" />
   </svg>
 )
+
+// Skeleton del historial
+function HistorialSkeleton() {
+  return (
+    <div className="mensajes-historial-loading">
+      <div className="mensajes-historial-loading-ajeno" style={{ width: '45%', height: 44 }} />
+      <div className="mensajes-historial-loading-propio" style={{ width: '52%', height: 36 }} />
+      <div className="mensajes-historial-loading-ajeno" style={{ width: '38%', height: 52 }} />
+      <div className="mensajes-historial-loading-propio" style={{ width: '60%', height: 36 }} />
+      <div className="mensajes-historial-loading-ajeno" style={{ width: '48%', height: 44 }} />
+    </div>
+  )
+}
+
+// ── Componente principal ─────────────────────────────────────
 
 export default function PanelChat({ usuario, onlineUsers, conversacionActiva, actualizarUltimoMensaje, marcarComoLeida }) {
   const [mensajes, setMensajes] = useState([])
@@ -88,28 +124,23 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
   const canalRealtimeRef = useRef(null)
   const lastTypingSent = useRef(0)
 
-  // Guardamos las callbacks del padre en refs para poder usarlas
-  // dentro de los efectos sin necesidad de incluirlas en las dependencias
+  // Refs estables para las callbacks del padre
   const actualizarUltimoMensajeRef = useRef(actualizarUltimoMensaje)
   const marcarComoLeidaRef = useRef(marcarComoLeida)
   useEffect(() => { actualizarUltimoMensajeRef.current = actualizarUltimoMensaje }, [actualizarUltimoMensaje])
   useEffect(() => { marcarComoLeidaRef.current = marcarComoLeida }, [marcarComoLeida])
 
-  // Auto-scroll al fondo
   const scrollToBottom = () => {
     if (historialRef.current) {
       historialRef.current.scrollTop = historialRef.current.scrollHeight
     }
   }
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [mensajes])
+  useEffect(() => { scrollToBottom() }, [mensajes])
 
-  // ── EFECTO 1: Carga HTTP del historial ──
-  // Depende SOLO del id primitivo. Se ejecuta exactamente una vez por conversación.
   const idActivo = conversacionActiva?.idconversacion ?? null
 
+  // ── Efecto 1: Carga HTTP del historial ──
   useEffect(() => {
     setMensajes([])
     setTypingUser(null)
@@ -124,18 +155,13 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
     setLoading(true)
 
     api.get(`/api/conversaciones/${idActivo}/mensajes?limite=100`)
-      .then(({ data }) => {
-        if (activo) setMensajes(data || [])
-      })
+      .then(({ data }) => { if (activo) setMensajes(data || []) })
       .catch((err) => {
         console.error('Error cargando mensajes:', err)
         if (activo) setMensajes([])
       })
-      .finally(() => {
-        if (activo) setLoading(false)
-      })
+      .finally(() => { if (activo) setLoading(false) })
 
-    // Marcar como leído (fire-and-forget, no altera conversacionActiva)
     api.post(`/api/conversaciones/${idActivo}/leer`)
       .then(() => { if (activo) marcarComoLeidaRef.current?.(idActivo) })
       .catch((err) => console.error('Error marcando como leído:', err))
@@ -143,8 +169,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
     return () => { activo = false }
   }, [idActivo])
 
-  // ── EFECTO 2: Suscripción Realtime (separada del HTTP) ──
-  // Depende SOLO del id primitivo. Gestiona el canal sin re-disparar el fetch.
+  // ── Efecto 2: Suscripción Realtime ──
   useEffect(() => {
     if (!idActivo) {
       if (canalRealtimeRef.current) {
@@ -188,10 +213,9 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
     }
   }, [idActivo])
 
-  // Envío con update optimista
+  // ── Envío optimista ──
   const handleEnviarMensaje = async (contenido) => {
     if (!conversacionActiva) return
-    
     setTypingUser(null)
     clearTimeout(typingTimeoutRef.current)
     const id = conversacionActiva.idconversacion
@@ -204,7 +228,6 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
       tipomensaje: 'TEXTO',
       createdat: new Date().toISOString(),
     }
-
     setMensajes((prev) => [...prev, mensajeOptimista])
     actualizarUltimoMensaje(id, mensajeOptimista)
 
@@ -225,16 +248,12 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
       canalRealtimeRef.current.send({
         type: 'broadcast',
         event: 'typing',
-        payload: {
-          idusuario: usuario.idusuario || usuario.id,
-          nombre: usuario.nombre || 'Usuario'
-        }
+        payload: { idusuario: usuario.idusuario || usuario.id, nombre: usuario.nombre || 'Usuario' }
       })
       lastTypingSent.current = now
     }
   }
 
-  // Helper para los detalles del contacto activo
   const getDetallesContacto = (c) => {
     if (c.tipo === 'PRIVADA') {
       return {
@@ -246,13 +265,16 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
     return { nombre: c.nombre || 'Grupo', foto: c.foto || null, rol: 'grupo' }
   }
 
-  /* ────────── RENDER: panel vacío ────────── */
+  /* ── Panel vacío ── */
   if (!conversacionActiva) {
     return (
       <main className="mensajes-panel">
         <div className="mensajes-panel-empty">
-          <IconoMensajes size={56} color="rgba(255,255,255,0.15)" />
-          <p>Seleccioná una conversación para chatear</p>
+          <div className="mensajes-panel-empty-icon">
+            <EmptyMessageIcon />
+          </div>
+          <h3>Tus mensajes</h3>
+          <p>Seleccioná una conversación de la lista para comenzar a chatear</p>
         </div>
       </main>
     )
@@ -261,34 +283,50 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
   const { nombre, foto, rol } = getDetallesContacto(conversacionActiva)
   const miIdUsuario = usuario?.idusuario || usuario?.id
   const items = buildMensajesConSeparadores(mensajes)
-  const isOnline = conversacionActiva.tipo === 'PRIVADA' && onlineUsers && onlineUsers.has(String(conversacionActiva.otroParticipante?.idusuario))
+  const isOnline = conversacionActiva.tipo === 'PRIVADA' &&
+    onlineUsers && onlineUsers.has(String(conversacionActiva.otroParticipante?.idusuario))
 
-  /* ────────── RENDER: chat activo ────────── */
+  /* ── Chat activo ── */
   return (
     <main className="mensajes-panel">
-      {/* ── Header con avatar + nombre + badge de rol ── */}
+      {/* Header */}
       <div className="mensajes-panel-header">
-        <Avatar src={foto} nombre={nombre} size={42} />
+        <div className="mensajes-panel-header-avatar">
+          <Avatar src={foto} nombre={nombre} size={44} />
+          {isOnline && <div className="mensajes-panel-header-online" />}
+        </div>
+
         <div className="mensajes-panel-header-info">
           <div className="mensajes-panel-name">{nombre}</div>
-          {rol && (
-            <div className={rolBadgeClass(rol)}>
-              {rol.toUpperCase()}
-            </div>
-          )}
-          {isOnline && <div className="mensajes-panel-online-text">En línea</div>}
+          <div className="mensajes-panel-status">
+            {rol && (
+              <span className={rolBadgeClass(rol)}>{rol.toUpperCase()}</span>
+            )}
+            {isOnline
+              ? <span className="mensajes-panel-online-text">● En línea</span>
+              : <span className="mensajes-panel-offline-text">Desconectado</span>
+            }
+          </div>
+        </div>
+
+        <div className="mensajes-panel-acciones">
+          <button className="mensajes-panel-accion-btn" title="Llamada">
+            <PhoneIcon />
+          </button>
+          <button className="mensajes-panel-accion-btn" title="Buscar en conversación">
+            <SearchIcon />
+          </button>
+          <button className="mensajes-panel-accion-btn" title="Más opciones">
+            <MoreIcon />
+          </button>
         </div>
       </div>
 
-      {/* ── Historial de mensajes ── */}
+      {/* Historial */}
       <div className="mensajes-historial" ref={historialRef}>
-        {loading && (
-          <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>
-            Cargando historial...
-          </div>
-        )}
+        {loading && <HistorialSkeleton />}
 
-        {items.map((item) => {
+        {!loading && items.map((item) => {
           if (item.type === 'separator') {
             return (
               <div key={item.key} className="mensaje-fecha-sep">
@@ -312,14 +350,17 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
         })}
       </div>
 
-      {/* ── Indicador de escribiendo ── */}
+      {/* Indicador de typing con animación de puntos */}
       {typingUser && (
         <div className="typing-indicator">
-          {typingUser} está escribiendo<span className="typing-dots"></span>
+          <div className="typing-bubbles">
+            <span /><span /><span />
+          </div>
+          <span>{typingUser} está escribiendo</span>
         </div>
       )}
 
-      {/* ── Input fijo abajo ── */}
+      {/* Input */}
       <ChatInput onSend={handleEnviarMensaje} onTyping={handleTyping} />
     </main>
   )

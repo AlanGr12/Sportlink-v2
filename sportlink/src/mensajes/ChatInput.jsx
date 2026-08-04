@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 
 const ClipIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -6,7 +6,15 @@ const ClipIcon = () => (
   </svg>
 )
 
-// Ícono de send tipo "flecha derecha" (coincide con el botón cian de la ref)
+const EmojiIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+    <line x1="9" y1="9" x2="9.01" y2="9"/>
+    <line x1="15" y1="9" x2="15.01" y2="9"/>
+  </svg>
+)
+
 const SendIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -15,23 +23,31 @@ const SendIcon = () => (
 
 export default function ChatInput({ onSend, onTyping }) {
   const [texto, setTexto] = useState('')
+  const textareaRef = useRef(null)
 
-  const handleSend = (e) => {
-    e.preventDefault()
+  // Auto-resize del textarea
+  useEffect(() => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+  }, [texto])
+
+  const enviar = () => {
     if (texto.trim()) {
       onSend(texto.trim())
       setTexto('')
+      // Reset height
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'
+      }
     }
   }
 
   const handleKeyDown = (e) => {
-    // Enter sin Shift envía el mensaje
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      if (texto.trim()) {
-        onSend(texto.trim())
-        setTexto('')
-      }
+      enviar()
     }
   }
 
@@ -41,24 +57,30 @@ export default function ChatInput({ onSend, onTyping }) {
   }
 
   return (
-    <form className="mensajes-input-area" onSubmit={handleSend}>
-      {/* Botón clip (adjuntar) — solo visual por ahora */}
+    <form className="mensajes-input-area" onSubmit={(e) => { e.preventDefault(); enviar() }}>
+      {/* Botón clip */}
       <button type="button" className="mensajes-input-btn" title="Adjuntar archivo">
         <ClipIcon />
       </button>
 
-      {/* Campo de texto */}
-      <input
-        type="text"
+      {/* Botón emoji */}
+      <button type="button" className="mensajes-input-btn" title="Emojis">
+        <EmojiIcon />
+      </button>
+
+      {/* Campo de texto — textarea con auto-resize */}
+      <textarea
+        ref={textareaRef}
+        rows={1}
         className="mensajes-input-field"
-        placeholder="Type a message..."
+        placeholder="Escribí un mensaje..."
         value={texto}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         autoComplete="off"
       />
 
-      {/* Botón circular de envío con ícono */}
+      {/* Botón de envío */}
       <button
         type="submit"
         className="mensajes-input-btn primary"
