@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import api from "../axiosConfig.js";
 
 import MenuEmpleos from "./MenuEmpleos";
 import ListaEmpleos from "./ListaEmpleos";
 import DetalleEmpleo from "./DetalleEmpleo";
+import FormularioEmpleo from "./FormularioEmpleo";
 import Footer from "../footer/footer";
 
 import "../entrenamientos/entrenamientos.css";
@@ -23,6 +25,19 @@ function Empleos({ cambiarVista, usuario }) {
   const [idclubResuelto, setIdclubResuelto] = useState(null);
 
   const esClub = usuario?.tipousuario === "club";
+
+  // ── Modal de creación (solo club) ─────────────────────────────────────────
+  const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
+
+  const abrirModalCrear = () => setModalCrearAbierto(true);
+  const cerrarModalCrear = () => setModalCrearAbierto(false);
+
+  // Se ejecuta cuando el formulario crea un empleo exitosamente
+  const handleEmpleoCreado = (nuevoEmpleo) => {
+    // Agrega el nuevo empleo al array local sin recargar toda la página
+    setEmpleos((prev) => [nuevoEmpleo, ...prev]);
+    cerrarModalCrear();
+  };
 
   useEffect(() => {
     const idusuario = usuario?.idusuario || usuario?.idUsuario || usuario?.id;
@@ -195,6 +210,19 @@ function Empleos({ cambiarVista, usuario }) {
               horasSemanales={horasSemanales} setHorasSemanales={setHorasSemanales}
             />
 
+            {/* Botón publicar empleo — solo visible para clubes */}
+            {esClub && (
+              <div className="empleos-publicar-wrapper">
+                <button
+                  id="btn-publicar-empleo"
+                  className="btn-publicar-empleo"
+                  onClick={abrirModalCrear}
+                >
+                  + Publicar Empleo
+                </button>
+              </div>
+            )}
+
             {/* Contador de resultados */}
             {!cargando && !error && (
               <div className="empleos-lista-header">
@@ -238,6 +266,38 @@ function Empleos({ cambiarVista, usuario }) {
       </div>
 
       <Footer />
+
+      {/* ── MODAL CREAR EMPLEO ──────────────────────────────────── */}
+      {modalCrearAbierto && createPortal(
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Publicar nuevo empleo"
+          onClick={(e) => { if (e.target === e.currentTarget) cerrarModalCrear(); }}
+        >
+          <div className="modal-contenedor">
+            <div className="modal-header">
+              <h2 className="modal-titulo">Publicar Empleo</h2>
+              <button
+                className="btn-cerrar-modal"
+                onClick={cerrarModalCrear}
+                aria-label="Cerrar modal"
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-cuerpo">
+              <FormularioEmpleo
+                idclub={idclubResuelto}
+                onGuardado={handleEmpleoCreado}
+                onCancelar={cerrarModalCrear}
+              />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }

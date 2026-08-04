@@ -3,6 +3,7 @@ import api from "../axiosConfig.js";
 import { IconoUbicacion } from "../iconos/IconoUbicacion.jsx";
 import { IconoEmpleos } from "../iconos/IconoEmpleos.jsx";
 import { IconoFecha } from "../iconos/IconoFecha.jsx";
+import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
 import "./empleos.css";
 import "../pruebas/pruebas.css";
 
@@ -38,17 +39,6 @@ const IconoGuardar = ({ size = 16 }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
-  </svg>
-);
-
-const IconoCV = ({ size = 16 }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"
-    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-    <path d="M10 9H8" />
-    <path d="M16 13H8" />
-    <path d="M16 17H8" />
   </svg>
 );
 
@@ -399,8 +389,19 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
         </div>
       )}
 
+      {exito && (
+        <ModalConfirmacionInscripcion 
+          tipoEvento="empleo" 
+          nombreEvento={empleo.nombre} 
+          onCerrar={() => {
+            setExito(false);
+            setModalAbierto(false);
+          }} 
+        />
+      )}
+
       {/* ── POP-UP MODAL DE POSTULACIÓN ─────────────────────── */}
-      {modalAbierto && (
+      {modalAbierto && !exito && (
         <div className="modal-prueba-overlay" onClick={() => { setModalAbierto(false); setExito(false); }}>
           <div className="modal-prueba-contenedor" onClick={(e) => e.stopPropagation()}>
             
@@ -420,30 +421,6 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
 
             {/* Cuerpo del modal */}
             <div className="modal-prueba-cuerpo">
-              {exito ? (
-                <div className="flex flex-col items-center justify-center p-8 text-center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '32px' }}>
-                  <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500 rounded-full flex items-center justify-center mb-4 shrink-0" style={{ width: '64px', height: '64px', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', flexShrink: 0 }}>
-                    <svg className="w-8 h-8 text-emerald-400 shrink-0" style={{ width: '32px', height: '32px', color: '#34d399', flexShrink: 0 }} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"></path>
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2" style={{ fontSize: '20px', fontWeight: '700', color: '#ffffff', marginBottom: '8px' }}>¡Postulación Enviada!</h3>
-                  <p className="text-sm text-zinc-400 mb-6" style={{ fontSize: '14px', color: '#a1a1aa', marginBottom: '24px' }}>
-                    Te postulaste con éxito a la vacante <strong>{empleo.nombre}</strong>. El club recibirá tu currículum.
-                  </p>
-                  <button 
-                    type="button" 
-                    className="btn-guardar px-6 py-2"
-                    style={{ padding: '10px 24px', fontSize: '13px', fontWeight: '700', borderRadius: '6px', cursor: 'pointer', border: 'none', backgroundColor: 'var(--primary)', color: '#000' }}
-                    onClick={() => {
-                      setModalAbierto(false);
-                      setExito(false);
-                    }}
-                  >
-                    ACEPTAR
-                  </button>
-                </div>
-              ) : (
                 <>
                   {/* Fachada o Logo del Club */}
                   {empleo.club?.fotoperfil ? (
@@ -613,7 +590,6 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
                     </div>
                   </form>
                 </>
-              )}
             </div>
           </div>
         </div>

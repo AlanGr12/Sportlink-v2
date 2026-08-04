@@ -14,9 +14,24 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
 
   console.log("Imagen entrenamiento:", entrenamiento.imagen);
 
-  // Obtener la imagen: priorizar imagen proveniente del backend (URL o campo), sino fallback por tipo
+  // URL base del bucket de entrenamientos en Supabase Storage
+  const SUPABASE_STORAGE_BASE =
+    'https://cczzvdaraenyqyujbsup.supabase.co/storage/v1/object/public/fotoEntrenamientos';
+
+  // Obtener la URL completa de la imagen.
+  // - Si ya es una URL absoluta (http...) → usarla directamente (backend normalizado).
+  // - Si es solo un nombre de archivo → construir la URL completa (igual que el modal).
+  // - Si no hay imagen → fallback por tipo de deporte.
   const getDeporteImagen = () => {
-    if (entrenamiento.imagen) return entrenamiento.imagen;
+    const img = entrenamiento.imagen;
+
+    if (img) {
+      // Ya es URL completa (el backend la normalizó)
+      if (img.startsWith('http')) return img;
+      // Solo nombre de archivo (datos legacy en caché local)
+      return `${SUPABASE_STORAGE_BASE}/${img}`;
+    }
+
     if (entrenamiento.entrenadorFoto) return entrenamiento.entrenadorFoto;
 
     const t = (entrenamiento.tipo || '').toLowerCase();

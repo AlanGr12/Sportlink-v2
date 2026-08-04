@@ -103,6 +103,54 @@
   border-color: var(--primary);
 }
 
+/* ── BOTÓN "PUBLICAR EMPLEO" (solo clubes) ───────────────── */
+.empleos-publicar-wrapper {
+  padding: 0 20px 12px;
+}
+
+.btn-publicar-empleo {
+  width: 100%;
+  background-color: var(--primary);
+  color: #000000;
+  border: none;
+  border-radius: var(--radius-button);
+  padding: 11px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 12px rgba(45, 239, 242, 0.18);
+}
+
+.btn-publicar-empleo:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(45, 239, 242, 0.3);
+}
+
+.btn-publicar-empleo:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(45, 239, 242, 0.15);
+}
+
+/* ── BANNER DE ERROR DE FORMULARIO ──────────────────────────*/
+.form-error-banner {
+  background-color: rgba(255, 77, 79, 0.1);
+  border: 1px solid rgba(255, 77, 79, 0.35);
+  color: #ff4d4f;
+  border-radius: var(--radius-input);
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 /* ── LISTA DE EMPLEOS (scrollable) ───────────────────────── */
 .empleos-lista-container {
   flex: 1;

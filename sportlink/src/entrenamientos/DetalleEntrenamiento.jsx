@@ -8,6 +8,7 @@ import iconFutbol from '../assets/futbol.png';
 import iconModalidad from '../assets/modalidad.png';
 import iconFecha from '../assets/fecha.png';
 import iconUbicacion from '../assets/ubicacion.png';
+import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
 import './DetalleEntrenamiento.css';
 
 const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar }) => {
@@ -199,35 +200,18 @@ console.log(entrenamiento)
   return (
     <>
       {mostrarToastExito && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-           <div className="bg-[#111] p-8 rounded-xl text-center text-white border border-green-500 max-w-[400px] w-[90%] shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-              {/* Icono check verde */}
-              <div className="text-green-500 text-6xl mb-4 font-bold flex justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              
-              <h2 className="text-2xl font-bold mb-2">¡Inscripción Exitosa!</h2>
-              <p className="text-gray-300 mb-6">Te has inscripto correctamente a este entrenamiento.</p>
-              
-              {/* Botón cierre cian */}
-              <button 
-                onClick={() => {
-                  setMostrarToastExito(false);
-                  if (onCerrar) onCerrar();
-                }} 
-                className="w-full bg-[#00f0ff] hover:bg-[#00c0cc] text-black font-bold py-3 px-6 rounded-lg transition-colors duration-200"
-              >
-                  ENTENDIDO
-              </button>
-           </div>
-        </div>
+        <ModalConfirmacionInscripcion 
+          tipoEvento="entrenamiento" 
+          onCerrar={() => {
+            setMostrarToastExito(false);
+            if (onCerrar) onCerrar();
+          }} 
+        />
       )}
     <div className="detalle-grid">
       {entrenamiento.imagen ? (
        <img
-  src={`https://cczzvdaraenyqyujbsup.supabase.co/storage/v1/object/public/fotoEntrenamientos/${entrenamiento.imagen}`}
+  src={entrenamiento.imagen.startsWith('http') ? entrenamiento.imagen : `https://cczzvdaraenyqyujbsup.supabase.co/storage/v1/object/public/fotoEntrenamientos/${entrenamiento.imagen}`}
   alt={entrenamiento.titulo}
 />
       ) : (
