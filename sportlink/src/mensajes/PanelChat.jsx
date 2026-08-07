@@ -100,6 +100,18 @@ const DoubleCheck = ({ leido }) => (
   </svg>
 )
 
+const ChevronUpIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="18 15 12 9 6 15"/>
+  </svg>
+)
+
+const ChevronDownIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 12 15 18 9"/>
+  </svg>
+)
+
 // Skeleton del historial
 function HistorialSkeleton() {
   return (
@@ -113,17 +125,41 @@ function HistorialSkeleton() {
   )
 }
 
-function destacarTexto(texto, query) {
+function destacarTexto(texto, query, idmensaje, matchActivoId) {
   if (!query || !query.trim() || typeof texto !== 'string') return texto
-  const qEscaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const partes = texto.split(new RegExp(`(${qEscaped})`, 'gi'))
-  return partes.map((parte, i) =>
-    parte.toLowerCase() === query.toLowerCase() ? (
-      <mark key={i} className="mensaje-search-highlight">{parte}</mark>
-    ) : (
-      parte
+  const qLower = query.toLowerCase()
+  const textLower = texto.toLowerCase()
+  if (!textLower.includes(qLower)) return texto
+
+  const partes = []
+  let lastIndex = 0
+  let pos = 0
+
+  while ((pos = textLower.indexOf(qLower, lastIndex)) !== -1) {
+    if (pos > lastIndex) {
+      partes.push(texto.slice(lastIndex, pos))
+    }
+    const matchId = `match-${idmensaje}-${pos}`
+    const esActivo = matchId === matchActivoId
+    const subStr = texto.slice(pos, pos + query.length)
+
+    partes.push(
+      <mark
+        key={`${idmensaje}-${pos}`}
+        id={matchId}
+        className={`mensaje-search-highlight ${esActivo ? 'activo' : ''}`}
+      >
+        {subStr}
+      </mark>
     )
-  )
+    lastIndex = pos + query.length
+  }
+
+  if (lastIndex < texto.length) {
+    partes.push(texto.slice(lastIndex))
+  }
+
+  return partes
 }
 
 // ── Componente principal ─────────────────────────────────────
@@ -133,6 +169,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
   const [loading, setLoading] = useState(false)
   const [mostrarBusqueda, setMostrarBusqueda] = useState(false)
   const [busquedaTexto, setBusquedaTexto] = useState('')
+  const [coincidenciaIndex, setCoincidenciaIndex] = useState(0)
 
   const historialRef = useRef(null)
   const [typingUser, setTypingUser] = useState(null)
@@ -162,6 +199,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
     setTypingUser(null)
     setMostrarBusqueda(false)
     setBusquedaTexto('')
+    setCoincidenciaIndex(0)
     clearTimeout(typingTimeoutRef.current)
 
     if (!idActivo) {
@@ -283,6 +321,69 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
     return { nombre: c.nombre || 'Grupo', foto: c.foto || null, rol: 'grupo' }
   }
 
+  // Obtener todas las coincidencias de búsqueda en la lista de mensajes
+  const coincidencias = React.useMemo(() => {
+    if (!mostrarBusqueda || !busquedaTexto.trim()) return []
+    const matches = []
+    const query = busquedaTexto.toLowerCase()
+
+    mensajes.forEach((msg) => {
+      const text = (msg.contenido || '').toLowerCase()
+      if (!text) return
+      let pos = 0
+      while ((pos = text.indexOf(query, pos)) !== -1) {
+        matches.push({
+          idmensaje: msg.idmensaje,
+          posicion: pos,
+          matchId: `match-${msg.idmensaje}-${pos}`
+        })
+        pos += query.length
+      }
+    })
+    return matches
+  }, [mensajes, mostrarBusqueda, busquedaTexto])
+
+  // Al cambiar la búsqueda, volvemos a la primera coincidencia
+  useEffect(() => {
+    setCoincidenciaIndex(0)
+  }, [busquedaTexto])
+
+  const matchActivo = coincidencias[coincidenciaIndex] || null
+  const matchActivoId = matchActivo?.matchId || null
+
+  // Hacer scroll automático hasta la coincidencia enfocada
+  useEffect(() => {
+    if (!mostrarBusqueda || !matchActivoId) return
+    const el = document.getElementById(matchActivoId)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [coincidenciaIndex, matchActivoId, mostrarBusqueda])
+
+  const siguienteCoincidencia = () => {
+    if (coincidencias.length === 0) return
+    setCoincidenciaIndex((prev) => (prev < coincidencias.length - 1 ? prev + 1 : 0))
+  }
+
+  const anteriorCoincidencia = () => {
+    if (coincidencias.length === 0) return
+    setCoincidenciaIndex((prev) => (prev > 0 ? prev - 1 : coincidencias.length - 1))
+  }
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (e.shiftKey) {
+        anteriorCoincidencia()
+      } else {
+        siguienteCoincidencia()
+      }
+    } else if (e.key === 'Escape') {
+      setMostrarBusqueda(false)
+      setBusquedaTexto('')
+    }
+  }
+
   /* ── Panel vacío ── */
   if (!conversacionActiva) {
     return (
@@ -301,14 +402,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
   const { nombre, foto, rol } = getDetallesContacto(conversacionActiva)
   const miIdUsuario = usuario?.idusuario || usuario?.id
 
-  // Filtrado de mensajes por búsqueda en chat
-  const mensajesFiltrados = React.useMemo(() => {
-    if (!mostrarBusqueda || !busquedaTexto.trim()) return mensajes
-    const q = busquedaTexto.toLowerCase()
-    return mensajes.filter((m) => (m.contenido || '').toLowerCase().includes(q))
-  }, [mensajes, mostrarBusqueda, busquedaTexto])
-
-  const items = buildMensajesConSeparadores(mensajesFiltrados)
+  const items = buildMensajesConSeparadores(mensajes)
   const isOnline = conversacionActiva.tipo === 'PRIVADA' &&
     onlineUsers && onlineUsers.has(String(conversacionActiva.otroParticipante?.idusuario))
 
@@ -355,22 +449,46 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
         </div>
       </div>
 
-      {/* Barra de búsqueda en conversación */}
+      {/* Barra de búsqueda estilo VS Code */}
       {mostrarBusqueda && (
         <div className="mensajes-chat-search-bar">
           <div className="mensajes-chat-search-input-wrapper">
             <SearchIcon />
             <input
               type="text"
-              placeholder="Buscar mensajes en este chat..."
+              placeholder="Buscar en el chat (Enter siguiente, Shift+Enter anterior)..."
               value={busquedaTexto}
               onChange={(e) => setBusquedaTexto(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               autoFocus
             />
+
             {busquedaTexto.trim() && (
-              <span className="mensajes-search-count">
-                {mensajesFiltrados.length} {mensajesFiltrados.length === 1 ? 'coincidencia' : 'coincidencias'}
-              </span>
+              <div className="mensajes-search-nav-btns">
+                <span className="mensajes-search-count">
+                  {coincidencias.length > 0
+                    ? `${coincidenciaIndex + 1} de ${coincidencias.length}`
+                    : 'Sin resultados'}
+                </span>
+                <button
+                  type="button"
+                  className="mensajes-search-nav-btn"
+                  title="Anterior coincidencia (Shift+Enter)"
+                  disabled={coincidencias.length === 0}
+                  onClick={anteriorCoincidencia}
+                >
+                  <ChevronUpIcon />
+                </button>
+                <button
+                  type="button"
+                  className="mensajes-search-nav-btn"
+                  title="Siguiente coincidencia (Enter)"
+                  disabled={coincidencias.length === 0}
+                  onClick={siguienteCoincidencia}
+                >
+                  <ChevronDownIcon />
+                </button>
+              </div>
             )}
           </div>
           <button
@@ -379,7 +497,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
               setMostrarBusqueda(false)
               setBusquedaTexto('')
             }}
-            title="Cerrar búsqueda"
+            title="Cerrar búsqueda (Esc)"
           >
             ✕
           </button>
@@ -389,12 +507,6 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
       {/* Historial */}
       <div className="mensajes-historial" ref={historialRef}>
         {loading && <HistorialSkeleton />}
-
-        {!loading && mostrarBusqueda && busquedaTexto.trim() && mensajesFiltrados.length === 0 && (
-          <div className="mensajes-busqueda-empty">
-            <span>Sin coincidencias para "{busquedaTexto}" en esta conversación</span>
-          </div>
-        )}
 
         {!loading && items.map((item) => {
           if (item.type === 'separator') {
@@ -411,7 +523,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
           return (
             <div key={item.key} className={`mensaje-burbuja-container ${esPropio ? 'propio' : 'ajeno'}`}>
               <div className="mensaje-burbuja">
-                {destacarTexto(msg.contenido, mostrarBusqueda ? busquedaTexto : '')}
+                {destacarTexto(msg.contenido, mostrarBusqueda ? busquedaTexto : '', msg.idmensaje, matchActivoId)}
               </div>
               <div className="mensaje-hora">
                 {formatearHora(msg.createdat)}

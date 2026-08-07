@@ -951,6 +951,12 @@
   overflow-y: auto;
 }
 
+.mensajes-chat-search-close{
+  background-color: transparent;
+  color: white;
+
+}
+
 .mensajes-emoji-btn {
   background: transparent;
   border: none;
@@ -1007,34 +1013,51 @@
   outline: none;
 }
 
-.mensajes-search-count {
-  font-size: 0.72rem;
-  color: var(--primary, #2DEFF2);
-  font-weight: 600;
-  white-space: nowrap;
+.mensajes-search-nav-btns {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
 }
 
-.mensajes-chat-search-close {
+.mensajes-search-nav-btn {
   background: transparent;
   border: none;
   color: var(--text-muted, #8A9099);
   cursor: pointer;
-  padding: 4px 8px;
-  font-size: 0.9rem;
+  padding: 2px 6px;
   border-radius: 4px;
-  transition: color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
 }
 
-.mensajes-chat-search-close:hover {
-  color: #fff;
+.mensajes-search-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--primary, #2DEFF2);
+}
+
+.mensajes-search-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .mensaje-search-highlight {
-  background-color: rgba(45, 239, 242, 0.35);
+  background-color: rgba(255, 200, 0, 0.35);
   color: #fff;
   border-radius: 2px;
   padding: 0 2px;
   font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.mensaje-search-highlight.activo {
+  background-color: #2DEFF2;
+  color: #000;
+  box-shadow: 0 0 12px rgba(45, 239, 242, 0.9);
+  font-weight: 800;
+  outline: 1px solid #ffffff;
 }
 
 .mensajes-busqueda-empty {
@@ -1043,4 +1066,5 @@
   color: var(--text-muted, #8A9099);
   font-size: 0.85rem;
 }
+
 
