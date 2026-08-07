@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import api from '../axiosConfig.js'
 import '../entrenamientos/entrenamientos.css'
@@ -36,7 +37,11 @@ function EntrenadoresView(props) {
   const [Entrenadores, setEntrenadores] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [contactando, setContactando] = useState(null) // id del entrenador que está siendo contactado
+  // ── Estado del popup de contacto ──
+  const [popupContacto, setPopupContacto] = useState(null) // { entrenador } | null
+  const [mensajeContacto, setMensajeContacto] = useState('')
+  const [enviandoContacto, setEnviandoContacto] = useState(false)
+  const [toastContacto, setToastContacto] = useState(null) // { nombre, conversacion } | null
 
   // Filtros
   const [busqueda, setBusqueda] = useState('')
@@ -103,28 +108,52 @@ function EntrenadoresView(props) {
     setFiltroUbicacion('')
   }
 
-  // Botón Contactar: crea o recupera la conversación privada y navega al chat
-  const handleContactar = async (entrenador) => {
+  // Botón Contactar: abre el popup para escribir el mensaje inicial
+  const handleContactar = (entrenador) => {
     if (!props.usuario) {
       navigate('/login')
       return
     }
-    if (contactando === entrenador.identrenador) return // evitar doble clic
+    setMensajeContacto('')
+    setToastContacto(null)
+    setPopupContacto({ entrenador })
+  }
 
-    setContactando(entrenador.identrenador)
+  // Enviar el mensaje inicial desde el popup
+  const handleEnviarContacto = async () => {
+    if (!mensajeContacto.trim() || !popupContacto) return
+    setEnviandoContacto(true)
     try {
+      // 1. Crear o recuperar la conversación privada
       const { data: conversacion } = await api.post('/api/conversaciones/privada', {
-        idusuarioReceptor: entrenador.idusuario
+        idusuarioReceptor: popupContacto.entrenador.idusuario
       })
-      // Navegamos a /mensajes y pasamos la conversación como state para abrirla directamente
-      navigate('/mensajes', { state: { conversacionInicial: conversacion } })
+      // 2. Enviar el primer mensaje
+      await api.post(`/api/conversaciones/${conversacion.idconversacion}/mensajes`, {
+        contenido: mensajeContacto.trim()
+      })
+      // 3. Cerrar popup y mostrar el cuadro verde debajo
+      const nombre = `${popupContacto.entrenador.nombre} ${popupContacto.entrenador.apellido}`
+      setPopupContacto(null)
+      setMensajeContacto('')
+      setToastContacto({ nombre, conversacion })
     } catch (err) {
-      console.error('Error al contactar entrenador:', err)
-      alert('No se pudo iniciar la conversación. Intentá de nuevo.')
+      console.error('Error al enviar mensaje:', err)
+      alert('No se pudo enviar el mensaje. Intentá de nuevo.')
     } finally {
-      setContactando(null)
+      setEnviandoContacto(false)
     }
   }
+
+  // Bloquear scroll del body mientras el popup está abierto
+  useEffect(() => {
+    if (popupContacto) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [popupContacto])
 
   if (loading) {
     return (
@@ -150,6 +179,192 @@ function EntrenadoresView(props) {
 
   return (
     <>
+      {/* ═══ POPUP DE CONTACTO — Portal sobre document.body ═══ */}
+      {popupContacto && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setPopupContacto(null) }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              backgroundColor: '#1a1d1e',
+              border: '1px solid #2d3032',
+              borderRadius: '12px',
+              padding: '32px',
+              width: '90%',
+              maxWidth: '460px',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+              color: '#fff',
+              fontFamily: 'inherit',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Botón cerrar */}
+            <button
+              aria-label="Cerrar"
+              onClick={() => setPopupContacto(null)}
+              style={{
+                position: 'absolute',
+                top: '12px',
+                right: '12px',
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                border: '1px solid rgba(255,255,255,0.12)',
+                background: 'transparent',
+                color: '#8b949e',
+                fontSize: '15px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                lineHeight: 1,
+              }}
+            >✕</button>
+
+            {/* Cabecera */}
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{ fontSize: '34px', marginBottom: '10px' }}>✉️</div>
+              <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>
+                Contactar a {popupContacto.entrenador.nombre} {popupContacto.entrenador.apellido}
+              </h2>
+              <p style={{ fontSize: '13px', color: '#8b949e', margin: 0, lineHeight: 1.5 }}>
+                Escribí tu mensaje inicial y lo recibirá directamente en su bandeja.
+              </p>
+            </div>
+
+            {/* Textarea */}
+            <textarea
+              className="contacto-modal-textarea"
+              placeholder={`Hola ${popupContacto.entrenador.nombre}, me interesa...`}
+              value={mensajeContacto}
+              onChange={(e) => setMensajeContacto(e.target.value)}
+              rows={4}
+              autoFocus
+              maxLength={500}
+              onKeyDown={(e) => { if (e.key === 'Enter' && e.ctrlKey) handleEnviarContacto() }}
+            />
+            <div style={{ textAlign: 'right', fontSize: '11px', color: '#8b949e', margin: '4px 2px 16px' }}>
+              {mensajeContacto.length}/500
+            </div>
+
+            {/* Acciones */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setPopupContacto(null)}
+                disabled={enviandoContacto}
+                style={{
+                  flex: 1,
+                  padding: '11px',
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  color: '#8b949e',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  opacity: enviandoContacto ? 0.45 : 1,
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleEnviarContacto}
+                disabled={!mensajeContacto.trim() || enviandoContacto}
+                style={{
+                  flex: 2,
+                  padding: '11px',
+                  background: 'var(--primary, #2DEFF2)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#000',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: !mensajeContacto.trim() || enviandoContacto ? 'not-allowed' : 'pointer',
+                  fontFamily: 'inherit',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  opacity: !mensajeContacto.trim() || enviandoContacto ? 0.45 : 1,
+                }}
+              >
+                {enviandoContacto ? 'Enviando...' : 'Enviar mensaje'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+      {/* ═══ CUADRO VERDE DE ÉXITO — fijo abajo, portal ═══ */}
+      {toastContacto && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '28px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 9998,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            whiteSpace: 'nowrap',
+            backgroundColor: '#0d1f14',
+            border: '1px solid #22c55e',
+            borderRadius: '8px',
+            padding: '11px 14px',
+            fontSize: '14px',
+            color: '#86efac',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            fontFamily: 'inherit',
+          }}
+        >
+          <span>¡Mensaje enviado con éxito!</span>
+          <span
+            onClick={() => {
+              setToastContacto(null)
+              navigate('/mensajes', { state: { conversacionInicial: toastContacto.conversacion } })
+            }}
+            style={{
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              fontWeight: 600,
+              color: '#4ade80',
+            }}
+          >
+            Hacé click aquí para ir al chat
+          </span>
+          <button
+            aria-label="Cerrar"
+            onClick={() => setToastContacto(null)}
+            style={{
+              marginLeft: '8px',
+              background: 'transparent',
+              border: 'none',
+              color: '#86efac',
+              fontSize: '16px',
+              cursor: 'pointer',
+              lineHeight: 1,
+              padding: 0,
+              flexShrink: 0,
+            }}
+          >✕</button>
+        </div>,
+        document.body
+      )}
+
       <div className="pagina-entrenamientos">
         <div className="entrenamientos-layout">
 
@@ -306,9 +521,8 @@ function EntrenadoresView(props) {
                     <button
                       className="btn-entrenador-contactar"
                       onClick={() => handleContactar(Entrenador)}
-                      disabled={contactando === Entrenador.identrenador}
                     >
-                      {contactando === Entrenador.identrenador ? 'Conectando...' : 'Contactar'}
+                      Contactar
                     </button>
                   </div>
 
