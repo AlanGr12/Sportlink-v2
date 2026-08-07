@@ -351,10 +351,6 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
           <IconoOjo size={14} />
           {" "}VER CLUB
         </button>
-        <button className="btn-empleo" type="button">
-          <IconoCV size={14} />
-          {" "}CV ADJUNTADO
-        </button>
         {usuario?.tipousuario === "club" ? null : yaPostulado ? (
           <button className="btn-empleo btn-empleo-postularse opacity-50 cursor-not-allowed" type="button" disabled>
             YA POSTULADO

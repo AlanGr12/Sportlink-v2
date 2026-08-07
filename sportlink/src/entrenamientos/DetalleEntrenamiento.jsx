@@ -8,10 +8,10 @@ import iconFutbol from '../assets/futbol.png';
 import iconModalidad from '../assets/modalidad.png';
 import iconFecha from '../assets/fecha.png';
 import iconUbicacion from '../assets/ubicacion.png';
-import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
+
 import './DetalleEntrenamiento.css';
 
-const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar }) => {
+const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar, onInscripcionExitosa }) => {
   const [postulantes, setPostulantes] = useState([]);
   const [postulantesLoading, setPostulantesLoading] = useState(false);
   const [postulantesError, setPostulantesError] = useState("");
@@ -20,7 +20,7 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar }) =
   const [inscripcionLoading, setInscripcionLoading] = useState(false);
   const [inscripcionError, setInscripcionError] = useState("");
   const [verificandoInscripcion, setVerificandoInscripcion] = useState(false);
-  const [mostrarToastExito, setMostrarToastExito] = useState(false);
+
   
   const tipoUsuario = usuario?.tipousuario?.toString()?.toLowerCase();
   const esJugador = tipoUsuario === 'jugador' || tipoUsuario === 'player';
@@ -62,16 +62,7 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar }) =
 
   const identrenamiento = entrenamiento?.identrenamientos || entrenamiento?.identrenamiento || entrenamiento?.id;
 
-  // Bloquear scroll del body al mostrar modal de éxito
-  useEffect(() => {
-    if (mostrarToastExito) {
-      const originalStyle = window.getComputedStyle(document.body).overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = originalStyle;
-      };
-    }
-  }, [mostrarToastExito]);
+
 
   // 1. Obtener postulantes si es Entrenador
   useEffect(() => {
@@ -132,7 +123,7 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar }) =
               idjugador: idjugadorResuelto
           });
           setIsInscripto(true);
-          setMostrarToastExito(true);
+          if (onInscripcionExitosa) onInscripcionExitosa();
       } catch (err) {
           setInscripcionError(err?.response?.data?.message || err?.response?.data?.error || "Ocurrió un error al inscribirse.");
       } finally {
@@ -199,15 +190,6 @@ console.log(entrenamiento)
 
   return (
     <>
-      {mostrarToastExito && (
-        <ModalConfirmacionInscripcion 
-          tipoEvento="entrenamiento" 
-          onCerrar={() => {
-            setMostrarToastExito(false);
-            if (onCerrar) onCerrar();
-          }} 
-        />
-      )}
     <div className="detalle-grid">
       {entrenamiento.imagen ? (
        <img

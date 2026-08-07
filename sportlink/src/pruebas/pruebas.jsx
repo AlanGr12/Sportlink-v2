@@ -739,6 +739,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
           Renderizado en document.body vía portal (igual que
           el modal de DetalleEntrenamiento)                  */}
       {modalDetalleValido && createPortal(
+        mostrarExitoModal ? null : (
         <div
           className="modal-prueba-overlay"
           onClick={cerrarModal}
@@ -934,7 +935,8 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
             </div>
           </div>
-        </div>,
+        </div>
+        ),
         document.body
       )}
 

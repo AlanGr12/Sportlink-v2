@@ -20,18 +20,31 @@ const ModalConfirmacionInscripcion = ({ tipoEvento, nombreEvento, onCerrar }) =>
     descripcion = "Revisá los mensajes ya que se te ha agregado al grupo de chat del entrenamiento, y verificá en tu calendario que el evento se haya agendado. ¡Éxitos!";
   }
 
-  // Bloquear scroll del body al mostrar modal
+  // Bloquear scroll del body al mostrar modal.
+  // El cleanup vacía el inline style (en vez de restaurar el valor capturado)
+  // para evitar que dos useEffect en conflicto dejen el scroll bloqueado.
   useEffect(() => {
-    const originalStyle = window.getComputedStyle(document.body).overflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = originalStyle;
+      document.body.style.overflow = '';
     };
   }, []);
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backdropFilter: 'blur(4px)'
+      }}
       onClick={onCerrar}
     >
       <div 

@@ -12,6 +12,7 @@ import { IconoModalidad } from '../iconos/IconoModalidad.jsx';
 import { IconoFutbol } from '../iconos/IconoFutbol.jsx';
 import { IconoBuscador } from '../iconos/IconoBuscador.jsx';
 import Footer from '../footer/footer';
+import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
 
 
 
@@ -81,6 +82,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
 
   // Toasts de Notificación
   const [toast, setToast] = useState(null);
+  const [mostrarModalExitoEntrenamiento, setMostrarModalExitoEntrenamiento] = useState(false);
 
   const mostrarToast = (mensaje, tipo = 'success') => {
     setToast({ mensaje, type: tipo });
@@ -505,6 +507,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
 
       {/* MODAL VER DETALLE */}
       {modalDetalleAbierto && entrenamientoSeleccionado && createPortal(
+        mostrarModalExitoEntrenamiento ? null : (
         <div className="modal-overlay" onClick={() => setModalDetalleAbierto(false)}>
           <div className="modal-contenedor" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -517,11 +520,23 @@ const PaginaEntrenamientos = ({ usuario }) => {
                 usuario={usuario}
                 idjugador={idJugadorReal}
                 onCerrar={() => setModalDetalleAbierto(false)}
+                onInscripcionExitosa={() => setMostrarModalExitoEntrenamiento(true)}
               />
             </div>
           </div>
-        </div>,
+        </div>
+        ),
         document.body
+      )}
+
+      {mostrarModalExitoEntrenamiento && (
+        <ModalConfirmacionInscripcion
+          tipoEvento="entrenamiento"
+          onCerrar={() => {
+            setMostrarModalExitoEntrenamiento(false);
+            setModalDetalleAbierto(false);
+          }}
+        />
       )}
     </div>
     <Footer />  
