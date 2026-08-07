@@ -51,9 +51,9 @@
   width: 12px;
   height: 12px;
   border-radius: 3px;
-  background: #8b5cf6;
+  background: #ffffff;
   flex-shrink: 0;
-  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 .mev-titulo {
@@ -123,8 +123,8 @@
 
 /* badge "Fijada" */
 .mev-bloqueado-badge {
-  background: rgba(139, 92, 246, 0.12);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: #23e7f5;
   border-radius: 4px;
   font-size: 0.6rem;
@@ -147,14 +147,14 @@
 }
 
 .mev-nombre-row:focus-within {
-  border-color: #8b5cf6;
+  border-color: #ffffff;
 }
 
 .mev-color-dot {
   width: 12px;
   height: 12px;
   border-radius: 3px;
-  background: #8b5cf6;
+  background: #ffffff;
   flex-shrink: 0;
 }
 
@@ -244,7 +244,7 @@
 
 .mev-upload-box:hover {
   border-color: #23e7f5;
-  background: rgba(139, 92, 246, 0.04);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .mev-upload-icon {

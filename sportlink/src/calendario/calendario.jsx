@@ -20,7 +20,7 @@ const CATEGORIAS = [
   { id: 'pruebas',        label: 'PRUEBAS DEPORTIVAS', color: '#23e7f5' },
   { id: 'entrenamientos', label: 'ENTRENAMIENTOS',     color: '#3b82f6' },
   { id: 'entrevistas',    label: 'ENTREVISTAS',        color: '#f59e0b' },
-  { id: 'personalizado',  label: 'PERSONALIZADO',      color: '#8b5cf6' },
+  { id: 'personalizado',  label: 'PERSONALIZADO',      color: '#ffffff' },
 ];
 
 const MESES = [
@@ -59,25 +59,25 @@ const COLOR_POR_TIPO = {
   PRUEBA:        '#23e7f5',
   ENTRENAMIENTO: '#3b82f6',
   ENTREVISTA:    '#f59e0b',
-  PERSONALIZADO: '#8b5cf6',
+  PERSONALIZADO: '#ffffff',
 };
 
 const CHIP_BG_POR_TIPO = {
   PRUEBA:        'rgba(35,231,245,0.10)',
   ENTRENAMIENTO: 'rgba(59,130,246,0.10)',
   ENTREVISTA:    'rgba(245,158,11,0.10)',
-  PERSONALIZADO: 'rgba(139,92,246,0.12)',
+  PERSONALIZADO: 'rgba(255,255,255,0.12)',
 };
 
 const CHIP_BORDER_POR_TIPO = {
   PRUEBA:        'rgba(35,231,245,0.25)',
   ENTRENAMIENTO: 'rgba(59,130,246,0.25)',
   ENTREVISTA:    'rgba(245,158,11,0.25)',
-  PERSONALIZADO: 'rgba(139,92,246,0.25)',
+  PERSONALIZADO: 'rgba(255,255,255,0.25)',
 };
 
 function obtenerColorPorTipo(tipo) {
-  return COLOR_POR_TIPO[tipo?.toUpperCase()] || '#8b5cf6';
+  return COLOR_POR_TIPO[tipo?.toUpperCase()] || '#ffffff';
 }
 
 function esEventoPasado(fechaStr, horaStr) {

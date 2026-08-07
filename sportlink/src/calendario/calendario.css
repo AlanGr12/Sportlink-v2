@@ -581,8 +581,8 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(139, 92, 246, 0.12);
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 4px;
   /* Altura fija: pastilla de una sola línea, nunca crece */
   height: 16px;
@@ -606,7 +606,7 @@
   font-family: 'Manrope', sans-serif;
   font-size: 0.62rem;
   font-weight: 600;
-  color: #c4b5fd;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -647,7 +647,7 @@
 }
 
 .cal-panel-evento:hover {
-  border-color: rgba(139, 92, 246, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .cal-panel-evento-img-wrap {
@@ -682,7 +682,7 @@
   border-radius: 3px;
   background: #23e7f5;
   flex-shrink: 0;
-  box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
 }
 
 .cal-panel-evento-nombre {
@@ -796,7 +796,7 @@
 
 .cal-proximos-item:hover {
   background: #1a1a1c;
-  border-color: rgba(139, 92, 246, 0.25);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .cal-proximos-dot {
