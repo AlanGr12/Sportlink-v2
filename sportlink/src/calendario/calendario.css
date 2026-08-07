@@ -987,3 +987,60 @@
     font-size: 2rem;
   }
 }
+
+/* ── SKELETON LOADING UI ── */
+@keyframes calPulse {
+  0% { opacity: 0.25; }
+  50% { opacity: 0.65; }
+  100% { opacity: 0.25; }
+}
+
+.cal-skeleton-chip {
+  height: 14px;
+  width: 85%;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  margin-top: 4px;
+  animation: calPulse 1.2s infinite ease-in-out;
+}
+
+.cal-skeleton-card {
+  height: 56px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  animation: calPulse 1.2s infinite ease-in-out;
+  margin-bottom: 8px;
+}
+
+.cal-loading-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #23e7f5;
+  background: rgba(35, 231, 245, 0.08);
+  border: 1px solid rgba(35, 231, 245, 0.2);
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  margin-left: 12px;
+}
+
+.cal-loading-spinner {
+  width: 8px;
+  height: 8px;
+  border: 2px solid rgba(35, 231, 245, 0.3);
+  border-top-color: #23e7f5;
+  border-radius: 50%;
+  animation: calSpin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes calSpin {
+  to { transform: rotate(360deg); }
+}

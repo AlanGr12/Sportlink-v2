@@ -331,7 +331,7 @@ export default function Calendario({ usuario }) {
 
   // ── Estado de eventos ────────────────────────────────────────────────────
   const [eventos,         setEventos]         = useState({});   // { 'YYYY-MM-DD': [ev, ...] }
-  const [cargandoEventos, setCargandoEventos] = useState(false);
+  const [cargandoEventos, setCargandoEventos] = useState(true);
   const [proximosVisibles, setProximosVisibles] = useState(3);
   const [infoVisibles, setInfoVisibles] = useState(3);
   const [infoAbierto, setInfoAbierto] = useState(true);
@@ -708,7 +708,15 @@ export default function Calendario({ usuario }) {
           {/* Cabecera mes */}
           <div className="cal-header-mes">
             <div>
-              <p className="cal-programacion-label">PROGRAMACIÓN ACTUAL</p>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <p className="cal-programacion-label" style={{ margin: 0 }}>PROGRAMACIÓN ACTUAL</p>
+                {cargandoEventos && (
+                  <span className="cal-loading-badge">
+                    <span className="cal-loading-spinner" />
+                    Cargando eventos...
+                  </span>
+                )}
+              </div>
               <h1 className="cal-mes-titulo">
                 <span className="cal-dropdown-wrap" onClick={e => e.stopPropagation()}>
                   <button
@@ -793,8 +801,13 @@ export default function Calendario({ usuario }) {
                         <span className={clasesNum(dia)}>
                           {String(dia).padStart(2, '0')}
                         </span>
-                        {/* Chips de eventos — color dinámico según tipo */}
-                        {evsDia.length > 0 && (
+                        {/* Chips de eventos / Skeletons */}
+                        {cargandoEventos ? (
+                          <div className="cal-celda-eventos">
+                            <div className="cal-skeleton-chip" />
+                            {i % 3 === 0 && <div className="cal-skeleton-chip" style={{ width: '55%' }} />}
+                          </div>
+                        ) : evsDia.length > 0 ? (
                           <div className="cal-celda-eventos">
                             {evsDia.slice(0, 2).map((ev, idx) => {
                               const tipoKey = ev.tipo?.toUpperCase() || 'PERSONALIZADO';
@@ -831,7 +844,7 @@ export default function Calendario({ usuario }) {
                               <div className="cal-celda-mas">+{evsDia.length - 2} más</div>
                             )}
                           </div>
-                        )}
+                        ) : null}
                       </>
                     )}
                   </div>
@@ -949,6 +962,16 @@ export default function Calendario({ usuario }) {
                   .filter(([fecha]) => fecha >= hoyStr)
                   .sort(([a],[b]) => a.localeCompare(b))
                   .flatMap(([, evs]) => evs);
+
+                if (cargandoEventos) {
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div className="cal-skeleton-card" />
+                      <div className="cal-skeleton-card" />
+                      <div className="cal-skeleton-card" />
+                    </div>
+                  );
+                }
 
                 return proximos.length === 0 ? (
                   <div className="cal-proximos-vacio">
