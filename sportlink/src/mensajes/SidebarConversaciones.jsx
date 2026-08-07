@@ -52,9 +52,8 @@ function formatearFechaRelativa(fechaString) {
 
 const FILTROS = [
   { label: 'Todos', value: 'todos' },
-  { label: 'Jugadores', value: 'jugador' },
-  { label: 'Entrenadores', value: 'entrenador' },
-  { label: 'Clubes', value: 'club' },
+  { label: 'Personas', value: 'personas' },
+  { label: 'Grupos', value: 'grupos' },
 ]
 
 function SkeletonItem() {
@@ -74,14 +73,23 @@ export default function SidebarConversaciones({ usuario, onlineUsers, conversaci
   const [filtroActivo, setFiltroActivo] = useState('todos')
 
   const conversacionesFiltradas = conversaciones.filter((c) => {
-    const nombre = c.tipo === 'PRIVADA' ? c.otroParticipante?.nombre : c.nombre
+    const esPrivada = (c.tipo || 'PRIVADA').toUpperCase() === 'PRIVADA'
+    const nombre = esPrivada ? c.otroParticipante?.nombre : c.nombre
     const matchBusqueda = (nombre || '').toLowerCase().includes(busqueda.toLowerCase())
 
     if (!matchBusqueda) return false
-    if (filtroActivo === 'todos') return true
 
-    const rol = (c.otroParticipante?.tipousuario || '').toLowerCase()
-    return rol === filtroActivo
+    if (filtroActivo === 'todos') {
+      return true
+    }
+    if (filtroActivo === 'personas') {
+      return esPrivada
+    }
+    if (filtroActivo === 'grupos') {
+      return !esPrivada
+    }
+
+    return true
   })
 
   const getDetallesContacto = (c) => {
@@ -160,9 +168,11 @@ export default function SidebarConversaciones({ usuario, onlineUsers, conversaci
             <span>
               {busqueda
                 ? 'Sin resultados para esa búsqueda.'
-                : filtroActivo !== 'todos'
-                  ? `No tenés conversaciones con ${filtroActivo}s.`
-                  : 'No tenés conversaciones todavía.'}
+                : filtroActivo === 'todos'
+                  ? 'No tenés conversaciones todavía.'
+                  : filtroActivo === 'personas'
+                    ? 'No tenés conversaciones individuales.'
+                    : 'No tenés conversaciones de grupos.'}
             </span>
           </div>
         )}

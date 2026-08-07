@@ -792,7 +792,7 @@
 /* Botón de envío — círculo con gradiente cian */
 .mensajes-input-btn.primary {
   background: linear-gradient(135deg, #2DEFF2, #00c8cc);
-  color: #000;
+  color: #ffffff;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -869,3 +869,178 @@
   align-self: flex-start;
   width: 45%;
 }
+
+/* ── POPOVERS DE INPUT (Adjuntar & Emojis) ─── */
+.mensajes-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.mensajes-popover {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  background-color: var(--bg-secondary, #121415);
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(45, 239, 242, 0.08);
+  z-index: 50;
+  animation: popoverIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes popoverIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Popover Adjuntar */
+.mensajes-adjuntar-popover {
+  left: 1.5rem;
+  width: 160px;
+  padding: 6px;
+}
+
+.mensajes-adjuntar-opcion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-white, #fff);
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: var(--font-family, 'Space Grotesk', sans-serif);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.mensajes-adjuntar-opcion:hover {
+  background: rgba(45, 239, 242, 0.1);
+  color: var(--primary, #2DEFF2);
+}
+
+.mensajes-adjuntar-opcion svg {
+  color: var(--primary, #2DEFF2);
+}
+
+/* Popover Emojis */
+.mensajes-emoji-popover {
+  left: 3.5rem;
+  width: 280px;
+  padding: 12px;
+}
+
+.mensajes-emoji-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted, #8A9099);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mensajes-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.mensajes-emoji-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mensajes-emoji-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.18);
+}
+
+/* ── BARRA DE BÚSQUEDA EN CHAT ─── */
+.mensajes-chat-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.6rem 1.5rem;
+  background-color: #16181a;
+  border-bottom: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+  animation: fadeIn 0.2s ease;
+}
+
+.mensajes-chat-search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  background-color: var(--bg-dark, #0A0B0C);
+  border: 1px solid rgba(45, 239, 242, 0.3);
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: var(--text-white, #fff);
+}
+
+.mensajes-chat-search-input-wrapper svg {
+  color: var(--primary, #2DEFF2);
+  flex-shrink: 0;
+}
+
+.mensajes-chat-search-input-wrapper input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.85rem;
+  font-family: var(--font-family, 'Space Grotesk', sans-serif);
+  outline: none;
+}
+
+.mensajes-search-count {
+  font-size: 0.72rem;
+  color: var(--primary, #2DEFF2);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mensajes-chat-search-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #8A9099);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.mensajes-chat-search-close:hover {
+  color: #fff;
+}
+
+.mensaje-search-highlight {
+  background-color: rgba(45, 239, 242, 0.35);
+  color: #fff;
+  border-radius: 2px;
+  padding: 0 2px;
+  font-weight: 600;
+}
+
+.mensajes-busqueda-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted, #8A9099);
+  font-size: 0.85rem;
+}
+
