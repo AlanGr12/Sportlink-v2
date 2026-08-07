@@ -1,0 +1,226 @@
+/* ============================================================
+   CLUBES — Estilos específicos de tarjetas y estados.
+   El layout base (pagina, sidebar, buscador, header) proviene
+   de entrenamientos.css que ya está importado.
+   ============================================================ */
+
+
+/* ── GRILLA DE TARJETAS ──────────────────────────────────── */
+.grid-clubes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  align-items: stretch;
+}
+
+
+/* ============================================================
+   TARJETA CLUB — Vertical, fondo oscuro, esquinas redondeadas
+   Misma estructura que card-entrenador
+   ============================================================ */
+.card-club {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+
+.card-club:hover {
+  transform: translateY(-4px);
+  border-color: rgba(45, 239, 242, 0.3);
+}
+
+
+/* ── LOGO HEADER ─────────────────────────────────────────── */
+/* Los logos de club suelen tener fondo propio (blanco/transparente),
+   por eso van "contain" sobre fondo claro, a diferencia de las fotos
+   de entrenadores que van "cover" a pantalla completa. */
+.card-club-imagen {
+  position: relative;
+  height: 180px;
+  width: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
+  background-color: #f4f4f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+
+.card-club-imagen img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+
+/* ── CUERPO DE LA TARJETA ────────────────────────────────── */
+.card-club-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-grow: 1;
+}
+
+
+.card-club-nombre {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-white);
+  text-transform: uppercase;
+  margin: 0;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+
+
+.card-club-ubicacion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+
+.card-club-ubicacion .pill-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+
+.card-club-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+
+/* ── PIE DE TARJETA: BOTÓN ───────────────────────────────── */
+.card-club-acciones {
+  padding: 0 20px 20px;
+}
+
+
+.btn-club-info {
+  width: 100%;
+  padding: 11px 8px;
+  background-color: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  border-radius: var(--radius-button);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  text-align: center;
+  font-family: var(--font-family);
+}
+
+
+.btn-club-info:hover {
+  background-color: rgba(45, 239, 242, 0.08);
+}
+/* ============================================================
+   MODAL DETALLE DE CLUB
+   Reutiliza .modal-overlay / .modal-contenedor / .modal-header
+   / .modal-cuerpo / .btn-cerrar-modal ya definidos en
+   entrenamientos.css (importado globalmente en esta vista).
+   ============================================================ */
+.detalle-club-imagen {
+  width: 100%;
+  height: 220px;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background-color: #f4f4f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+
+.detalle-club-imagen img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+
+.detalle-club-nombre {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-white);
+  text-transform: uppercase;
+  margin: 0 0 8px 0;
+  letter-spacing: 0.04em;
+}
+
+
+.detalle-club-ubicacion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 12px 0;
+}
+
+
+.detalle-club-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+
+.detalle-club-descripcion {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0 0 20px 0;
+  white-space: pre-line;
+}
+
+
+.detalle-club-acciones {
+  display: flex;
+  justify-content: flex-end;
+}
+
+
+.detalle-club-acciones .btn-entrenador-contactar {
+  min-width: 160px;
+}
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .grid-clubes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
+@media (max-width: 600px) {
+  .grid-clubes {
+    grid-template-columns: 1fr;
+  }
+}
+

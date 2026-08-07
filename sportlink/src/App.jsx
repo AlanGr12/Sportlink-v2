@@ -2,18 +2,21 @@ import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import api from './axiosConfig.js'
 
+
 import Login from './log in/Login.jsx'
 import RegistroFlow from './RegistroFlow.jsx'
 import Landing from './landing/landing.jsx'
 import MiPerfil from './mi perfil/miperfil.jsx'
 import EntrenadoresView from './mostrarEntrenadores/entrenadores.jsx'
 import JugadoresView from './mostrarJugadores/jugadores.jsx'
+import ClubesView from './mostrarClubes/ClubesView.jsx'
 import Header from './header/header.jsx'
 import Calendario from './calendario/calendario.jsx'
 import Pruebas from './pruebas/pruebas.jsx'
 import PaginaEntrenamientos from './entrenamientos/PaginaEntrenamientos.jsx'
 import Empleos from './empleos/Empleos.jsx'
 import MensajesView from './mensajes/MensajesView.jsx'
+
 
 // ── Página 404 ───────────────────────────────────────────────────────────────
 function NotFound404() {
@@ -66,17 +69,20 @@ function NotFound404() {
   )
 }
 
+
 // ── Ruta protegida: redirige a /login si no hay sesión ───────────────────────
 function ProtectedRoute({ usuario, children }) {
   if (!usuario) return <Navigate to="/login" replace />
   return children
 }
 
+
 // ── Ruta pública: redirige al inicio si ya hay sesión (login/registro) ───────
 function PublicOnlyRoute({ usuario, children }) {
   if (usuario) return <Navigate to="/" replace />
   return children
 }
+
 
 // ── Componente principal ─────────────────────────────────────────────────────
 function App() {
@@ -94,6 +100,7 @@ function App() {
     }
   })
 
+
   /**
    * actualizarUsuario — acepta dos formas:
    *   1. actualizarUsuario({ token, perfil })  → respuesta del backend login
@@ -108,6 +115,7 @@ function App() {
       return
     }
 
+
     // Detectar si viene envuelto en { token, perfil } (nueva respuesta del backend)
     if (input.token && input.perfil) {
       localStorage.setItem('token', input.token)
@@ -119,6 +127,7 @@ function App() {
       setUsuario(input)
     }
   }
+
 
   // Enriquecer el objeto usuario con idjugador / identrenador si no los tiene
   useEffect(() => {
@@ -142,6 +151,7 @@ function App() {
       }
     }
 
+
     const fetchIdEntrenador = async () => {
       if (!usuario) return
       if (usuario.identrenador || usuario.idEntrenador) return
@@ -161,9 +171,11 @@ function App() {
       }
     }
 
+
     fetchIdJugador()
     fetchIdEntrenador()
   }, [usuario])
+
 
   // idjugador resuelto para pasar a Pruebas
   const idJugador =
@@ -175,6 +187,7 @@ function App() {
     usuario?.jugador?.id ||
     null
 
+
   return (
     <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Header usuario={usuario} onLogout={() => actualizarUsuario(null)} />
@@ -182,6 +195,7 @@ function App() {
         <Routes>
           {/* ── Públicas ── */}
           <Route path="/" element={<Landing usuario={usuario} />} />
+
 
           <Route
             path="/login"
@@ -192,6 +206,7 @@ function App() {
             }
           />
 
+
           <Route
             path="/registro"
             element={
@@ -201,11 +216,13 @@ function App() {
             }
           />
 
+
           <Route path="/pruebas" element={<Pruebas idJugador={idJugador} usuario={usuario} />} />
           <Route path="/entrenamientos" element={<PaginaEntrenamientos usuario={usuario} />} />
           <Route path="/entrenadores" element={<EntrenadoresView usuario={usuario} />} />
-          <Route path="/clubes" element={<JugadoresView usuario={usuario} />} />
+          <Route path="/clubes" element={<ClubesView usuario={usuario} />} />
           <Route path="/empleos" element={<Empleos usuario={usuario} />} />
+
 
           {/* ── Protegidas ── */}
           <Route
@@ -224,6 +241,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+
           <Route
             path="/mensajes"
             element={
@@ -236,6 +255,7 @@ function App() {
             }
           />
 
+
           {/* ── 404 ── */}
           <Route path="*" element={<NotFound404 />} />
         </Routes>
@@ -245,3 +265,4 @@ function App() {
 }
 
 export default App
+
