@@ -2,6 +2,16 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import './ModalEvento.css';
 
+const COLORES_DISPONIBLES = [
+  { hex: '#ffffff', nombre: 'Blanco' },
+  { hex: '#ef4444', nombre: 'Rojo' },
+  { hex: '#ec4899', nombre: 'Rosa' },
+  { hex: '#a855f7', nombre: 'Violeta' },
+  { hex: '#10b981', nombre: 'Verde' },
+  { hex: '#f97316', nombre: 'Naranja' },
+  { hex: '#d946ef', nombre: 'Magenta' },
+];
+
 /**
  * ModalEvento — popup para crear o editar un evento personalizado.
  *
@@ -21,15 +31,18 @@ export default function ModalEvento({
 }) {
   const modoEdicion = !!eventoEditar;
 
-  const [nombre,       setNombre]       = useState('');
-  const [fecha,        setFecha]        = useState('');
-  const [hora,         setHora]         = useState('');
-  const [descripcion,  setDescripcion]  = useState('');
-  const [imagenFile,   setImagenFile]   = useState(null);
-  const [imagenPreview,setImagenPreview]= useState(null);
-  const [errores,      setErrores]      = useState({});
-  const [guardando,    setGuardando]    = useState(false);
+  const [nombre,            setNombre]            = useState('');
+  const [fecha,             setFecha]             = useState('');
+  const [hora,              setHora]              = useState('');
+  const [descripcion,       setDescripcion]       = useState('');
+  const [colorSeleccionado, setColorSeleccionado] = useState('#ffffff');
+  const [showColorMenu,     setShowColorMenu]     = useState(false);
+  const [imagenFile,        setImagenFile]        = useState(null);
+  const [imagenPreview,     setImagenPreview]     = useState(null);
+  const [errores,           setErrores]           = useState({});
+  const [guardando,         setGuardando]         = useState(false);
   const imagenRef = useRef(null);
+  const colorPickerRef = useRef(null);
 
   // ── Inicialización ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -39,6 +52,9 @@ export default function ModalEvento({
       setFecha(eventoEditar.fecha   || '');
       setHora(eventoEditar.hora     || '');
       setDescripcion(eventoEditar.descripcion || '');
+      if (eventoEditar.color) {
+        setColorSeleccionado(eventoEditar.color);
+      }
       if (eventoEditar.imagenPreview) {
         setImagenPreview(eventoEditar.imagenPreview);
       }
@@ -56,6 +72,17 @@ export default function ModalEvento({
       setHora(`${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`);
     }
   }, []);   // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Cerrar menú de colores al hacer click fuera ─────────────────────────────
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target)) {
+        setShowColorMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // ── Cerrar con Escape ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -106,6 +133,7 @@ export default function ModalEvento({
         fecha,
         hora,
         descripcion:  descripcion.trim() || null,
+        color:        colorSeleccionado,
         imagenPreview: imagenPreview || null,
         imagenNombre:  imagenFile?.name || null,
       });
@@ -129,7 +157,7 @@ export default function ModalEvento({
         {/* ── Header ── */}
         <div className="mev-header">
           <div className="mev-header-left">
-            <span className="mev-header-dot" />
+            <span className="mev-header-dot" style={{ background: colorSeleccionado, boxShadow: `0 0 10px ${colorSeleccionado}80` }} />
             <h2 className="mev-titulo" id="mev-titulo">
               {modoEdicion ? 'EDITAR EVENTO' : 'NUEVO EVENTO'}
             </h2>
@@ -144,13 +172,45 @@ export default function ModalEvento({
         {/* ── Formulario ── */}
         <form className="mev-form" onSubmit={handleSubmit} noValidate>
 
-          {/* Nombre */}
+          {/* Nombre con selector de color */}
           <div className="mev-grupo">
             <label className="mev-label" htmlFor="mev-nombre">
               Nombre del evento <span className="mev-req">*</span>
             </label>
             <div className="mev-nombre-row">
-              <span className="mev-color-dot" />
+              <div className="mev-color-picker-wrap" ref={colorPickerRef}>
+                <button
+                  type="button"
+                  className="mev-color-dot-btn"
+                  style={{ background: colorSeleccionado }}
+                  onClick={() => setShowColorMenu(!showColorMenu)}
+                  title="Seleccionar color del evento"
+                />
+                {showColorMenu && (
+                  <div className="mev-color-menu">
+                    <div className="mev-color-menu-title">Color del evento</div>
+                    <div className="mev-color-grid">
+                      {COLORES_DISPONIBLES.map((c) => (
+                        <button
+                          key={c.hex}
+                          type="button"
+                          className={`mev-color-option ${colorSeleccionado === c.hex ? 'activo' : ''}`}
+                          style={{ background: c.hex }}
+                          title={c.nombre}
+                          onClick={() => {
+                            setColorSeleccionado(c.hex);
+                            setShowColorMenu(false);
+                          }}
+                        >
+                          {colorSeleccionado === c.hex && (
+                            <span className="mev-color-check" style={{ color: c.hex === '#ffffff' ? '#000' : '#fff' }}>✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <input
                 id="mev-nombre"
                 type="text"

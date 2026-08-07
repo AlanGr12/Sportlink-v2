@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../axiosConfig.js';
 import ModalEvento from './ModalEvento.jsx';
+import ModalConfirmacionEliminar from './ModalConfirmacionEliminar.jsx';
 import ModalDetallePrueba from './ModalDetallePrueba.jsx';
 import DetalleEntrenamiento from '../entrenamientos/DetalleEntrenamiento.jsx';
 import DetalleEmpleo from '../empleos/DetalleEmpleo.jsx';
@@ -80,6 +81,23 @@ function obtenerColorPorTipo(tipo) {
   return COLOR_POR_TIPO[tipo?.toUpperCase()] || '#ffffff';
 }
 
+function obtenerColorEvento(ev) {
+  if (ev?.color) return ev.color;
+  return obtenerColorPorTipo(ev?.tipo);
+}
+
+function obtenerChipBgEvento(ev) {
+  if (ev?.color) return `${ev.color}1e`;
+  const tipoKey = ev?.tipo?.toUpperCase() || 'PERSONALIZADO';
+  return CHIP_BG_POR_TIPO[tipoKey] || CHIP_BG_POR_TIPO.PERSONALIZADO;
+}
+
+function obtenerChipBorderEvento(ev) {
+  if (ev?.color) return `${ev.color}40`;
+  const tipoKey = ev?.tipo?.toUpperCase() || 'PERSONALIZADO';
+  return CHIP_BORDER_POR_TIPO[tipoKey] || CHIP_BORDER_POR_TIPO.PERSONALIZADO;
+}
+
 function esEventoPasado(fechaStr, horaStr) {
   if (!fechaStr) return false;
   const ahora = new Date();
@@ -109,6 +127,16 @@ function mapearEventoBackend(e) {
   let fechaStr = e.fecha;
   if (fechaStr && fechaStr.includes('T')) fechaStr = fechaStr.split('T')[0];
 
+  let color = e.color || null;
+  let descripcionLimpia = e.descripcion || '';
+  if (e.descripcion && e.descripcion.includes('[color:')) {
+    const matchColor = e.descripcion.match(/\[color:(#[a-fA-F0-9]{6})\]/);
+    if (matchColor) {
+      color = matchColor[1];
+      descripcionLimpia = e.descripcion.replace(/\[color:#[a-fA-F0-9]{6}\]/g, '').trim();
+    }
+  }
+
   return {
     id:              e.idEvento   || null,
     tipo:            (e.tipo || 'PERSONALIZADO').toUpperCase(),
@@ -118,7 +146,8 @@ function mapearEventoBackend(e) {
     idEntrenamiento: e.idEntrenamiento || null,
     idInscripcionEmpleo: e.idinscripcionempleo || null,
     nombre:          e.titulo     || '',
-    descripcion:     e.descripcion || '',
+    descripcion:     descripcionLimpia,
+    color:           color,
     imagenPreview:   e.imagen     || null,
     datosPrueba:     e._datosPrueba || null, // viene enriquecido desde el service
     datosEntrenamiento: e._datosEntrenamiento || null,
@@ -183,8 +212,8 @@ function EventoCard({ ev, eliminando, onVerPrueba, onVerEntrenamiento, onVerEmpl
           <span
             className="cal-panel-evento-dot"
             style={{
-              background: obtenerColorPorTipo(ev.tipo),
-              boxShadow:  `0 0 8px ${obtenerColorPorTipo(ev.tipo)}66`,
+              background: obtenerColorEvento(ev),
+              boxShadow:  `0 0 8px ${obtenerColorEvento(ev)}66`,
             }}
           />
           <h3 className="cal-panel-evento-nombre">{ev.nombre}</h3>
@@ -312,6 +341,7 @@ export default function Calendario({ usuario }) {
   // 'libre' | 'diaBloqueado' | 'editar' | null
   const [modalTipo,             setModalTipo]             = useState(null);
   const [eventoEditando,        setEventoEditando]        = useState(null);
+  const [eventoAEliminar,       setEventoAEliminar]       = useState(null);
   const [pruebaDetalle,         setPruebaDetalle]         = useState(null);
   const [entrenamientoDetalle,  setEntrenamientoDetalle]  = useState(null);
   const [empleoDetalle,         setEmpleoDetalle]         = useState(null);
@@ -453,13 +483,17 @@ export default function Calendario({ usuario }) {
       }
       console.log('[Calendario] guardarEvento: userId resuelto =', userId);
 
+      const descConColor = payload.color
+        ? (payload.descripcion ? `${payload.descripcion} [color:${payload.color}]` : `[color:${payload.color}]`)
+        : payload.descripcion;
+
       if (payload.id && modalTipo === 'editar') {
         // ── EDITAR ──
         const res = await api.put(`${API}/calendario/${payload.id}`, {
           fecha:       payload.fecha,
           horainicio:  payload.hora,
           titulo:      payload.nombre,
-          descripcion: payload.descripcion,
+          descripcion: descConColor,
           imagen:      payload.imagenPreview,
         });
 
@@ -469,6 +503,7 @@ export default function Calendario({ usuario }) {
           fecha:        payload.fecha,
           hora:         payload.hora,
           descripcion:  payload.descripcion,
+          color:        payload.color || null,
           // Usar la URL pública del storage devuelta por el backend;
           // si no subió imagen nueva, mantener la anterior
           imagenPreview: res.data?.imagen ?? eventoEditando.imagenPreview,
@@ -485,7 +520,7 @@ export default function Calendario({ usuario }) {
           horainicio:  payload.hora,
           horafin:     null,
           titulo:      payload.nombre,
-          descripcion: payload.descripcion,
+          descripcion: descConColor,
           imagen:      payload.imagenPreview,
         });
 
@@ -504,6 +539,7 @@ export default function Calendario({ usuario }) {
                           : payload.hora,
           nombre:       payload.nombre,
           descripcion:  payload.descripcion,
+          color:        payload.color || null,
           // Usar la URL pública del storage devuelta por el backend,
           // nunca el base64 local (que puede ser muy pesado)
           imagenPreview: backendEv.imagen || null,
@@ -528,9 +564,13 @@ export default function Calendario({ usuario }) {
   };
 
   // ── Eliminar evento personalizado ─────────────────────────────────────────
-  const eliminarEvento = async (ev) => {
-    if (!ev.id) return;
-    if (!window.confirm(`¿Eliminar el evento "${ev.nombre}"?`)) return;
+  const abrirConfirmacionEliminar = (ev) => {
+    if (!ev?.id) return;
+    setEventoAEliminar(ev);
+  };
+
+  const confirmarEliminacion = async () => {
+    if (!eventoAEliminar?.id) return;
 
     const userId = resolverUserId(usuario);
     if (!userId) {
@@ -538,10 +578,11 @@ export default function Calendario({ usuario }) {
       return;
     }
 
-    setEliminandoId(ev.id);
+    setEliminandoId(eventoAEliminar.id);
     try {
-      await api.delete(`${API}/calendario/${ev.id}`);
-      eliminarEventoLocal(ev.id, ev.fecha);
+      await api.delete(`${API}/calendario/${eventoAEliminar.id}`);
+      eliminarEventoLocal(eventoAEliminar.id, eventoAEliminar.fecha);
+      setEventoAEliminar(null);
     } catch (err) {
       console.error('Error al eliminar evento:', err);
       alert('No se pudo eliminar el evento.');
@@ -763,17 +804,17 @@ export default function Calendario({ usuario }) {
                                   <div
                                     className={`cal-celda-evento-chip ${esPasado ? 'cal-celda-evento-chip--pasado' : ''}`}
                                     style={{
-                                      background:   CHIP_BG_POR_TIPO[tipoKey]     || CHIP_BG_POR_TIPO.PERSONALIZADO,
-                                      borderColor:  CHIP_BORDER_POR_TIPO[tipoKey] || CHIP_BORDER_POR_TIPO.PERSONALIZADO,
+                                      background:   obtenerChipBgEvento(ev),
+                                      borderColor:  obtenerChipBorderEvento(ev),
                                     }}
                                   >
                                     <span
                                       className="cal-celda-evento-dot"
-                                      style={{ background: obtenerColorPorTipo(ev.tipo) }}
+                                      style={{ background: obtenerColorEvento(ev) }}
                                     />
                                     <span
                                       className="cal-celda-evento-nombre"
-                                      style={{ color: obtenerColorPorTipo(ev.tipo) }}
+                                      style={{ color: obtenerColorEvento(ev) }}
                                     >
                                       {limpiarTitulo(ev.nombre)}
                                     </span>
@@ -860,7 +901,7 @@ export default function Calendario({ usuario }) {
                       onVerEntrenamiento={setEntrenamientoDetalle}
                       onVerEmpleo={setEmpleoDetalle}
                       onEditar={abrirEdicion}
-                      onEliminar={eliminarEvento}
+                      onEliminar={abrirConfirmacionEliminar}
                     />
                   ))}
                   {(eventosDelDia.length > 3 || infoVisibles > 3) && (
@@ -924,7 +965,7 @@ export default function Calendario({ usuario }) {
                         onVerEntrenamiento={setEntrenamientoDetalle}
                         onVerEmpleo={setEmpleoDetalle}
                         onEditar={abrirEdicion}
-                        onEliminar={eliminarEvento}
+                        onEliminar={abrirConfirmacionEliminar}
                       />
                     ))}
                     {(proximos.length > 3 || proximosVisibles > 3) && (
@@ -1029,6 +1070,16 @@ export default function Calendario({ usuario }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal Confirmación de Eliminación */}
+      {eventoAEliminar && (
+        <ModalConfirmacionEliminar
+          evento={eventoAEliminar}
+          onConfirmar={confirmarEliminacion}
+          onCerrar={() => setEventoAEliminar(null)}
+          eliminando={eliminandoId === eventoAEliminar.id}
+        />
       )}
     </div>
   );
