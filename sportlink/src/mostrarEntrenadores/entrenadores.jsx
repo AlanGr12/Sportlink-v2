@@ -243,7 +243,7 @@ function EntrenadoresView(props) {
                   <polyline points="22,6 12,13 2,6"></polyline>
                 </svg>
               </div>
-              <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: '0 0 6px',letterSpacing:0 }}>
                 Contactar a {popupContacto.entrenador.nombre} {popupContacto.entrenador.apellido}
               </h2>
               <p style={{ fontSize: '13px', color: '#8b949e', margin: 0, lineHeight: 1.5 }}>
