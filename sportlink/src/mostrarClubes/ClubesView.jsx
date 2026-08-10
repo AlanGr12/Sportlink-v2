@@ -56,6 +56,14 @@ function ClubesView(props) {
   // Modal de detalle
   const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false)
   const [clubSeleccionado, setClubSeleccionado] = useState(null)
+  const [historiaExpandida, setHistoriaExpandida] = useState(false)
+  const [premiosExpandidos, setPremiosExpandidos] = useState(false)
+
+  // ── Estado del popup de contacto ──
+  const [popupContacto, setPopupContacto] = useState(null)
+  const [mensajeContacto, setMensajeContacto] = useState('')
+  const [enviandoContacto, setEnviandoContacto] = useState(false)
+  const [toastContacto, setToastContacto] = useState(null)
 
 
   const toggleSidebarSeccion = (seccion) => {
@@ -82,16 +90,16 @@ function ClubesView(props) {
   }, [])
 
 
-  // Bloquea el scroll de fondo mientras el modal está abierto
+  // Bloquea el scroll de fondo mientras un modal o popup está abierto
   useEffect(() => {
-    if (modalDetalleAbierto) {
+    if (modalDetalleAbierto || popupContacto) {
       const overflowOriginal = document.body.style.overflow
       document.body.style.overflow = 'hidden'
       return () => {
         document.body.style.overflow = overflowOriginal
       }
     }
-  }, [modalDetalleAbierto])
+  }, [modalDetalleAbierto, popupContacto])
 
 
   // Filtrado local
@@ -131,30 +139,46 @@ function ClubesView(props) {
 
   const handleVerClub = (club) => {
     setClubSeleccionado(club)
+    setHistoriaExpandida(false)
+    setPremiosExpandidos(false)
     setModalDetalleAbierto(true)
   }
 
 
-  // Botón Contactar dentro del modal: crea/recupera conversación privada con el club
-  const handleContactar = async (club) => {
+  // Botón Contactar: abre el popup para escribir el mensaje inicial
+  const handleContactar = (club) => {
     if (!props.usuario) {
       navigate('/login')
       return
     }
-    if (contactando === club.idclub) return
+    setMensajeContacto('')
+    setToastContacto(null)
+    setPopupContacto({ club })
+  }
 
-
-    setContactando(club.idclub)
+  // Enviar el mensaje inicial desde el popup
+  const handleEnviarContacto = async () => {
+    if (!mensajeContacto.trim() || !popupContacto) return
+    setEnviandoContacto(true)
     try {
+      // 1. Crear o recuperar la conversación privada
       const { data: conversacion } = await api.post('/api/conversaciones/privada', {
-        idusuarioReceptor: club.idusuario
+        idusuarioReceptor: popupContacto.club.idusuario
       })
-      navigate('/mensajes', { state: { conversacionInicial: conversacion } })
+      // 2. Enviar el primer mensaje
+      await api.post(`/api/conversaciones/${conversacion.idconversacion}/mensajes`, {
+        contenido: mensajeContacto.trim()
+      })
+      // 3. Cerrar popup y mostrar el cuadro verde debajo
+      const nombre = popupContacto.club.nombre
+      setPopupContacto(null)
+      setMensajeContacto('')
+      setToastContacto({ nombre, conversacion })
     } catch (err) {
-      console.error('Error al contactar club:', err)
-      alert('No se pudo iniciar la conversación. Intentá de nuevo.')
+      console.error('Error al enviar mensaje:', err)
+      alert('No se pudo enviar el mensaje. Intentá de nuevo.')
     } finally {
-      setContactando(null)
+      setEnviandoContacto(false)
     }
   }
 
@@ -322,14 +346,31 @@ function ClubesView(props) {
                       {/* Píldoras de deportes */}
                       {club.deportes && club.deportes.length > 0 && (
                         <div className="card-club-pills">
-                          {club.deportes.map((d, idx) => (
+                          {club.deportes.slice(0, 3).map((d, idx) => (
                             <span key={idx} className="pill-info">
                               <IconoMedalla size={14} color="currentColor" className="pill-icon" />
                               {d.deporte}
                             </span>
                           ))}
+                          {club.deportes.length > 3 && (
+                            <span className="pill-info pill-mas">
+                              +{club.deportes.length - 3}
+                            </span>
+                          )}
                         </div>
                       )}
+
+                      {/* Resumen extra (Historia, Premios) */}
+                      <div className="card-club-resumen-extra">
+                        <span className="resumen-item">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                          Historia
+                        </span>
+                        <span className="resumen-item">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                          Premios
+                        </span>
+                      </div>
                     </div>
 
 
@@ -399,8 +440,57 @@ function ClubesView(props) {
               )}
 
 
+              {/* Sección Historia */}
+              <div className="detalle-seccion">
+                <div className="detalle-seccion-header" onClick={() => setHistoriaExpandida(!historiaExpandida)}>
+                  <h4>Historia</h4>
+                  <span className="icono-expandir">{historiaExpandida ? '−' : '+'}</span>
+                </div>
+                {historiaExpandida && (
+                  <div className="detalle-seccion-contenido">
+                    {clubSeleccionado.historia ? (
+                      <p>{clubSeleccionado.historia}</p>
+                    ) : (
+                      <div className="estado-vacio">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                        <p>No hay información sobre la historia de este club aún.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Sección Premios */}
+              <div className="detalle-seccion">
+                <div className="detalle-seccion-header" onClick={() => setPremiosExpandidos(!premiosExpandidos)}>
+                  <h4>Premios y Palmarés</h4>
+                  <span className="icono-expandir">{premiosExpandidos ? '−' : '+'}</span>
+                </div>
+                {premiosExpandidos && (
+                  <div className="detalle-seccion-contenido">
+                    {clubSeleccionado.premios && clubSeleccionado.premios.length > 0 ? (
+                      <ul>
+                        {clubSeleccionado.premios.map((p, i) => <li key={i}>{p}</li>)}
+                      </ul>
+                    ) : (
+                      <div className="estado-vacio">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                        <p>El club aún no ha cargado sus premios.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {clubSeleccionado.descripcion && (
-                <p className="detalle-club-descripcion">{clubSeleccionado.descripcion}</p>
+                <div className="detalle-seccion">
+                  <div className="detalle-seccion-header" style={{ cursor: 'default' }}>
+                    <h4>Acerca del club</h4>
+                  </div>
+                  <div className="detalle-seccion-contenido">
+                    <p className="detalle-club-descripcion">{clubSeleccionado.descripcion}</p>
+                  </div>
+                </div>
               )}
 
 
@@ -408,9 +498,8 @@ function ClubesView(props) {
                 <button
                   className="btn-entrenador-contactar"
                   onClick={() => handleContactar(clubSeleccionado)}
-                  disabled={contactando === clubSeleccionado.idclub}
                 >
-                  {contactando === clubSeleccionado.idclub ? 'Conectando...' : 'Contactar'}
+                  Contactar
                 </button>
               </div>
             </div>
@@ -419,6 +508,211 @@ function ClubesView(props) {
         document.body
       )}
 
+
+      {/* ═══ POPUP DE CONTACTO — Portal sobre document.body ═══ */}
+      {popupContacto && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setPopupContacto(null) }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              backgroundColor: '#1a1d1e',
+              border: '1px solid #2d3032',
+              borderRadius: '12px',
+              padding: '32px',
+              width: '90%',
+              maxWidth: '460px',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+              color: '#fff',
+              fontFamily: 'inherit',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Botón cerrar */}
+            <button
+              aria-label="Cerrar"
+              onClick={() => setPopupContacto(null)}
+              style={{
+                position: 'absolute',
+                top: '12px',
+                right: '12px',
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                border: '1px solid rgba(255,255,255,0.12)',
+                background: 'transparent',
+                color: '#8b949e',
+                fontSize: '15px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                lineHeight: 1,
+              }}
+            >✕</button>
+
+            {/* Cabecera */}
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{ marginBottom: '10px' }}>
+                <svg viewBox="0 0 24 24" width="34" height="34" stroke="#2DEFF2" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+              </div>
+              <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>
+                Contactar a {popupContacto.club.nombre}
+              </h2>
+              <p style={{ fontSize: '13px', color: '#8b949e', margin: 0, lineHeight: 1.5 }}>
+                Escribí tu mensaje inicial y lo recibirá directamente en su bandeja.
+              </p>
+            </div>
+
+            {/* Textarea */}
+            <textarea
+              className="contacto-modal-textarea"
+              placeholder={`Hola, me interesa...`}
+              value={mensajeContacto}
+              onChange={(e) => setMensajeContacto(e.target.value)}
+              rows={4}
+              autoFocus
+              maxLength={500}
+              onKeyDown={(e) => { if (e.key === 'Enter' && e.ctrlKey) handleEnviarContacto() }}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '8px',
+                color: '#fff',
+                fontSize: '14px',
+                resize: 'none',
+                outline: 'none',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box'
+              }}
+            />
+            <div style={{ textAlign: 'right', fontSize: '11px', color: '#8b949e', margin: '4px 2px 16px' }}>
+              {mensajeContacto.length}/500
+            </div>
+
+            {/* Acciones */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setPopupContacto(null)}
+                disabled={enviandoContacto}
+                style={{
+                  flex: 1,
+                  padding: '11px',
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  color: '#8b949e',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  opacity: enviandoContacto ? 0.45 : 1,
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleEnviarContacto}
+                disabled={!mensajeContacto.trim() || enviandoContacto}
+                style={{
+                  flex: 2,
+                  padding: '11px',
+                  background: 'var(--primary, #2DEFF2)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#000',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: !mensajeContacto.trim() || enviandoContacto ? 'not-allowed' : 'pointer',
+                  fontFamily: 'inherit',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  opacity: !mensajeContacto.trim() || enviandoContacto ? 0.45 : 1,
+                }}
+              >
+                {enviandoContacto ? 'Enviando...' : 'Enviar mensaje'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ═══ CUADRO VERDE DE ÉXITO — fijo abajo, portal ═══ */}
+      {toastContacto && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '28px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 9998,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            whiteSpace: 'nowrap',
+            backgroundColor: '#0d1f14',
+            border: '1px solid #22c55e',
+            borderRadius: '8px',
+            padding: '11px 14px',
+            fontSize: '14px',
+            color: '#86efac',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            fontFamily: 'inherit',
+          }}
+        >
+          <span>¡Mensaje enviado con éxito!</span>
+          <span
+            onClick={() => {
+              setToastContacto(null)
+              navigate('/mensajes', { state: { conversacionInicial: toastContacto.conversacion } })
+            }}
+            style={{
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              fontWeight: 600,
+              color: '#4ade80',
+            }}
+          >
+            Hacé click aquí para ir al chat
+          </span>
+          <button
+            aria-label="Cerrar"
+            onClick={() => setToastContacto(null)}
+            style={{
+              marginLeft: '8px',
+              background: 'transparent',
+              border: 'none',
+              color: '#86efac',
+              fontSize: '16px',
+              cursor: 'pointer',
+              lineHeight: 1,
+              padding: 0,
+              flexShrink: 0,
+            }}
+          >✕</button>
+        </div>,
+        document.body
+      )}
 
       <Footer />
     </>

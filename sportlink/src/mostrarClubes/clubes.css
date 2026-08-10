@@ -110,6 +110,39 @@
 }
 
 
+.pill-mas {
+  background-color: rgba(45, 239, 242, 0.15);
+  color: var(--primary);
+  border: 1px dashed rgba(45, 239, 242, 0.4);
+  font-weight: 700;
+}
+
+
+.card-club-resumen-extra {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+
+.resumen-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+
+.resumen-item svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+}
+
+
 /* ── PIE DE TARJETA: BOTÓN ───────────────────────────────── */
 .card-club-acciones {
   padding: 0 20px 20px;
@@ -196,8 +229,96 @@
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-muted);
-  margin: 0 0 20px 0;
+  margin: 0;
   white-space: pre-line;
+}
+
+
+.detalle-seccion {
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+
+.detalle-seccion:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+
+.detalle-seccion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+
+.detalle-seccion-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-white);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+
+.icono-expandir {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--primary);
+  line-height: 1;
+}
+
+
+.detalle-seccion-contenido {
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+
+.detalle-seccion-contenido ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+
+.detalle-seccion-contenido li {
+  margin-bottom: 8px;
+}
+
+
+.estado-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+
+.estado-vacio svg {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+
+.estado-vacio p {
+  margin: 0;
+  font-size: 13px;
 }
 
 

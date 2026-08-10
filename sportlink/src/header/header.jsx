@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, NavLink } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
+import api from '../axiosConfig.js';
 import './header.css';
 import logoSportlink from '../assets/logoSportlink.png';
 import { IconoMensajes } from '../iconos/IconoMensajes.jsx';
@@ -17,6 +18,7 @@ const Header = ({ usuario, onLogout }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
   const [notificacionesOpen, setNotificacionesOpen] = useState(false);
+  const [unreadMensajes, setUnreadMensajes] = useState(0);
 
   const explorarRef = useRef(null);
   const avatarRef = useRef(null);
@@ -74,6 +76,21 @@ const Header = ({ usuario, onLogout }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (estaLogueado) {
+      const fetchUnread = async () => {
+        try {
+          const { data } = await api.get('/api/conversaciones');
+          const total = data.reduce((acc, c) => acc + (c.noleidos || 0), 0);
+          setUnreadMensajes(total);
+        } catch (err) {
+          console.error("Error fetching unread messages", err);
+        }
+      };
+      fetchUnread();
+    }
+  }, [estaLogueado, location.pathname]);
 
   // Elementos del dropdown "Explorar" según rol
   const renderDropdownItems = () => {
@@ -194,8 +211,29 @@ const Header = ({ usuario, onLogout }) => {
             <>
               <div className="header-icons-container" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 {/* Mensajes */}
-                <button className={`header-action-btn ${location.pathname.startsWith('/mensajes') ? 'active' : ''}`} onClick={() => ir('/mensajes')}>
+                <button className={`header-action-btn ${location.pathname.startsWith('/mensajes') ? 'active' : ''}`} onClick={() => ir('/mensajes')} style={{ position: 'relative' }}>
                   <IconoMensajes size={22} color="#ffffff" className="header-svg-icon" />
+                  {unreadMensajes > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      bottom: '4px',
+                      right: '2px',
+                      backgroundColor: '#2DEFF2',
+                      color: '#000',
+                      fontSize: '9px',
+                      fontWeight: 'bold',
+                      borderRadius: '50%',
+                      width: '15px',
+                      height: '15px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1.5px solid #0A0B0C',
+                      zIndex: 2
+                    }}>
+                      {unreadMensajes > 9 ? '+9' : unreadMensajes}
+                    </span>
+                  )}
                 </button>
 
                 {/* Notificaciones */}

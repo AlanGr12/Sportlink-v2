@@ -198,17 +198,19 @@
 }
 
 .header-action-btn {
-  background: none;
+  background: transparent !important;
   border: none;
   cursor: pointer;
   padding: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s;
+  transition: transform 0.2s, opacity 0.2s;
 }
 
 .header-action-btn:hover {
+  background: transparent !important;
+  opacity: 0.8;
   transform: scale(1.08);
 }
 

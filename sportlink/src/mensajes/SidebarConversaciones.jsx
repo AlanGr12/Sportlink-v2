@@ -110,7 +110,7 @@ export default function SidebarConversaciones({ usuario, onlineUsers, conversaci
       {/* ── Header ── */}
       <div className="mensajes-sidebar-header">
         <div className="mensajes-sidebar-title-row">
-          <h2>
+          <h2 style={{ display: 'flex', alignItems: 'center', margin: 0 }}>
             Mensajes
             {totalNoLeidos > 0 && (
               <span className="mensajes-unread-badge" style={{ marginLeft: '8px', fontSize: '0.6rem' }}>

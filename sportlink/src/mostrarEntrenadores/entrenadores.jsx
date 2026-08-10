@@ -237,7 +237,12 @@ function EntrenadoresView(props) {
 
             {/* Cabecera */}
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{ fontSize: '34px', marginBottom: '10px' }}>✉️</div>
+              <div style={{ marginBottom: '10px' }}>
+                <svg viewBox="0 0 24 24" width="34" height="34" stroke="#2DEFF2" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+              </div>
               <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>
                 Contactar a {popupContacto.entrenador.nombre} {popupContacto.entrenador.apellido}
               </h2>
