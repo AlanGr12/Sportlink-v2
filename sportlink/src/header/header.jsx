@@ -300,8 +300,7 @@ const Header = ({ usuario, onLogout }) => {
 
                     <button
                       className="header-dropdown-link"
-                      onClick={() => setAvatarDropdownOpen(false)}
-                      style={{ cursor: 'not-allowed', opacity: 0.8 }}
+                      onClick={() => ir('/ajustes')}
                       type="button"
                     >
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="dropdown-link-icon">

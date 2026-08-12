@@ -65,6 +65,97 @@ const MiPerfil = (props) => {
   const [formEdicion, setFormEdicion] = useState({});
   const [toastMensaje, setToastMensaje] = useState('');
 
+  // Estados de Red Social Mock
+  const [seguidores, setSeguidores] = useState(1240);
+  const [seguidos, setSeguidos] = useState(384);
+  const [nuevoPostTexto, setNuevoPostTexto] = useState('');
+  const [nuevoPostImagen, setNuevoPostImagen] = useState('');
+  const [comentariosInputs, setComentariosInputs] = useState({});
+  const [publicaciones, setPublicaciones] = useState([
+    {
+      id: 1,
+      autor: 'Mi Perfil',
+      fecha: 'Hace 2 días',
+      contenido: '¡Excelente entrenamiento hoy por la mañana con el equipo! Enfocados en la táctica de juego y pases rápidos. ⚽🔥',
+      imagen: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=600&auto=format&fit=crop',
+      likes: 124,
+      liked: false,
+      comentarios: [
+        { autor: 'Carlos Perez', texto: '¡Grande crack! Seguí así.' },
+        { autor: 'Martín DT', texto: 'Muy buen ritmo en el circuito.' }
+      ]
+    },
+    {
+      id: 2,
+      autor: 'Mi Perfil',
+      fecha: 'Hace 1 semana',
+      contenido: 'Superado el test de velocidad de hoy. Nueva marca personal lograda. ¡El esfuerzo da sus frutos! 🏃💨 #Rendimiento #Sportlink',
+      imagen: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?q=80&w=600&auto=format&fit=crop',
+      likes: 98,
+      liked: false,
+      comentarios: []
+    }
+  ]);
+
+  const handleLikePost = (postId) => {
+    setPublicaciones(prev => prev.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          likes: p.liked ? p.likes - 1 : p.likes + 1,
+          liked: !p.liked
+        };
+      }
+      return p;
+    }));
+  };
+
+  const handleAddComment = (postId, e) => {
+    e.preventDefault();
+    const commentText = comentariosInputs[postId];
+    if (!commentText || !commentText.trim()) return;
+
+    setPublicaciones(prev => prev.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          comentarios: [
+            ...p.comentarios,
+            { autor: nombreCompleto, texto: commentText.trim() }
+          ]
+        };
+      }
+      return p;
+    }));
+
+    setComentariosInputs(prev => ({
+      ...prev,
+      [postId]: ''
+    }));
+  };
+
+  const handleCrearPost = (e) => {
+    e.preventDefault();
+    if (!nuevoPostTexto.trim()) return;
+
+    const nuevoPost = {
+      id: Date.now(),
+      autor: nombreCompleto,
+      fecha: 'Ahora mismo',
+      contenido: nuevoPostTexto,
+      imagen: nuevoPostImagen || null,
+      likes: 0,
+      liked: false,
+      comentarios: []
+    };
+
+    setPublicaciones([nuevoPost, ...publicaciones]);
+    setNuevoPostTexto('');
+    setNuevoPostImagen('');
+  };
+
+  const totalLikes = publicaciones.reduce((acc, p) => acc + p.likes, 0);
+
   // Usuario viene del prop (App.jsx es la fuente de verdad de sesión)
   const usuario = props.usuario;
   const idUsuario = usuario?.idusuario || usuario?.idUsuario || usuario?.id;
@@ -264,6 +355,25 @@ const MiPerfil = (props) => {
                 ) : (
                   <p className="profile-bio-text empty">Sin descripción en tu perfil. Hacé clic en "Editar perfil" para agregar una biografía y destacar en SportLink.</p>
                 )}
+
+                <div className="profile-social-stats">
+                  <div className="social-stat-item">
+                    <span className="stat-number">{publicaciones.length}</span>
+                    <span className="stat-label-text">publicaciones</span>
+                  </div>
+                  <div className="social-stat-item" onClick={() => setSeguidores(s => s + 1)} style={{ cursor: 'pointer' }}>
+                    <span className="stat-number">{seguidores}</span>
+                    <span className="stat-label-text">seguidores</span>
+                  </div>
+                  <div className="social-stat-item">
+                    <span className="stat-number">{seguidos}</span>
+                    <span className="stat-label-text">seguidos</span>
+                  </div>
+                  <div className="social-stat-item">
+                    <span className="stat-number">{totalLikes}</span>
+                    <span className="stat-label-text">me gustas</span>
+                  </div>
+                </div>
               </div>
 
               <div className="profile-actions-area">
@@ -339,17 +449,117 @@ const MiPerfil = (props) => {
                   </div>
                 )}
 
-                {/* 3. Tab: Publicaciones (Multimedia / Portafolio) */}
+                {/* 3. Tab: Publicaciones (Feed de Red Social) */}
                 {tabActiva === 'publicaciones' && (
-                  <div className="tab-pane-content pane-publicaciones">
-                    <div className="empty-feed-graphic">
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="empty-feed-svg">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                        <circle cx="12" cy="13" r="4" />
-                      </svg>
-                      <h4>Sin publicaciones recientes</h4>
-                      <p>¡Prepárate para compartir fotos, vídeos e historias de tus victorias en los próximos torneos!</p>
+                  <div className="tab-pane-content pane-publicaciones" style={{ padding: 0, backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }}>
+                    {/* Crear publicación */}
+                    <div className="create-post-card">
+                      <h4 className="create-post-header">Crear Publicación</h4>
+                      <form onSubmit={handleCrearPost} className="create-post-form">
+                        <textarea
+                          className="create-post-textarea"
+                          placeholder="¿Qué entrenaste hoy? Comparte tus logros..."
+                          value={nuevoPostTexto}
+                          onChange={(e) => setNuevoPostTexto(e.target.value)}
+                          maxLength={280}
+                          required
+                        />
+                        <input
+                          type="text"
+                          className="create-post-input-url"
+                          placeholder="URL de imagen opcional (ej. https://...)"
+                          value={nuevoPostImagen}
+                          onChange={(e) => setNuevoPostImagen(e.target.value)}
+                        />
+                        <button type="submit" className="create-post-submit-btn">
+                          Publicar
+                        </button>
+                      </form>
                     </div>
+
+                    {/* Feed de Publicaciones */}
+                    {publicaciones.length === 0 ? (
+                      <div className="empty-feed-graphic">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="empty-feed-svg">
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                          <circle cx="12" cy="13" r="4" />
+                        </svg>
+                        <h4>Sin publicaciones recientes</h4>
+                      </div>
+                    ) : (
+                      publicaciones.map(post => (
+                        <div key={post.id} className="feed-post-card">
+                          <div className="post-card-header">
+                            <div className="post-author-info">
+                              <Avatar
+                                src={perfil?.fotoperfil}
+                                nombre={nombreCompleto}
+                                size="36px"
+                                className="post-author-avatar"
+                                style={{ border: 'none' }}
+                              />
+                              <div>
+                                <span className="post-author-name">{post.id === 1 || post.id === 2 ? nombreCompleto : post.autor}</span>
+                                <span className="post-date">{post.fecha}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="post-content">{post.contenido}</p>
+
+                          {post.imagen && (
+                            <img src={post.imagen} alt="Publicación" className="post-image" />
+                          )}
+
+                          <div className="post-actions-row">
+                            <button 
+                              className={`post-action-btn ${post.liked ? 'liked' : ''}`}
+                              onClick={() => handleLikePost(post.id)}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                              </svg>
+                              {post.likes} {post.likes === 1 ? 'Me gusta' : 'Me gustas'}
+                            </button>
+                            <button className="post-action-btn">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                              </svg>
+                              {post.comentarios.length} {post.comentarios.length === 1 ? 'Comentario' : 'Comentarios'}
+                            </button>
+                          </div>
+
+                          {/* Sección de Comentarios */}
+                          <div className="post-comments-section">
+                            {post.comentarios.map((c, i) => (
+                              <div key={i} className="comment-item">
+                                <span className="comment-author">{c.autor}</span>
+                                <span className="comment-text">{c.texto}</span>
+                              </div>
+                            ))}
+                            <form 
+                              onSubmit={(e) => handleAddComment(post.id, e)} 
+                              className="comment-form"
+                            >
+                              <input
+                                type="text"
+                                className="comment-input"
+                                placeholder="Escribe un comentario..."
+                                value={comentariosInputs[post.id] || ''}
+                                onChange={(e) => setComentariosInputs(prev => ({
+                                  ...prev,
+                                  [post.id]: e.target.value
+                                }))}
+                                required
+                              />
+                              <button type="submit" className="comment-submit-btn">
+                                Comentar
+                              </button>
+                            </form>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 )}
 

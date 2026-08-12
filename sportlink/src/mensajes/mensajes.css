@@ -1067,4 +1067,660 @@
   font-size: 0.85rem;
 }
 
+/* ── Mensaje Editado/Eliminado ── */
+.mensaje-burbuja-container.propio .mensaje-burbuja.eliminado,
+.mensaje-burbuja-container.ajeno .mensaje-burbuja.eliminado {
+  color: var(--text-muted, #8A9099) !important;
+  font-style: italic;
+  background: transparent !important;
+  border: 1px solid var(--border-light, rgba(255,255,255,0.08)) !important;
+  box-shadow: none !important;
+}
 
+.mensaje-eliminado-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted, #8A9099);
+}
+
+.mensaje-editado-tag {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.5);
+  font-style: italic;
+  margin-left: 4px;
+}
+
+.mensaje-burbuja-container.propio .mensaje-editado-tag {
+  color: rgba(0,0,0,0.5);
+}
+
+/* ── Fila de burbuja con opciones externas ── */
+.mensaje-burbuja-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mensaje-burbuja-container.propio .mensaje-burbuja-row {
+  flex-direction: row-reverse;
+}
+
+.mensaje-contenido-wrapper {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mensaje-texto {
+  flex-grow: 1;
+}
+
+.mensaje-opciones-externas {
+  position: relative;
+  opacity: 0;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.mensaje-burbuja-container:hover .mensaje-opciones-externas,
+.mensaje-opciones-externas:focus-within {
+  opacity: 1;
+}
+
+.mensaje-trigger-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.mensaje-trigger-btn:hover {
+  opacity: 1;
+  background: rgba(255,255,255,0.15);
+}
+
+.mensaje-dropdown {
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  margin-right: 8px;
+  background-color: var(--bg-secondary, #121415);
+  border: 1px solid var(--border-light, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  min-width: 130px;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.mensaje-dropdown button {
+  background: none;
+  border: none;
+  color: var(--text-white, #fff);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  font-family: var(--font-family, 'Space Grotesk', sans-serif);
+  cursor: pointer;
+  transition: background-color 0.15s;
+  text-transform: none !important;
+}
+
+.mensaje-dropdown button:hover {
+  background-color: rgba(255,255,255,0.05);
+}
+
+.mensaje-dropdown button.danger {
+  color: #ff4d4f;
+}
+
+.mensaje-dropdown button.danger:hover {
+  background-color: rgba(255, 77, 79, 0.1);
+}
+
+/* ── Editar Wrapper ── */
+.mensaje-editar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,0,0,0.2);
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.mensaje-editar-wrapper input {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.875rem;
+  outline: none;
+  width: 100%;
+  min-width: 150px;
+}
+
+.btn-guardar-edicion,
+.btn-cancelar-edicion {
+  background: rgba(0,0,0,0.2);
+  border: none;
+  color: inherit;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.btn-guardar-edicion:hover,
+.btn-cancelar-edicion:hover {
+  opacity: 1;
+  background: rgba(0,0,0,0.4);
+}
+
+/* ── Modal Confirmar Eliminar ── */
+.mensaje-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.mensaje-modal-card {
+  background-color: var(--bg-secondary, #121415);
+  border: 1px solid var(--border-light, rgba(255,255,255,0.08));
+  border-radius: 12px;
+  padding: 24px;
+  width: 320px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  text-align: center;
+  color: var(--text-white, #fff);
+  font-family: var(--font-family, 'Space Grotesk', sans-serif);
+}
+
+.mensaje-modal-card h4 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.mensaje-modal-card p {
+  font-size: 0.85rem;
+  color: var(--text-muted, #8A9099);
+  margin: 0 0 20px;
+}
+
+.mensaje-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.mensaje-modal-actions button {
+  background: transparent;
+  border: 1px solid var(--border-light, rgba(255,255,255,0.08));
+  color: var(--text-white, #fff);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: all 0.2s;
+  text-transform: none !important;
+}
+
+.mensaje-modal-actions button:hover {
+  background-color: rgba(255,255,255,0.05);
+}
+
+.mensaje-modal-actions button.danger {
+  background-color: rgba(255, 77, 79, 0.1);
+  border-color: rgba(255, 77, 79, 0.3);
+  color: #ff4d4f;
+}
+
+.mensaje-modal-actions button.danger:hover {
+  background-color: rgba(255, 77, 79, 0.2);
+}
+
+
+
+
+
+
+
+
+
+.mensajes-historial-loading-propio {
+  align-self: flex-end;
+  width: 60%;
+}
+
+.mensajes-historial-loading-ajeno {
+  align-self: flex-start;
+  width: 45%;
+}
+
+/* ── POPOVERS DE INPUT (Adjuntar & Emojis) ─── */
+.mensajes-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.mensajes-popover {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  background-color: var(--bg-secondary, #121415);
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(45, 239, 242, 0.08);
+  z-index: 50;
+  animation: popoverIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes popoverIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Popover Adjuntar */
+.mensajes-adjuntar-popover {
+  left: 1.5rem;
+  width: 160px;
+  padding: 6px;
+}
+
+.mensajes-adjuntar-opcion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-white, #fff);
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: var(--font-family, 'Space Grotesk', sans-serif);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.mensajes-adjuntar-opcion:hover {
+  background: rgba(45, 239, 242, 0.1);
+  color: var(--primary, #2DEFF2);
+}
+
+.mensajes-adjuntar-opcion svg {
+  color: var(--primary, #2DEFF2);
+}
+
+/* Popover Emojis */
+.mensajes-emoji-popover {
+  left: 3.5rem;
+  width: 280px;
+  padding: 12px;
+}
+
+.mensajes-emoji-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted, #8A9099);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mensajes-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.mensajes-emoji-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mensajes-emoji-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.18);
+}
+
+/* ── BARRA DE BÚSQUEDA EN CHAT ─── */
+.mensajes-chat-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.6rem 1.5rem;
+  background-color: #16181a;
+  border-bottom: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+  animation: fadeIn 0.2s ease;
+}
+
+.mensajes-chat-search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  background-color: var(--bg-dark, #0A0B0C);
+  border: 1px solid rgba(45, 239, 242, 0.3);
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: var(--text-white, #fff);
+}
+
+.mensajes-chat-search-input-wrapper svg {
+  color: var(--primary, #2DEFF2);
+  flex-shrink: 0;
+}
+
+.mensajes-chat-search-input-wrapper input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.85rem;
+  font-family: var(--font-family, 'Space Grotesk', sans-serif);
+  outline: none;
+}
+
+.mensajes-search-nav-btns {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+}
+
+.mensajes-search-nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #8A9099);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.mensajes-search-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--primary, #2DEFF2);
+}
+
+.mensajes-search-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.mensaje-search-highlight {
+  background-color: rgba(255, 200, 0, 0.35);
+  color: #fff;
+  border-radius: 2px;
+  padding: 0 2px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.mensaje-search-highlight.activo {
+  background-color: #2DEFF2;
+  color: #000;
+  box-shadow: 0 0 12px rgba(45, 239, 242, 0.9);
+  font-weight: 800;
+  outline: 1px solid #ffffff;
+}
+
+.mensajes-busqueda-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted, #8A9099);
+  font-size: 0.85rem;
+}
+
+/* ── Mensaje Editado/Eliminado ── */
+.mensaje-burbuja { position: relative; }
+
+.mensaje-burbuja-container.propio .mensaje-burbuja.eliminado,
+.mensaje-burbuja-container.ajeno .mensaje-burbuja.eliminado {
+  color: var(--text-muted, #8A9099) !important;
+  font-style: italic;
+  background: transparent !important;
+  border: 1px solid var(--border-light, rgba(255,255,255,0.08)) !important;
+  box-shadow: none !important;
+}
+
+.mensaje-eliminado-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted, #8A9099);
+}
+
+.mensaje-editado-tag {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.5);
+  font-style: italic;
+  margin-left: 4px;
+}
+
+.mensaje-burbuja-container.propio .mensaje-editado-tag { color: rgba(0,0,0,0.5); }
+
+/* ── Fila de burbuja con opciones externas ── */
+.mensaje-burbuja-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mensaje-contenido-wrapper {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mensaje-texto { flex-grow: 1; }
+
+.mensaje-opciones-externas {
+  position: relative;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.mensaje-burbuja-container:hover .mensaje-opciones-externas,
+.mensaje-opciones-externas:focus-within {
+  opacity: 1;
+}
+
+.mensaje-trigger-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.mensaje-trigger-btn:hover {
+  opacity: 1;
+  background: rgba(255,255,255,0.1);
+}
+
+.mensaje-dropdown {
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  margin-right: 8px;
+  background-color: var(--bg-secondary, #121415);
+  border: 1px solid var(--border-light, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  min-width: 130px;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.mensaje-dropdown button {
+  background: none;
+  border: none;
+  color: var(--text-white, #fff);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  font-family: var(--font-family, 'Space Grotesk', sans-serif);
+  cursor: pointer;
+  transition: background-color 0.15s;
+  text-transform: none !important;
+}
+
+.mensaje-dropdown button:hover { background-color: rgba(255,255,255,0.05); }
+.mensaje-dropdown button.danger { color: #ff4d4f; }
+.mensaje-dropdown button.danger:hover { background-color: rgba(255, 77, 79, 0.1); }
+
+/* ── Editar Wrapper ── */
+.mensaje-editar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,0,0,0.2);
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.mensaje-editar-wrapper input {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.875rem;
+  outline: none;
+  width: 100%;
+  min-width: 150px;
+}
+
+.btn-guardar-edicion,
+.btn-cancelar-edicion {
+  background: rgba(0,0,0,0.2);
+  border: none;
+  color: inherit;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.btn-guardar-edicion:hover,
+.btn-cancelar-edicion:hover { opacity: 1; background: rgba(0,0,0,0.4); }
+
+/* ── Modal Confirmar Eliminar ── */
+.mensaje-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.mensaje-modal-card {
+  background-color: var(--bg-secondary, #121415);
+  border: 1px solid var(--border-light, rgba(255,255,255,0.08));
+  border-radius: 12px;
+  padding: 24px;
+  width: 320px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  text-align: center;
+  color: var(--text-white, #fff);
+  font-family: var(--font-family, 'Space Grotesk', sans-serif);
+}
+
+.mensaje-modal-card h4 { margin: 0 0 8px; font-size: 1.1rem; }
+
+.mensaje-modal-card p {
+  font-size: 0.85rem;
+  color: var(--text-muted, #8A9099);
+  margin: 0 0 20px;
+}
+
+.mensaje-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.mensaje-modal-actions button {
+  background: transparent;
+  border: 1px solid var(--border-light, rgba(255,255,255,0.08));
+  color: var(--text-white, #fff);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: all 0.2s;
+  text-transform: none !important;
+}
+
+.mensaje-modal-actions button:hover {
+  background-color: rgba(255,255,255,0.05);
+}
+
+.mensaje-modal-actions button.danger {
+  background-color: rgba(255, 77, 79, 0.1);
+  border-color: rgba(255, 77, 79, 0.3);
+  color: #ff4d4f;
+}
+
+.mensaje-modal-actions button.danger:hover {
+  background-color: rgba(255, 77, 79, 0.2);
+}

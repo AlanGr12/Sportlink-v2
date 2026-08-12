@@ -16,6 +16,7 @@ import Pruebas from './pruebas/pruebas.jsx'
 import PaginaEntrenamientos from './entrenamientos/PaginaEntrenamientos.jsx'
 import Empleos from './empleos/Empleos.jsx'
 import MensajesView from './mensajes/MensajesView.jsx'
+import Ajustes from './ajustes/Ajustes.jsx'
 
 
 // ── Página 404 ───────────────────────────────────────────────────────────────
@@ -251,6 +252,15 @@ function App() {
                 <div style={{ paddingTop: '80px', height: '100vh', overflow: 'hidden', boxSizing: 'border-box' }}>
                   <MensajesView usuario={usuario} conversacionInicial={null} />
                 </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/ajustes"
+            element={
+              <ProtectedRoute usuario={usuario}>
+                <Ajustes usuario={usuario} />
               </ProtectedRoute>
             }
           />

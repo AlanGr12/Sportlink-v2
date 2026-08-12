@@ -36,6 +36,36 @@ const EmptyMessageIcon = () => (
   </svg>
 )
 
+const ThreeDotsIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+  </svg>
+)
+
+const ProhibitedIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+  </svg>
+)
+
+const CheckIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+)
+
+const PencilIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px'}}>
+    <path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+  </svg>
+)
+
+const TrashIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px'}}>
+    <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+  </svg>
+)
+
 // ── Helpers ─────────────────────────────────────────────────
 
 function rolBadgeClass(rol) {
@@ -171,6 +201,11 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
   const [busquedaTexto, setBusquedaTexto] = useState('')
   const [coincidenciaIndex, setCoincidenciaIndex] = useState(0)
 
+  const [dropdownMsgId, setDropdownMsgId] = useState(null)
+  const [editandoMsgId, setEditandoMsgId] = useState(null)
+  const [editTexto, setEditTexto] = useState('')
+  const [msgAEliminar, setMsgAEliminar] = useState(null)
+
   const historialRef = useRef(null)
   const [typingUser, setTypingUser] = useState(null)
   const typingTimeoutRef = useRef(null)
@@ -200,6 +235,9 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
     setMostrarBusqueda(false)
     setBusquedaTexto('')
     setCoincidenciaIndex(0)
+    setDropdownMsgId(null)
+    setEditandoMsgId(null)
+    setMsgAEliminar(null)
     clearTimeout(typingTimeoutRef.current)
 
     if (!idActivo) {
@@ -384,6 +422,19 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
     }
   }
 
+  const guardarEdicion = async (msg) => {
+    if (editTexto !== msg.contenido && editTexto.trim() !== '') {
+      try {
+        await api.put(`/api/conversaciones/${idActivo}/mensajes/${msg.idmensaje}`, { contenido: editTexto })
+        setMensajes(prev => prev.map(m => m.idmensaje === msg.idmensaje ? { ...m, contenido: editTexto, tipomensaje: 'EDITADO' } : m))
+        actualizarUltimoMensajeRef.current?.(idActivo, { ...msg, contenido: editTexto, tipomensaje: 'EDITADO' })
+      } catch (err) {
+        console.error('Error editando mensaje:', err)
+      }
+    }
+    setEditandoMsgId(null)
+  }
+
   /* ── Panel vacío ── */
   if (!conversacionActiva) {
     return (
@@ -519,11 +570,64 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
 
           const msg = item.data
           const esPropio = Number(msg.idusuarioemisor) === Number(miIdUsuario)
+          const isEliminado = msg.tipomensaje === 'ELIMINADO' || msg.eliminado
+          const isEditado = msg.tipomensaje === 'EDITADO' || msg.editado
 
           return (
-            <div key={item.key} className={`mensaje-burbuja-container ${esPropio ? 'propio' : 'ajeno'}`}>
-              <div className="mensaje-burbuja">
-                {destacarTexto(msg.contenido, mostrarBusqueda ? busquedaTexto : '', msg.idmensaje, matchActivoId)}
+            <div 
+              key={item.key} 
+              className={`mensaje-burbuja-container ${esPropio ? 'propio' : 'ajeno'}`}
+              onMouseLeave={() => setDropdownMsgId(null)}
+            >
+              <div className="mensaje-burbuja-row">
+                <div className={`mensaje-burbuja ${isEliminado ? 'eliminado' : ''}`}>
+                  {isEliminado ? (
+                    <div className="mensaje-eliminado-content">
+                      <ProhibitedIcon /> <i>Mensaje eliminado</i>
+                    </div>
+                  ) : editandoMsgId === msg.idmensaje ? (
+                    <div className="mensaje-editar-wrapper">
+                      <input 
+                        type="text" 
+                        value={editTexto} 
+                        onChange={(e) => setEditTexto(e.target.value)} 
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') guardarEdicion(msg)
+                          else if (e.key === 'Escape') setEditandoMsgId(null)
+                        }}
+                        autoFocus
+                      />
+                      <button className="btn-guardar-edicion" onClick={() => guardarEdicion(msg)}><CheckIcon /></button>
+                      <button className="btn-cancelar-edicion" onClick={() => setEditandoMsgId(null)}>✕</button>
+                    </div>
+                  ) : (
+                    <div className="mensaje-contenido-wrapper">
+                      <span className="mensaje-texto">
+                        {destacarTexto(msg.contenido, mostrarBusqueda ? busquedaTexto : '', msg.idmensaje, matchActivoId)}
+                      </span>
+                      {isEditado && <span className="mensaje-editado-tag"> (editado)</span>}
+                    </div>
+                  )}
+                </div>
+
+                {/* Opciones fuera de la burbuja a la derecha */}
+                {esPropio && !isEliminado && editandoMsgId !== msg.idmensaje && (
+                  <div className="mensaje-opciones-externas">
+                    <button className="mensaje-trigger-btn white" onClick={(e) => { e.stopPropagation(); setDropdownMsgId(dropdownMsgId === msg.idmensaje ? null : msg.idmensaje); }}>
+                       <ThreeDotsIcon />
+                    </button>
+                    {dropdownMsgId === msg.idmensaje && (
+                      <div className="mensaje-dropdown outside">
+                        <button onClick={(e) => { e.stopPropagation(); setEditandoMsgId(msg.idmensaje); setEditTexto(msg.contenido); setDropdownMsgId(null); }}>
+                          <PencilIcon /> Editar
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setMsgAEliminar(msg); setDropdownMsgId(null); }} className="danger">
+                          <TrashIcon /> Borrar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="mensaje-hora">
                 {formatearHora(msg.createdat)}
@@ -546,6 +650,30 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
 
       {/* Input */}
       <ChatInput onSend={handleEnviarMensaje} onTyping={handleTyping} />
+
+      {/* Modal Confirmar Eliminar */}
+      {msgAEliminar && (
+        <div className="mensaje-modal-overlay" onClick={() => setMsgAEliminar(null)}>
+          <div className="mensaje-modal-card" onClick={e => e.stopPropagation()}>
+            <h4>¿Eliminar mensaje?</h4>
+            <p>¿Estás seguro que querés eliminar este mensaje?</p>
+            <div className="mensaje-modal-actions">
+              <button onClick={() => setMsgAEliminar(null)}>Cancelar</button>
+              <button className="danger" onClick={async () => {
+                const msg = msgAEliminar;
+                setMsgAEliminar(null)
+                try {
+                  await api.delete(`/api/conversaciones/${idActivo}/mensajes/${msg.idmensaje}`)
+                  setMensajes(prev => prev.map(m => m.idmensaje === msg.idmensaje ? { ...m, tipomensaje: 'ELIMINADO', contenido: '' } : m))
+                  actualizarUltimoMensajeRef.current?.(idActivo, { ...msg, tipomensaje: 'ELIMINADO', contenido: 'Mensaje eliminado' })
+                } catch (e) {
+                  console.error(e)
+                }
+              }}>Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
