@@ -6,6 +6,7 @@ import '../entrenamientos/entrenamientos.css'
 import './clubes.css'
 import Footer from '../footer/footer.jsx'
 import Avatar from '../components/Avatar.jsx'
+import CustomSelect from '../components/CustomSelect.jsx'
 import { IconoUbicacion } from '../iconos/IconoUbicacion.jsx'
 import { IconoFutbol } from '../iconos/IconoFutbol.jsx'
 import { IconoBuscador } from '../iconos/IconoBuscador.jsx'
@@ -234,16 +235,12 @@ function ClubesView(props) {
               </div>
               <div className={`filtro-contenido-wrapper ${sidebarExpandido.deporte ? 'open' : ''}`}>
                 <div className="filtro-contenido">
-                  <select
-                    className="filtro-select"
+                  <CustomSelect
                     value={filtroDeporte}
                     onChange={(e) => setFiltroDeporte(e.target.value)}
-                  >
-                    <option value="">Todos los deportes</option>
-                    {deportesDisponibles.map(d => (
-                      <option key={d.id} value={d.nombre}>{d.nombre}</option>
-                    ))}
-                  </select>
+                    placeholder="Todos los deportes"
+                    options={deportesDisponibles.map(d => ({ value: d.nombre, label: d.nombre }))}
+                  />
                 </div>
               </div>
             </div>
@@ -346,14 +343,16 @@ function ClubesView(props) {
                       {/* Píldoras de deportes */}
                       {club.deportes && club.deportes.length > 0 && (
                         <div className="card-club-pills">
-                          {club.deportes.slice(0, 3).map((d, idx) => (
-                            <span key={idx} className="pill-info">
-                              <IconoMedalla size={14} color="currentColor" className="pill-icon" />
-                              {d.deporte}
-                            </span>
-                          ))}
+                          {club.deportes.slice(0, 3).map((d, idx) => {
+                            const isFutbol = d.deporte.toLowerCase() === 'fútbol' || d.deporte.toLowerCase() === 'futbol';
+                            return (
+                              <span key={idx} className={`sport-badge ${isFutbol ? 'sport-badge-cyan' : 'sport-badge-gray'}`}>
+                                {d.deporte}
+                              </span>
+                            );
+                          })}
                           {club.deportes.length > 3 && (
-                            <span className="pill-info pill-mas">
+                            <span className="sport-badge sport-badge-gray">
                               +{club.deportes.length - 3}
                             </span>
                           )}
@@ -430,12 +429,14 @@ function ClubesView(props) {
 
               {clubSeleccionado.deportes && clubSeleccionado.deportes.length > 0 && (
                 <div className="detalle-club-pills">
-                  {clubSeleccionado.deportes.map((d, idx) => (
-                    <span key={idx} className="pill-info">
-                      <IconoMedalla size={14} color="currentColor" className="pill-icon" />
-                      {d.deporte}
-                    </span>
-                  ))}
+                  {clubSeleccionado.deportes.map((d, idx) => {
+                    const isFutbol = d.deporte.toLowerCase() === 'fútbol' || d.deporte.toLowerCase() === 'futbol';
+                    return (
+                      <span key={idx} className={`sport-badge ${isFutbol ? 'sport-badge-cyan' : 'sport-badge-gray'}`}>
+                        {d.deporte}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
 

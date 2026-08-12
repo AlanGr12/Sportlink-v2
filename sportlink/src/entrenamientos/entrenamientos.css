@@ -135,6 +135,7 @@
 
 .filtro-contenido-wrapper.open {
   grid-template-rows: 1fr;
+  overflow: visible;
 }
 
 .filtro-contenido {

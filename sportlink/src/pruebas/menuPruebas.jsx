@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "../entrenamientos/entrenamientos.css";
 import "./menuPruebas.css";
+import CustomSelect from "../components/CustomSelect.jsx";
 
 // Mismos iconos que PaginaEntrenamientos.jsx
 import { IconoFecha } from "../iconos/IconoFecha.jsx";
@@ -77,19 +78,19 @@ function MenuPruebas({
         </div>
         <div className={`filtro-contenido-wrapper ${expandido.zona ? "open" : ""}`}>
           <div className="filtro-contenido">
-            <select
-              className="filtro-select"
+            <CustomSelect
               value={zona}
               onChange={(e) => setZona(e.target.value)}
-            >
-              <option value="">Todas las zonas</option>
-              <option value="CABA">CABA</option>
-              <option value="Zona Norte">Zona Norte</option>
-              <option value="Zona Sur">Zona Sur</option>
-              <option value="Zona Oeste">Zona Oeste</option>
-              <option value="Conurbano">Conurbano</option>
-              <option value="Interior">Interior</option>
-            </select>
+              placeholder="Todas las zonas"
+              options={[
+                { value: "CABA", label: "CABA" },
+                { value: "Zona Norte", label: "Zona Norte" },
+                { value: "Zona Sur", label: "Zona Sur" },
+                { value: "Zona Oeste", label: "Zona Oeste" },
+                { value: "Conurbano", label: "Conurbano" },
+                { value: "Interior", label: "Interior" }
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -108,16 +109,16 @@ function MenuPruebas({
         </div>
         <div className={`filtro-contenido-wrapper ${expandido.categoria ? "open" : ""}`}>
           <div className="filtro-contenido">
-            <select
-              className="filtro-select"
+            <CustomSelect
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
-            >
-              <option value="">Todas</option>
-              <option value="Primera">Primera</option>
-              <option value="Reserva">Reserva</option>
-              <option value="Juveniles">Juveniles</option>
-            </select>
+              placeholder="Todas"
+              options={[
+                { value: "Primera", label: "Primera" },
+                { value: "Reserva", label: "Reserva" },
+                { value: "Juveniles", label: "Juveniles" }
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -136,18 +137,12 @@ function MenuPruebas({
         </div>
         <div className={`filtro-contenido-wrapper ${expandido.deporte ? "open" : ""}`}>
           <div className="filtro-contenido">
-            <select
-              className="filtro-select"
+            <CustomSelect
               value={deporte}
               onChange={(e) => setDeporte(e.target.value)}
-            >
-              <option value="">Todos los deportes</option>
-              {deportesDisponibles.map((d) => (
-                <option key={d.id} value={d.nombre}>
-                  {d.nombre}
-                </option>
-              ))}
-            </select>
+              placeholder="Todos los deportes"
+              options={deportesDisponibles.map((d) => ({ value: d.nombre, label: d.nombre }))}
+            />
           </div>
         </div>
       </div>

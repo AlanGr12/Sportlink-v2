@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './FormularioEntrenamiento.css';
+import CustomSelect from '../components/CustomSelect.jsx';
 
 const deportesDisponibles = [
   { id: 1, nombre: 'Fútbol' },
@@ -258,28 +259,24 @@ const FormularioEntrenamiento = ({
       <div className="form-fila-doble">
         <div className="form-grupo">
           <label className="form-label">Deporte</label>
-          <select
-            className="form-select"
+          <CustomSelect
             value={iddeporte}
             onChange={(e) => setIddeporte(Number(e.target.value))}
-          >
-            {deportesDisponibles.map(d => (
-              <option key={d.id} value={d.id}>{d.nombre}</option>
-            ))}
-          </select>
+            options={deportesDisponibles.map(d => ({ value: d.id, label: d.nombre }))}
+          />
         </div>
 
         <div className="form-grupo">
           <label className="form-label">Nivel<span>*</span></label>
-          <select
-            className="form-select"
+          <CustomSelect
             value={nivel}
             onChange={(e) => setNivel(e.target.value)}
-          >
-            <option value="Principiante">Principiante</option>
-            <option value="Intermedio">Intermedio</option>
-            <option value="Avanzado">Avanzado</option>
-          </select>
+            options={[
+              { value: 'Principiante', label: 'Principiante' },
+              { value: 'Intermedio', label: 'Intermedio' },
+              { value: 'Avanzado', label: 'Avanzado' }
+            ]}
+          />
           {errores.nivel && <span className="error-feedback">{errores.nivel}</span>}
         </div>
       </div>
@@ -287,15 +284,15 @@ const FormularioEntrenamiento = ({
       {/* Género */}
       <div className="form-grupo">
         <label className="form-label">Género<span>*</span></label>
-        <select
-          className="form-select"
+        <CustomSelect
           value={genero}
           onChange={(e) => setGenero(e.target.value)}
-        >
-          <option value="Mixto">Mixto</option>
-          <option value="Masculino">Masculino</option>
-          <option value="Femenino">Femenino</option>
-        </select>
+          options={[
+            { value: 'Mixto', label: 'Mixto' },
+            { value: 'Masculino', label: 'Masculino' },
+            { value: 'Femenino', label: 'Femenino' }
+          ]}
+        />
         {errores.genero && <span className="error-feedback">{errores.genero}</span>}
       </div>
 

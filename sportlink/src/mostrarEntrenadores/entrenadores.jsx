@@ -6,6 +6,7 @@ import '../entrenamientos/entrenamientos.css'
 import './entrenadores.css'
 import Footer from '../footer/footer.jsx'
 import Avatar from '../components/Avatar.jsx'
+import CustomSelect from '../components/CustomSelect.jsx'
 import { IconoUbicacion } from '../iconos/IconoUbicacion.jsx'
 import { IconoFutbol } from '../iconos/IconoFutbol.jsx'
 import { IconoBuscador } from '../iconos/IconoBuscador.jsx'
@@ -393,16 +394,12 @@ function EntrenadoresView(props) {
               </div>
               <div className={`filtro-contenido-wrapper ${sidebarExpandido.deporte ? 'open' : ''}`}>
                 <div className="filtro-contenido">
-                  <select
-                    className="filtro-select"
+                  <CustomSelect
                     value={filtroDeporte}
                     onChange={(e) => setFiltroDeporte(e.target.value)}
-                  >
-                    <option value="">Todos los deportes</option>
-                    {deportesDisponibles.map(d => (
-                      <option key={d.id} value={d.nombre}>{d.nombre}</option>
-                    ))}
-                  </select>
+                    placeholder="Todos los deportes"
+                    options={deportesDisponibles.map(d => ({ value: d.nombre, label: d.nombre }))}
+                  />
                 </div>
               </div>
             </div>

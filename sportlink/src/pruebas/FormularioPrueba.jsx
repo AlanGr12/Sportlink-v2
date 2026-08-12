@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../axiosConfig.js";
+import CustomSelect from "../components/CustomSelect.jsx";
 
 // ── Deportes disponibles (mismo listado que FormularioEntrenamiento) ──────────
 const deportesDisponibles = [
@@ -150,15 +151,11 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
           <label className="form-label">
             Deporte<span>*</span>
           </label>
-          <select
-            className="form-select"
+          <CustomSelect
             value={iddeporte}
             onChange={(e) => setIddeporte(Number(e.target.value))}
-          >
-            {deportesDisponibles.map((d) => (
-              <option key={d.id} value={d.id}>{d.nombre}</option>
-            ))}
-          </select>
+            options={deportesDisponibles.map((d) => ({ value: d.id, label: d.nombre }))}
+          />
         </div>
 
         <div className="form-grupo">
@@ -255,16 +252,16 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
           <label className="form-label">
             Género<span>*</span>
           </label>
-          <select
-            className="form-select"
+          <CustomSelect
             value={genero}
             onChange={(e) => setGenero(e.target.value)}
-          >
-            <option value="">Seleccioná...</option>
-            <option value="Masculino">Masculino</option>
-            <option value="Femenino">Femenino</option>
-            <option value="Mixto">Mixto</option>
-          </select>
+            placeholder="Seleccioná..."
+            options={[
+              { value: "Masculino", label: "Masculino" },
+              { value: "Femenino", label: "Femenino" },
+              { value: "Mixto", label: "Mixto" }
+            ]}
+          />
           {errores.genero && <span className="error-feedback">{errores.genero}</span>}
         </div>
       </div>
@@ -302,14 +299,14 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
       <div className="form-fila-doble">
         <div className="form-grupo">
           <label className="form-label">Estado</label>
-          <select
-            className="form-select"
+          <CustomSelect
             value={estado}
             onChange={(e) => setEstado(e.target.value)}
-          >
-            <option value="true">Activa</option>
-            <option value="false">Inactiva</option>
-          </select>
+            options={[
+              { value: "true", label: "Activa" },
+              { value: "false", label: "Inactiva" }
+            ]}
+          />
         </div>
 
         <div className="form-grupo">
