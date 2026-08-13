@@ -82,7 +82,12 @@ export default function MensajesView({ usuario }) {
       prev
         .map((c) => {
           if (c.idconversacion === idconversacion) {
-            return { ...c, ultimoMensaje: mensaje, updatedat: mensaje.createdat }
+            const actualFecha = c.ultimoMensaje?.createdat ? new Date(c.ultimoMensaje.createdat).getTime() : 0
+            const msgFecha = mensaje.createdat ? new Date(mensaje.createdat).getTime() : 0
+
+            if (!c.ultimoMensaje || c.ultimoMensaje.idmensaje === mensaje.idmensaje || msgFecha >= actualFecha) {
+              return { ...c, ultimoMensaje: mensaje, updatedat: mensaje.createdat || c.updatedat }
+            }
           }
           return c
         })

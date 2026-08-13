@@ -1155,14 +1155,14 @@
   transform: translateY(-50%);
   margin-right: 8px;
   background-color: var(--bg-secondary, #121415);
-  border: 1px solid var(--border-light, rgba(255,255,255,0.08));
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  border: 1px solid var(--border-light, rgba(255,255,255,0.12));
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 10px rgba(45, 239, 242, 0.1);
   display: flex;
   flex-direction: column;
   min-width: 130px;
   overflow: hidden;
-  z-index: 20;
+  z-index: 100;
 }
 
 .mensaje-dropdown button {
@@ -1180,7 +1180,8 @@
 }
 
 .mensaje-dropdown button:hover {
-  background-color: rgba(255,255,255,0.05);
+  background-color: rgba(45, 239, 242, 0.1);
+  color: var(--primary, #2DEFF2);
 }
 
 .mensaje-dropdown button.danger {
@@ -1188,7 +1189,8 @@
 }
 
 .mensaje-dropdown button.danger:hover {
-  background-color: rgba(255, 77, 79, 0.1);
+  background-color: rgba(255, 77, 79, 0.15);
+  color: #ff6b6b;
 }
 
 /* ── Editar Wrapper ── */
@@ -1196,42 +1198,50 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(0,0,0,0.2);
-  padding: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 4px 8px;
   border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .mensaje-editar-wrapper input {
   background: transparent;
   border: none;
-  color: inherit;
+  color: #ffffff;
   font-family: inherit;
   font-size: 0.875rem;
   outline: none;
   width: 100%;
-  min-width: 150px;
+  min-width: 160px;
+}
+
+.mensaje-burbuja-container.propio .mensaje-editar-wrapper input {
+  color: #000000;
+  font-weight: 600;
 }
 
 .btn-guardar-edicion,
 .btn-cancelar-edicion {
-  background: rgba(0,0,0,0.2);
+  background: rgba(0,0,0,0.25);
   border: none;
   color: inherit;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  opacity: 0.8;
-  transition: opacity 0.2s, background 0.2s;
+  opacity: 0.85;
+  transition: opacity 0.2s, background 0.2s, transform 0.15s;
+  flex-shrink: 0;
 }
 
 .btn-guardar-edicion:hover,
 .btn-cancelar-edicion:hover {
   opacity: 1;
   background: rgba(0,0,0,0.4);
+  transform: scale(1.1);
 }
 
 /* ── Modal Confirmar Eliminar ── */
@@ -1592,14 +1602,14 @@
   transform: translateY(-50%);
   margin-right: 8px;
   background-color: var(--bg-secondary, #121415);
-  border: 1px solid var(--border-light, rgba(255,255,255,0.08));
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  border: 1px solid var(--border-light, rgba(255,255,255,0.12));
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 10px rgba(45, 239, 242, 0.1);
   display: flex;
   flex-direction: column;
   min-width: 130px;
   overflow: hidden;
-  z-index: 20;
+  z-index: 100;
 }
 
 .mensaje-dropdown button {
@@ -1616,44 +1626,50 @@
   text-transform: none !important;
 }
 
-.mensaje-dropdown button:hover { background-color: rgba(255,255,255,0.05); }
+.mensaje-dropdown button:hover { background-color: rgba(45, 239, 242, 0.1); color: var(--primary, #2DEFF2); }
 .mensaje-dropdown button.danger { color: #ff4d4f; }
-.mensaje-dropdown button.danger:hover { background-color: rgba(255, 77, 79, 0.1); }
+.mensaje-dropdown button.danger:hover { background-color: rgba(255, 77, 79, 0.15); color: #ff6b6b; }
 
 /* ── Editar Wrapper ── */
 .mensaje-editar-wrapper {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(0,0,0,0.2);
-  padding: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 4px 8px;
   border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .mensaje-editar-wrapper input {
   background: transparent;
   border: none;
-  color: inherit;
+  color: #ffffff;
   font-family: inherit;
   font-size: 0.875rem;
   outline: none;
   width: 100%;
-  min-width: 150px;
+  min-width: 160px;
+}
+
+.mensaje-burbuja-container.propio .mensaje-editar-wrapper input {
+  color: #000000;
+  font-weight: 600;
 }
 
 .btn-guardar-edicion,
 .btn-cancelar-edicion {
-  background: rgba(0,0,0,0.2);
+  background: rgba(0,0,0,0.25);
   border: none;
   color: inherit;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  opacity: 0.8;
+  opacity: 0.85;
   transition: opacity 0.2s, background 0.2s;
 }
 

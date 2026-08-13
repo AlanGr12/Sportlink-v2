@@ -263,6 +263,17 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
     return () => { activo = false }
   }, [idActivo])
 
+  // ── Listener para cerrar el dropdown al hacer click fuera ──
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.mensaje-opciones-externas')) {
+        setDropdownMsgId(null)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [])
+
   // ── Efecto 2: Suscripción Realtime ──
   useEffect(() => {
     if (!idActivo) {
@@ -289,6 +300,26 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
           actualizarUltimoMensajeRef.current?.(idActivo, nuevoMensaje)
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'mensajes', filter: `idconversacion=eq.${idActivo}` },
+        (payload) => {
+          const msgActualizado = payload.new
+          setMensajes((prev) =>
+            prev.map((m) => (m.idmensaje === msgActualizado.idmensaje ? { ...m, ...msgActualizado } : m))
+          )
+          actualizarUltimoMensajeRef.current?.(idActivo, msgActualizado)
+        }
+      )
+      .on('broadcast', { event: 'mensaje_update' }, (payload) => {
+        const msgActualizado = payload.payload
+        if (msgActualizado && Number(msgActualizado.idconversacion) === Number(idActivo)) {
+          setMensajes((prev) =>
+            prev.map((m) => (m.idmensaje === msgActualizado.idmensaje ? { ...m, ...msgActualizado } : m))
+          )
+          actualizarUltimoMensajeRef.current?.(idActivo, msgActualizado)
+        }
+      })
       .on('broadcast', { event: 'typing' }, (payload) => {
         if (String(payload.payload.idusuario) !== miId) {
           setTypingUser(payload.payload.nombre)
@@ -424,15 +455,53 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
 
   const guardarEdicion = async (msg) => {
     if (editTexto !== msg.contenido && editTexto.trim() !== '') {
+      const nuevoTexto = editTexto.trim()
       try {
-        await api.put(`/api/conversaciones/${idActivo}/mensajes/${msg.idmensaje}`, { contenido: editTexto })
-        setMensajes(prev => prev.map(m => m.idmensaje === msg.idmensaje ? { ...m, contenido: editTexto, tipomensaje: 'EDITADO' } : m))
-        actualizarUltimoMensajeRef.current?.(idActivo, { ...msg, contenido: editTexto, tipomensaje: 'EDITADO' })
+        const { data: msgEditado } = await api.put(
+          `/api/conversaciones/${idActivo}/mensajes/${msg.idmensaje}`,
+          { contenido: nuevoTexto }
+        )
+        const itemActualizado = msgEditado || { ...msg, contenido: nuevoTexto, tipomensaje: 'EDITADO' }
+        setMensajes((prev) =>
+          prev.map((m) => (m.idmensaje === msg.idmensaje ? itemActualizado : m))
+        )
+        actualizarUltimoMensajeRef.current?.(idActivo, itemActualizado)
+
+        canalRealtimeRef.current?.send({
+          type: 'broadcast',
+          event: 'mensaje_update',
+          payload: itemActualizado
+        })
       } catch (err) {
         console.error('Error editando mensaje:', err)
       }
     }
     setEditandoMsgId(null)
+  }
+
+  const handleConfirmarEliminar = async () => {
+    if (!msgAEliminar) return
+    const msg = msgAEliminar
+    setMsgAEliminar(null)
+    try {
+      const { data } = await api.delete(`/api/conversaciones/${idActivo}/mensajes/${msg.idmensaje}`)
+      const itemEliminado = data?.mensaje || { ...msg, tipomensaje: 'ELIMINADO', contenido: '' }
+      setMensajes((prev) =>
+        prev.map((m) => (m.idmensaje === msg.idmensaje ? itemEliminado : m))
+      )
+      actualizarUltimoMensajeRef.current?.(idActivo, {
+        ...itemEliminado,
+        contenido: 'Mensaje eliminado'
+      })
+
+      canalRealtimeRef.current?.send({
+        type: 'broadcast',
+        event: 'mensaje_update',
+        payload: itemEliminado
+      })
+    } catch (e) {
+      console.error('Error eliminando mensaje:', e)
+    }
   }
 
   /* ── Panel vacío ── */
@@ -577,7 +646,6 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
             <div 
               key={item.key} 
               className={`mensaje-burbuja-container ${esPropio ? 'propio' : 'ajeno'}`}
-              onMouseLeave={() => setDropdownMsgId(null)}
             >
               <div className="mensaje-burbuja-row">
                 <div className={`mensaje-burbuja ${isEliminado ? 'eliminado' : ''}`}>
@@ -597,8 +665,8 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
                         }}
                         autoFocus
                       />
-                      <button className="btn-guardar-edicion" onClick={() => guardarEdicion(msg)}><CheckIcon /></button>
-                      <button className="btn-cancelar-edicion" onClick={() => setEditandoMsgId(null)}>✕</button>
+                      <button className="btn-guardar-edicion" title="Guardar cambios" onClick={() => guardarEdicion(msg)}><CheckIcon /></button>
+                      <button className="btn-cancelar-edicion" title="Cancelar edición" onClick={() => setEditandoMsgId(null)}>✕</button>
                     </div>
                   ) : (
                     <div className="mensaje-contenido-wrapper">
@@ -613,7 +681,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
                 {/* Opciones fuera de la burbuja a la derecha */}
                 {esPropio && !isEliminado && editandoMsgId !== msg.idmensaje && (
                   <div className="mensaje-opciones-externas">
-                    <button className="mensaje-trigger-btn white" onClick={(e) => { e.stopPropagation(); setDropdownMsgId(dropdownMsgId === msg.idmensaje ? null : msg.idmensaje); }}>
+                    <button className="mensaje-trigger-btn white" title="Opciones" onClick={(e) => { e.stopPropagation(); setDropdownMsgId(dropdownMsgId === msg.idmensaje ? null : msg.idmensaje); }}>
                        <ThreeDotsIcon />
                     </button>
                     {dropdownMsgId === msg.idmensaje && (
@@ -659,17 +727,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
             <p>¿Estás seguro que querés eliminar este mensaje?</p>
             <div className="mensaje-modal-actions">
               <button onClick={() => setMsgAEliminar(null)}>Cancelar</button>
-              <button className="danger" onClick={async () => {
-                const msg = msgAEliminar;
-                setMsgAEliminar(null)
-                try {
-                  await api.delete(`/api/conversaciones/${idActivo}/mensajes/${msg.idmensaje}`)
-                  setMensajes(prev => prev.map(m => m.idmensaje === msg.idmensaje ? { ...m, tipomensaje: 'ELIMINADO', contenido: '' } : m))
-                  actualizarUltimoMensajeRef.current?.(idActivo, { ...msg, tipomensaje: 'ELIMINADO', contenido: 'Mensaje eliminado' })
-                } catch (e) {
-                  console.error(e)
-                }
-              }}>Eliminar</button>
+              <button className="danger" onClick={handleConfirmarEliminar}>Eliminar</button>
             </div>
           </div>
         </div>
