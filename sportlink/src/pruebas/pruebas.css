@@ -334,6 +334,7 @@
   color: var(--text-white);
   margin: 0;
   font-family: var(--font-family);
+  letter-spacing: 0px !important;
 }
 
 /* Grilla de especificaciones */
