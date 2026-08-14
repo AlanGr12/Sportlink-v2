@@ -136,12 +136,27 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
           <div className="card-prueba-detalle-item">
             <IconoModalidad size={16} />
             <p>
-              {entrenamiento.cantidad ||
-              entrenamiento.cantidadJugadores ||
-              entrenamiento.capacidad
-                ? `${entrenamiento.cantidad || entrenamiento.cantidadJugadores || entrenamiento.capacidad} cupos`
-                : 'Cupos a confirmar'}
+              {(() => {
+                const capacity = entrenamiento.cantidad || entrenamiento.cantidadJugadores || entrenamiento.capacidad || null;
+                const inscritos = Number(entrenamiento.inscritosCount ?? entrenamiento.inscritos ?? 0);
+                if (capacity) {
+                  return `${inscritos} / ${capacity} cupos`;
+                }
+                return 'Cupos a confirmar';
+              })()}
             </p>
+            {(() => {
+              const capacity = Number(entrenamiento.cantidad || entrenamiento.cantidadJugadores || entrenamiento.capacidad || 0);
+              const inscritos = Number(entrenamiento.inscritosCount ?? entrenamiento.inscritos ?? 0);
+              const restantes = capacity > 0 ? capacity - inscritos : null;
+              if (restantes !== null && restantes > 0 && restantes <= 2) {
+                return <span className="pocos-cupos">Quedan {restantes} cupo{restantes > 1 ? 's' : ''}</span>;
+              }
+              if (restantes === 0 && capacity > 0) {
+                return <span className="pocos-cupos full">Completo</span>;
+              }
+              return null;
+            })()}
           </div>
 
           <div className="card-prueba-detalle-item">
@@ -154,6 +169,10 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
 
       {/* Botones */}
       <div className="card-prueba-pie">
+
+        {usuarioActual && entrenamiento.isInscripto && (
+          <div className="inscripto-badge">Estás inscripto</div>
+        )}
 
         <button
           className="btn-mas-info"

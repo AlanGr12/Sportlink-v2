@@ -12,7 +12,7 @@ import iconUbicacion from '../assets/ubicacion.png';
 
 import './DetalleEntrenamiento.css';
 
-const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar, onInscripcionExitosa }) => {
+const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar, onInscripcionExitosa, onDesuscripcionExitosa, onOptimisticChange }) => {
   const [postulantes, setPostulantes] = useState([]);
   const [postulantesLoading, setPostulantesLoading] = useState(false);
   const [postulantesError, setPostulantesError] = useState("");
@@ -114,26 +114,44 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar, onI
       return () => { cancelado = true; };
   }, [esJugador, idjugadorResuelto, identrenamiento]);
 
-  const handleInscribirse = async () => {
+    const handleInscribirse = async () => {
       if (!identrenamiento || !idjugadorResuelto) {
-          setInscripcionError("Datos de inscripción incompletos.");
-          return;
+        setInscripcionError("Datos de inscripción incompletos.");
+        return;
       }
+
+      // Chequear cupo localmente antes de intentar inscribir
+      const capacidad = Number(entrenamiento?.cantidad || entrenamiento?.cantidadJugadores || entrenamiento?.capacidad || 0);
+      const inscritosAct = Number(entrenamiento?.inscritosCount ?? entrenamiento?.inscritos ?? 0);
+      if (capacidad > 0 && inscritosAct >= capacidad) {
+      setInscripcionError('No hay cupos disponibles.');
+      return;
+      }
+
       setInscripcionError("");
       setInscripcionLoading(true);
+
+      // Optimistic update: marcar inscripto y aumentar contador localmente
+      setIsInscripto(true);
+      if (typeof onOptimisticChange === 'function') onOptimisticChange({ identrenamiento, delta: 1, isInscripto: true });
+
       try {
-          await api.post("/api/inscripcionesentrenamientos", {
-              identrenamiento,
-              idjugador: idjugadorResuelto
-          });
-          setIsInscripto(true);
-          if (onInscripcionExitosa) onInscripcionExitosa();
+        await api.post("/api/inscripcionesentrenamientos", {
+          identrenamiento,
+          idjugador: idjugadorResuelto
+        });
+        // Mantener loading visible hasta que el popup aparezca
+        if (onInscripcionExitosa) onInscripcionExitosa();
+        // Poner false después para que desaparezca el overlay
+        setTimeout(() => setInscripcionLoading(false), 500);
       } catch (err) {
-          setInscripcionError(err?.response?.data?.message || err?.response?.data?.error || "Ocurrió un error al inscribirse.");
-      } finally {
-          setInscripcionLoading(false);
+        // Revert optimistic update
+        setIsInscripto(false);
+        if (typeof onOptimisticChange === 'function') onOptimisticChange({ identrenamiento, delta: -1, isInscripto: false });
+        setInscripcionError(err?.response?.data?.message || err?.response?.data?.error || "Ocurrió un error al inscribirse.");
+        setInscripcionLoading(false);
       }
-  };
+    };
 
   const handleDesuscribirse = () => {
       setMostrarConfirmacion(true);
@@ -147,6 +165,9 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar, onI
           setIsInscripto(false);
           setMostrarConfirmacion(false);
           setMostrarExitoDesuscripcion(true);
+        if (typeof onDesuscripcionExitosa === 'function') onDesuscripcionExitosa();
+        // Optimistic decrement already applied when user confirmed; but ensure parent sync
+        if (typeof onOptimisticChange === 'function') onOptimisticChange({ identrenamiento, delta: -1, isInscripto: false });
       } catch (err) {
           setInscripcionError(err?.response?.data?.message || err?.response?.data?.error || "Ocurrió un error al cancelar la inscripción.");
           setMostrarConfirmacion(false);
@@ -410,6 +431,38 @@ console.log(entrenamiento)
         <button className="btn-cancelar" onClick={onCerrar}>Cerrar</button>
       </div>
     </div>
+
+    {/* Overlay de cargando mientras se procesa inscripción */}
+    {inscripcionLoading && createPortal(
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        backdropFilter: 'blur(2px)'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '4px solid rgba(0, 240, 255, 0.3)',
+            borderTop: '4px solid #00f0ff',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 20px'
+          }} />
+          <p style={{ color: '#ffffff', fontSize: '16px', fontWeight: '600', margin: 0 }}>Procesando inscripción...</p>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>,
+      document.body
+    )}
 
     {/* Modal Confirmación Desuscripción */}
     {mostrarConfirmacion && createPortal(

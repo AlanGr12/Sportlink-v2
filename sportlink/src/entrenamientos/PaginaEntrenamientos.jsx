@@ -90,6 +90,31 @@ const PaginaEntrenamientos = ({ usuario }) => {
     setTimeout(() => setToast(null), 4000);
   };
 
+  // Actualización optimista: incrementar/decrementar inscritos y marcar isInscripto
+  const handleOptimisticChange = useCallback(({ identrenamiento, delta = 0, isInscripto }) => {
+    setEntrenamientos(prev => prev.map(e => {
+      const id = Number(e.id || e.identrenamientos || e.identrenamiento || e.ident);
+      if (!id || Number(identrenamiento) !== id) return e;
+      const nuevos = { ...e };
+      const prevCount = Number(nuevos.inscritosCount ?? nuevos.inscritos ?? 0);
+      nuevos.inscritosCount = Math.max(0, prevCount + Number(delta));
+      if (typeof isInscripto !== 'undefined') nuevos.isInscripto = !!isInscripto;
+      return nuevos;
+    }));
+
+    // Si el modal de detalle está abierto, actualizar la copia seleccionada también
+    setEntrenamientoSeleccionado(prev => {
+      if (!prev) return prev;
+      const idPrev = Number(prev.id || prev.identrenamientos || prev.identrenamiento || prev.ident);
+      if (!idPrev || Number(identrenamiento) !== idPrev) return prev;
+      const nuevos = { ...prev };
+      const prevCount = Number(nuevos.inscritosCount ?? nuevos.inscritos ?? 0);
+      nuevos.inscritosCount = Math.max(0, prevCount + Number(delta));
+      if (typeof isInscripto !== 'undefined') nuevos.isInscripto = !!isInscripto;
+      return nuevos;
+    });
+  }, []);
+
   // Petición con reintento ante 5xx (backoff corto)
   const fetchConReintento = async (url, options = {}, reintentosRestantes = 1) => {
     try {
@@ -160,12 +185,80 @@ const PaginaEntrenamientos = ({ usuario }) => {
       const res = await api.get(url, { params });
       if (res.data && res.data.items) {
         const items = res.data.items.map(normalize);
-        setEntrenamientos(items);
-        setTotal(res.data.total || items.length);
+        // Enriquecer cada entrenamiento con conteo de inscritos y estado de inscripción
+        const itemsConExtras = await Promise.all(items.map(async (it) => {
+          const idEntr = Number(it.id || it.identrenamientos || it.identrenamiento || it.ident || 0);
+          let inscritosCount = 0;
+          let isInscripto = false;
+
+          if (idEntr) {
+            try {
+              const r = await api.get(`/api/inscripcionesentrenamientos?identrenamiento=${idEntr}`);
+              const lista = Array.isArray(r.data) ? r.data : (r.data?.items || []);
+              inscritosCount = lista.length;
+            } catch (e) {
+              // Silenciar error de conteo — no debe bloquear la carga principal
+              inscritosCount = it.inscritosCount || 0;
+            }
+
+            // Si el usuario actual es jugador, verificar su inscripción específica
+            if (idJugadorReal) {
+              try {
+                const resp = await api.get(`/api/inscripcionesentrenamientos?identrenamiento=${idEntr}`);
+                const lista = Array.isArray(resp.data) ? resp.data : (resp.data?.items || []);
+                isInscripto = lista.some(item => {
+                  const idJug = Number(item.idjugador || item.idjugadorinscripto || item.jugador?.idjugador);
+                  return idJug === Number(idJugadorReal);
+                });
+              } catch (e) {
+                isInscripto = it.isInscripto || false;
+              }
+            }
+          }
+
+          return {
+            ...it,
+            inscritosCount,
+            isInscripto
+          };
+        }));
+
+        setEntrenamientos(itemsConExtras);
+        setTotal(res.data.total || itemsConExtras.length);
       } else if (Array.isArray(res.data)) {
         const items = res.data.map(normalize);
-        setEntrenamientos(items);
-        setTotal(items.length);
+        const itemsConExtras = await Promise.all(items.map(async (it) => {
+          const idEntr = Number(it.id || it.identrenamientos || it.identrenamiento || it.ident || 0);
+          let inscritosCount = 0;
+          let isInscripto = false;
+          if (idEntr) {
+
+            try {
+              const r = await api.get(`/api/inscripcionesentrenamientos?identrenamiento=${idEntr}`);
+              const lista = Array.isArray(r.data) ? r.data : (r.data?.items || []);
+              inscritosCount = lista.length;
+            } catch (e) {
+              inscritosCount = it.inscritosCount || 0;
+            }
+
+            if (idJugadorReal) {
+              try {
+                const resp = await api.get(`/api/inscripcionesentrenamientos?identrenamiento=${idEntr}`);
+                const lista = Array.isArray(resp.data) ? resp.data : (resp.data?.items || []);
+                isInscripto = lista.some(item => {
+                  const idJug = Number(item.idjugador || item.idjugadorinscripto || item.jugador?.idjugador);
+                  return idJug === Number(idJugadorReal);
+                });
+              } catch (e) {
+                isInscripto = it.isInscripto || false;
+              }
+            }
+          }
+          return { ...it, inscritosCount, isInscripto };
+        }));
+
+        setEntrenamientos(itemsConExtras);
+        setTotal(itemsConExtras.length);
       } else {
         // Si la API retorna un formato inesperado, marcar error para revisión
         setEntrenamientos([]);
@@ -517,7 +610,16 @@ const PaginaEntrenamientos = ({ usuario }) => {
                 usuario={usuario}
                 idjugador={idJugadorReal}
                 onCerrar={() => setModalDetalleAbierto(false)}
-                onInscripcionExitosa={() => setMostrarModalExitoEntrenamiento(true)}
+                onInscripcionExitosa={() => {
+                      setMostrarModalExitoEntrenamiento(true);
+                      // Recargar lista en background (sin esperar para no bloquear el modal)
+                      setTimeout(() => cargarEntrenamientos(), 0);
+                    }}
+                    onDesuscripcionExitosa={() => {
+                      // Recargar lista en background sin esperar
+                      setTimeout(() => cargarEntrenamientos(), 0);
+                    }}
+                    onOptimisticChange={handleOptimisticChange}
               />
             </div>
           </div>

@@ -46,7 +46,7 @@ const ListaEntrenamientos = ({
     <div className="lista-entrenamientos-grid">
       {entrenamientos.map((entrenamiento) => (
         <TarjetaEntrenamiento
-          key={entrenamiento.id}
+          key={entrenamiento.id || entrenamiento.identrenamientos || entrenamiento.identrenamiento || entrenamiento.ident}
           entrenamiento={entrenamiento}
           onVerDetalle={onVerDetalle}
           onEditar={onEditar}
