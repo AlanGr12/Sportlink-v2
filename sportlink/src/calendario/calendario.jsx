@@ -408,62 +408,83 @@ export default function Calendario({ usuario }) {
     try {
       const res = await api.get(`${API}/calendario`);
 
+      // ── PASO 1: Mapear todos los eventos inmediatamente sin fetches adicionales ──
+      // Esto permite que el calendario se renderice de forma instantánea.
       const eventosMapeados = {};
+      const pendientesEnriquecer = []; // Eventos que necesitan fetch extra
 
       for (const e of res.data) {
         const ev = mapearEventoBackend(e);
 
-        // Si el backend ya devuelve _datosPrueba en el objeto (prueba automática),
-        // no hace falta un fetch adicional.
         if (ev.tipo === 'PRUEBA') {
-          if (!ev.nombre) {
-            ev.nombre = 'Prueba Deportiva';
-          }
-          // Extraer ubicacion y creador de datosPrueba si existen
+          if (!ev.nombre) ev.nombre = 'Prueba Deportiva';
           if (ev.datosPrueba) {
             ev.ubicacion = ev.datosPrueba.zona || ev.datosPrueba.club?.ubicacion || null;
             ev.creador   = ev.datosPrueba.club?.nombre || null;
           } else if (ev.idPrueba) {
-            // Fetch adicional (ej. para Clubes)
-            try {
-              const resP = await api.get(`/api/pruebas/${ev.idPrueba}`);
-              ev.datosPrueba = resP.data;
-              ev.ubicacion = ev.datosPrueba.zona || ev.datosPrueba.club?.ubicacion || null;
-              ev.creador   = ev.datosPrueba.club?.nombre || null;
-            } catch {}
+            pendientesEnriquecer.push({ ev, tipo: 'PRUEBA' });
           }
         } else if (ev.tipo === 'ENTRENAMIENTO') {
-          // Si no viene nombre del backend, intentar un fetch liviano
+          if (!ev.nombre) ev.nombre = 'Entrenamiento';
           if (ev.idEntrenamiento) {
-            try {
-              const resE = await api.get(`/api/entrenamientos/${ev.idEntrenamiento}`);
-              const ent = resE.data;
-              if (!ev.nombre) ev.nombre = ent.titulo || 'Entrenamiento';
-              ev.descripcion = ent.descripcion || ev.descripcion;
-              ev.imagenPreview = ent.imagen || ev.imagenPreview;
-              ev.ubicacion = ent.ubicacion || null;
-              ev.datosEntrenamiento = ent;
-            } catch { if (!ev.nombre) ev.nombre = 'Entrenamiento'; }
+            // Si el backend ya enriquece con _datosEntrenamiento, usarlo directamente
+            if (ev.datosEntrenamiento) {
+              ev.nombre        = ev.datosEntrenamiento.titulo || ev.nombre;
+              ev.descripcion   = ev.datosEntrenamiento.descripcion || ev.descripcion;
+              ev.imagenPreview = ev.datosEntrenamiento.imagen || ev.imagenPreview;
+              ev.ubicacion     = ev.datosEntrenamiento.ubicacion || null;
+            } else {
+              pendientesEnriquecer.push({ ev, tipo: 'ENTRENAMIENTO' });
+            }
           }
         } else if (ev.tipo === 'EMPLEO') {
-          if (ev.idInscripcionEmpleo) {
-            try {
-              const resE = await api.get(`/api/empleo/${ev.idInscripcionEmpleo}`);
-              ev.datosEmpleo = resE.data;
-            } catch {}
+          if (ev.idInscripcionEmpleo && !ev.datosEmpleo) {
+            pendientesEnriquecer.push({ ev, tipo: 'EMPLEO' });
           }
         }
-        // PERSONALIZADO: nombre y descripcion ya vienen desde el backend (campo titulo)
 
         if (!ev.fecha) continue;
         if (!eventosMapeados[ev.fecha]) eventosMapeados[ev.fecha] = [];
         eventosMapeados[ev.fecha].push(ev);
       }
 
-      setEventos(eventosMapeados);
+      // ── PASO 2: Mostrar el calendario INMEDIATAMENTE con la info básica ──
+      setEventos({ ...eventosMapeados });
+      setCargandoEventos(false);
+
+      // ── PASO 3: Enriquecer en paralelo en segundo plano ──
+      if (pendientesEnriquecer.length > 0) {
+        const enriquecer = pendientesEnriquecer.map(async ({ ev, tipo }) => {
+          try {
+            if (tipo === 'PRUEBA') {
+              const resP = await api.get(`/api/pruebas/${ev.idPrueba}`);
+              ev.datosPrueba = resP.data;
+              ev.ubicacion   = ev.datosPrueba.zona || ev.datosPrueba.club?.ubicacion || null;
+              ev.creador     = ev.datosPrueba.club?.nombre || null;
+            } else if (tipo === 'ENTRENAMIENTO') {
+              const resE = await api.get(`/api/entrenamientos/${ev.idEntrenamiento}`);
+              const ent = resE.data;
+              ev.nombre        = ent.titulo || ev.nombre;
+              ev.descripcion   = ent.descripcion || ev.descripcion;
+              ev.imagenPreview = ent.imagen || ev.imagenPreview;
+              ev.ubicacion     = ent.ubicacion || null;
+              ev.datosEntrenamiento = ent;
+            } else if (tipo === 'EMPLEO') {
+              const resE = await api.get(`/api/empleo/${ev.idInscripcionEmpleo}`);
+              ev.datosEmpleo = resE.data;
+            }
+          } catch {
+            // Enriquecimiento fallido: el evento ya se muestra con info básica, no pasa nada
+          }
+        });
+
+        // Correr todos los fetches en paralelo y actualizar el estado una vez terminados
+        await Promise.all(enriquecer);
+        setEventos({ ...eventosMapeados });
+      }
+
     } catch (err) {
       console.error('Error al obtener eventos del backend:', err);
-    } finally {
       setCargandoEventos(false);
     }
   }, [usuario]);   // eslint-disable-line react-hooks/exhaustive-deps

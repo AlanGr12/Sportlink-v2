@@ -60,6 +60,9 @@ function Pruebas({ idJugador, usuario }) {
   const [verificandoInscripcion, setVerificandoInscripcion] = useState(false);
   const [inscripcionError, setInscripcionError] = useState("");
   const [isInscripto, setIsInscripto] = useState(false);
+  const [desuscripcionLoading, setDesuscripcionLoading] = useState(false);
+  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+  const [mostrarExitoDesuscripcion, setMostrarExitoDesuscripcion] = useState(false);
 
   const tipoUsuario = usuarioEfectivo?.tipousuario?.toString()?.toLowerCase();
   const esJugador = tipoUsuario === "jugador" || tipoUsuario === "player";
@@ -379,6 +382,41 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
       console.error("[Pruebas] Error al inscribirse:", error);
     } finally {
       setInscripcionLoading(false);
+    }
+  };
+
+  const handleDesuscribirse = () => {
+    setMostrarConfirmacion(true);
+  };
+
+  const confirmarDesuscripcion = async () => {
+    setInscripcionError("");
+    setDesuscripcionLoading(true);
+    const idPruebaNum = obtenerIdPrueba(pruebaSeleccionada);
+
+    try {
+      await api.delete(`/api/inscripcionesprueba/${idPruebaNum}`);
+      
+      setIsInscripto(false);
+      setMostrarConfirmacion(false);
+      setMostrarExitoDesuscripcion(true);
+      
+      setPruebas((prevPruebas) => prevPruebas.map((prueba) => {
+        if (obtenerIdPrueba(prueba) !== idPruebaNum) return prueba;
+        const inscripcionesActuales = Array.isArray(prueba.inscripciones) ? prueba.inscripciones : [];
+        return {
+          ...prueba,
+          yaInscripto: false,
+          inscripciones: inscripcionesActuales.filter(i => 
+             Number(i.idjugador || i.idJugador || i.jugadorId) !== Number(idjugadorResuelto)
+          )
+        };
+      }));
+    } catch (error) {
+      setInscripcionError(error?.response?.data?.message || error?.response?.data?.error || "Ocurrió un error al cancelar la inscripción.");
+      setMostrarConfirmacion(false);
+    } finally {
+      setDesuscripcionLoading(false);
     }
   };
 
@@ -901,19 +939,42 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
               <div className="modal-prueba-acciones">
                 {esJugador && (
                   isInscripto || verificandoInscripcion ? (
-                    <button
-                      className="btn-guardar"
-                      disabled
-                      style={{
-                        backgroundColor: "#ffffff",
-                        color: "#111111",
-                        border: "1px solid #d1d5db",
-                        cursor: "not-allowed",
-                        opacity: 0.7
-                      }}
-                    >
-                      {isInscripto ? "INSCRIPTO" : "VERIFICANDO..."}
-                    </button>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginRight: '10px' }}>
+                      <button
+                        className="btn-guardar"
+                        disabled
+                        style={{
+                          backgroundColor: "#ffffff",
+                          color: "#111111",
+                          border: "1px solid #d1d5db",
+                          cursor: "not-allowed",
+                          opacity: 0.7
+                          
+                        }}
+                      >
+                        {isInscripto ? "INSCRIPTO" : "VERIFICANDO..."}
+                      </button>
+                      {isInscripto && (
+                        <button
+                          className="btn-cancelar"
+                          onClick={handleDesuscribirse}
+                          disabled={desuscripcionLoading}
+                          style={{
+                            backgroundColor: "#ff4444",
+                            color: "#fff",
+                            border: "none",
+                            cursor: desuscripcionLoading ? "not-allowed" : "pointer",
+                            padding: '10px 16px',
+                            borderRadius: '8px',
+                            fontWeight: '600',
+                            fontSize: '14px',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {desuscripcionLoading ? "Cancelando..." : "DESUSCRIBIRSE"}
+                        </button>
+                      )}
+                    </div>
                   ) : (
                     <button
                       className="btn-guardar"
@@ -940,7 +1001,6 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
         document.body
       )}
 
-      {/* ── MODAL DE ÉXITO DE PRUEBA ──────────────────────────── */}
       {mostrarExitoModal && (
         <ModalConfirmacionInscripcion 
           tipoEvento="prueba" 
@@ -949,6 +1009,41 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
             cerrarModal();
           }} 
         />
+      )}
+
+      {/* Modal Confirmación Desuscripción */}
+      {mostrarConfirmacion && createPortal(
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(4px)' }} onClick={() => !desuscripcionLoading && setMostrarConfirmacion(false)}>
+          <div style={{ backgroundColor: '#1a1d1e', padding: '32px', borderRadius: '12px', textAlign: 'center', color: '#ffffff', border: '1px solid #2d3032', maxWidth: '420px', width: '90%', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ width: '64px', height: '64px', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+              <span style={{ fontSize: '32px' }}>⚠️</span>
+            </div>
+            <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>¿Cancelar Inscripción?</h3>
+            <p style={{ fontSize: '14px', color: '#a1a1aa', marginBottom: '24px' }}>Estás a punto de cancelar tu inscripción a esta prueba. Perderás tu lugar y serás removido del grupo de chat.</p>
+            <div style={{ display: 'flex', gap: '12px', width: '100%', justifyContent: 'center' }}>
+              <button onClick={() => setMostrarConfirmacion(false)} disabled={desuscripcionLoading} style={{ padding: '10px 24px', fontSize: '13px', fontWeight: '700', borderRadius: '6px', cursor: 'pointer', border: '1px solid #555', backgroundColor: 'transparent', color: '#fff' }}>CANCELAR</button>
+              <button onClick={confirmarDesuscripcion} disabled={desuscripcionLoading} style={{ padding: '10px 24px', fontSize: '13px', fontWeight: '700', borderRadius: '6px', cursor: 'pointer', border: 'none', backgroundColor: '#ef4444', color: '#fff' }}>{desuscripcionLoading ? 'CANCELANDO...' : 'SÍ, DESUSCRIBIRME'}</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal Éxito Desuscripción */}
+      {mostrarExitoDesuscripcion && createPortal(
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(4px)' }} onClick={() => { setMostrarExitoDesuscripcion(false); }}>
+          <div style={{ backgroundColor: '#1a1d1e', padding: '32px', borderRadius: '12px', textAlign: 'center', color: '#ffffff', border: '1px solid #2d3032', maxWidth: '420px', width: '90%', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ width: '64px', height: '64px', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+              <svg style={{ width: '32px', height: '32px', color: '#34d399' }} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"></path>
+              </svg>
+            </div>
+            <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>¡Desuscripción exitosa!</h3>
+            <p style={{ fontSize: '14px', color: '#a1a1aa', marginBottom: '24px' }}>Se ha cancelado tu inscripción a la prueba correctamente.</p>
+            <button type="button" style={{ padding: '10px 24px', fontSize: '13px', fontWeight: '700', borderRadius: '6px', cursor: 'pointer', border: 'none', backgroundColor: 'var(--primary, #2DEFF2)', color: '#000' }} onClick={() => { setMostrarExitoDesuscripcion(false); }}>ENTENDIDO</button>
+          </div>
+        </div>,
+        document.body
       )}
     </>
   );
