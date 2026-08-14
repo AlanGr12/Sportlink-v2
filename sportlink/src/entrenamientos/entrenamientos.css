@@ -720,6 +720,7 @@
   text-transform: uppercase;
   color: var(--text-white);
   margin: 0 0 12px 0;
+  padding-left: 10px;
 }
 
 .detalle-items-grid {

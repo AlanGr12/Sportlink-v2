@@ -17,6 +17,7 @@ import PaginaEntrenamientos from './entrenamientos/PaginaEntrenamientos.jsx'
 import Empleos from './empleos/Empleos.jsx'
 import MensajesView from './mensajes/MensajesView.jsx'
 import Ajustes from './ajustes/Ajustes.jsx'
+import FeedView from './feed/FeedView.jsx'
 
 
 // ── Página 404 ───────────────────────────────────────────────────────────────
@@ -223,6 +224,16 @@ function App() {
           <Route path="/entrenadores" element={<EntrenadoresView usuario={usuario} />} />
           <Route path="/clubes" element={<ClubesView usuario={usuario} />} />
           <Route path="/empleos" element={<Empleos usuario={usuario} />} />
+
+
+          <Route
+            path="/feed"
+            element={
+              <ProtectedRoute usuario={usuario}>
+                <FeedView usuario={usuario} />
+              </ProtectedRoute>
+            }
+          />
 
 
           {/* ── Protegidas ── */}

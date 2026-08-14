@@ -188,6 +188,11 @@ const Header = ({ usuario, onLogout }) => {
             </li>
 
             <li>
+              <button className={navLinkClass('/feed')} onClick={() => ir('/feed')}>
+                Feed
+              </button>
+            </li>
+            <li>
               <button className={navLinkClass('/entrenadores')} onClick={() => ir('/entrenadores')}>
                 Entrenadores
               </button>
