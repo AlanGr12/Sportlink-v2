@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import api from '../axiosConfig.js'
 import { PostCard, PostAcciones } from './PostCard.jsx'
 import CrearPost from './CrearPost.jsx'
+import Avatar from '../components/Avatar.jsx'
 import './FeedView.css'
 
 // ─── Referencia de post vinculado ────────────────────────────────────────────
@@ -13,23 +14,23 @@ function ReferenciaBloque({ tipo, ref: refData }) {
     contenido = (
       <>
         <strong>Prueba deportiva</strong>
-        {refData.categoria && <span>· {refData.categoria}</span>}
-        {refData.zona && <span>· {refData.zona}</span>}
+        {refData.categoria && <span> · {refData.categoria}</span>}
+        {refData.zona && <span> · {refData.zona}</span>}
       </>
     )
   } else if (tipo === 'ENTRENAMIENTO') {
     contenido = (
       <>
         <strong>{refData.titulo || 'Entrenamiento'}</strong>
-        {refData.ubicacion && <span>· {refData.ubicacion}</span>}
-        {refData.nivel && <span>· {refData.nivel}</span>}
+        {refData.ubicacion && <span> · {refData.ubicacion}</span>}
+        {refData.nivel && <span> · {refData.nivel}</span>}
       </>
     )
   } else if (tipo === 'EMPLEO') {
     contenido = (
       <>
         <strong>{refData.nombre || 'Empleo'}</strong>
-        {refData.horasreq && <span>· {refData.horasreq}h</span>}
+        {refData.horasreq && <span> · {refData.horasreq}h</span>}
       </>
     )
   }
@@ -78,15 +79,19 @@ function PostCompleto({ post, usuario, onEliminar }) {
         <ReferenciaBloque tipo={post.tipopublicacion} ref={post.referencia} />
       )}
 
-      {/* Imagen */}
+      {/* Media (Imagen o Video) */}
       {post.imagen && (
         <div className="post-card-imagen">
-          <img
-            src={post.imagen}
-            alt="Imagen de la publicación"
-            onClick={() => setImagenModal(post.imagen)}
-            loading="lazy"
-          />
+          {post.imagen.match(/\.(mp4|webm|ogg)$/i) ? (
+            <video src={post.imagen} controls className="post-media-video" />
+          ) : (
+            <img
+              src={post.imagen}
+              alt="Publicación"
+              onClick={() => setImagenModal(post.imagen)}
+              loading="lazy"
+            />
+          )}
         </div>
       )}
 
@@ -110,10 +115,14 @@ export default function FeedView({ usuario }) {
   const [loadingMas, setLoadingMas] = useState(false)
   const [hayMas, setHayMas] = useState(true)
 
-  // Stats para sidebar
+  // Stats
   const [stats, setStats] = useState({ totalPosts: 0, totalLikes: 0, totalComentarios: 0 })
 
-  // Ref para el sentinel del scroll infinito
+  // Datos dinámicos para sidebars (según backend)
+  const [seguidos, setSeguidos] = useState(usuario?.seguidos || [])
+  const [recomendaciones, setRecomendaciones] = useState([])
+  const [noticias, setNoticias] = useState([]) // vacías si no hay API de noticias
+
   const sentinelRef = useRef(null)
 
   const cargarPosts = useCallback(async (pagina = 1, reemplazar = false) => {
@@ -140,12 +149,30 @@ export default function FeedView({ usuario }) {
     }
   }, [])
 
-  // Carga inicial
+  // Cargar datos dinámicos recomendados desde el backend si existen
   useEffect(() => {
     cargarPosts(1, true)
-  }, [cargarPosts])
 
-  // Scroll infinito con IntersectionObserver
+    const cargarRecomendaciones = async () => {
+      try {
+        const miId = usuario?.idusuario || usuario?.id
+        const res = await api.get('/api/jugadores')
+        if (Array.isArray(res.data)) {
+          const filtrados = res.data
+            .filter(j => Number(j.idusuario) !== Number(miId))
+            .slice(0, 3)
+          setRecomendaciones(filtrados)
+        }
+      } catch {
+        // En caso de que no devuelva datos o falle
+        setRecomendaciones([])
+      }
+    }
+
+    cargarRecomendaciones()
+  }, [cargarPosts, usuario])
+
+  // Scroll infinito
   useEffect(() => {
     if (!sentinelRef.current) return
     const observer = new IntersectionObserver(
@@ -172,17 +199,70 @@ export default function FeedView({ usuario }) {
     setStats(prev => ({ ...prev, totalPosts: Math.max(0, prev.totalPosts - 1) }))
   }
 
+  // Traducción del tipo de usuario
+  const rolUsuario = usuario?.tipousuario === 'jugador'
+    ? 'Atleta Profesional'
+    : usuario?.tipousuario === 'entrenador'
+      ? 'Entrenador Elite'
+      : usuario?.tipousuario === 'club'
+        ? 'Club Deportivo'
+        : usuario?.tipousuario || 'Miembro de SportLink'
+
   return (
     <div className="feed-pagina">
       <div className="feed-layout">
-        {/* ── Columna principal ── */}
-        <div className="feed-columna-principal">
-          {/* Crear post (solo si hay sesión) */}
+        {/* ════ Columna Izquierda: Perfil + Seguidos ════ */}
+        <aside className="feed-sidebar-izquierda">
+          {/* Card Resumen Perfil */}
+          <div className="feed-profile-card">
+            <div className="feed-profile-banner" />
+            <div className="feed-profile-avatar-container">
+              <Avatar src={usuario?.fotoperfil} nombre={usuario?.nombre || 'Usuario'} size={72} />
+            </div>
+            <div className="feed-profile-info">
+              <h3 className="feed-profile-name">{usuario?.nombre || usuario?.email || 'Usuario'}</h3>
+              <p className="feed-profile-role">{rolUsuario}</p>
+            </div>
+            <div className="feed-profile-stats">
+              <div className="feed-profile-stat-row">
+                <span className="feed-stat-label">Vistas del perfil</span>
+                <span className="feed-stat-value">{usuario?.vistasPerfil ?? stats.totalPosts ?? 0}</span>
+              </div>
+              <div className="feed-profile-stat-row">
+                <span className="feed-stat-label">Conexiones</span>
+                <span className="feed-stat-value">{usuario?.conexiones ?? 0}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card SEGUIDOS */}
+          <div className="feed-sidebar-card">
+            <h4 className="feed-sidebar-header-title">SEGUIDOS</h4>
+            {seguidos && seguidos.length > 0 ? (
+              <div className="feed-seguidos-lista">
+                {seguidos.map((item, idx) => (
+                  <div key={item.id || idx} className="feed-seguido-item">
+                    <Avatar src={item.logo || item.fotoperfil} nombre={item.nombre} size={36} />
+                    <div className="feed-seguido-info">
+                      <span className="feed-seguido-nombre">{item.nombre}</span>
+                      <span className="feed-seguido-sub">{item.categoria || item.tipousuario || 'Club'}</span>
+                    </div>
+                  </div>
+                ))}
+                <button className="feed-ver-todo-btn">Ver todo →</button>
+              </div>
+            ) : (
+              <div className="feed-vacio-box">Sin seguidos por el momento</div>
+            )}
+          </div>
+        </aside>
+
+        {/* ════ Columna Central: Publicar + Feed ════ */}
+        <main className="feed-columna-principal">
           {usuario && (
             <CrearPost usuario={usuario} onPostCreado={handlePostCreado} />
           )}
 
-          {/* Posts */}
           {loading ? (
             <div className="feed-spinner-wrapper">
               <div className="feed-spinner" />
@@ -206,7 +286,6 @@ export default function FeedView({ usuario }) {
                 />
               ))}
 
-              {/* Sentinel para scroll infinito */}
               <div ref={sentinelRef} />
 
               {loadingMas && (
@@ -220,34 +299,66 @@ export default function FeedView({ usuario }) {
               )}
             </>
           )}
-        </div>
+        </main>
 
-        {/* ── Sidebar ── */}
-        <aside className="feed-sidebar">
+        {/* ════ Columna Derecha: Recomendados + Noticias ════ */}
+        <aside className="feed-sidebar-derecha">
+          {/* Recomendado para ti */}
           <div className="feed-sidebar-card">
-            <p className="feed-sidebar-titulo">Actividad del feed</p>
-            <div className="feed-sidebar-stat">
-              <span className="feed-sidebar-stat-label">Publicaciones</span>
-              <span className="feed-sidebar-stat-valor">{stats.totalPosts}</span>
-            </div>
-            <div className="feed-sidebar-stat">
-              <span className="feed-sidebar-stat-label">Likes totales</span>
-              <span className="feed-sidebar-stat-valor">{stats.totalLikes}</span>
-            </div>
-            <div className="feed-sidebar-stat">
-              <span className="feed-sidebar-stat-label">Comentarios</span>
-              <span className="feed-sidebar-stat-valor">{stats.totalComentarios}</span>
-            </div>
+            <h4 className="feed-sidebar-header-title">RECOMENDADO PARA TI</h4>
+            {recomendaciones && recomendaciones.length > 0 ? (
+              <div className="feed-recomendados-lista">
+                {recomendaciones.map((rec) => (
+                  <div key={rec.idjugador || rec.idusuario} className="feed-recomendado-item">
+                    <Avatar src={rec.fotoperfil} nombre={rec.nombre || 'Usuario'} size={40} />
+                    <div className="feed-recomendado-info">
+                      <span className="feed-recomendado-nombre">{rec.nombre}</span>
+                      <span className="feed-recomendado-sub">{rec.posicion || rec.deporte || 'Deportista'}</span>
+                    </div>
+                    <button className="feed-btn-conectar">Conectar</button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="feed-vacio-box">Sin recomendaciones por el momento</div>
+            )}
           </div>
 
+          {/* Noticias deportivas */}
           <div className="feed-sidebar-card">
-            <p className="feed-sidebar-titulo">Consejo</p>
-            <p style={{ fontSize: '13px', color: '#8A9099', margin: 0, lineHeight: 1.6 }}>
-              Compartí tu progreso, logros y entrenamientos para conectar con la comunidad deportiva de Sportlink.
-            </p>
+            <h4 className="feed-sidebar-header-title">NOTICIAS DEPORTIVAS</h4>
+            {noticias && noticias.length > 0 ? (
+              <div className="feed-noticias-lista">
+                {noticias.map((item, idx) => (
+                  <div key={idx} className="feed-noticia-item">
+                    <h5>{item.titulo}</h5>
+                    <p>{item.subtitulo}</p>
+                  </div>
+                ))}
+                <button className="feed-mostrar-mas-btn">Mostrar más ∨</button>
+              </div>
+            ) : (
+              <div className="feed-vacio-box">Sin noticias por el momento</div>
+            )}
           </div>
+
+          {/* Footer links */}
+          <footer className="feed-footer-links">
+            <div className="feed-footer-row">
+              <span>Acerca de</span>
+              <span>•</span>
+              <span>Accesibilidad</span>
+              <span>•</span>
+              <span>Centro de ayuda</span>
+            </div>
+            <div className="feed-footer-row">
+              <span>Privacidad y Términos</span>
+            </div>
+            <p className="feed-copyright">SportLink © 2026</p>
+          </footer>
         </aside>
       </div>
     </div>
   )
 }
+
