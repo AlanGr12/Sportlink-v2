@@ -18,7 +18,7 @@ import Empleos from './empleos/Empleos.jsx'
 import MensajesView from './mensajes/MensajesView.jsx'
 import Ajustes from './ajustes/Ajustes.jsx'
 import FeedView from './feed/FeedView.jsx'
-
+import PublicacionDetalle from './feed/PublicacionDetalle.jsx'
 
 // ── Página 404 ───────────────────────────────────────────────────────────────
 function NotFound404() {
@@ -233,7 +233,8 @@ function App() {
                 <FeedView usuario={usuario} />
               </ProtectedRoute>
             }
-          />
+          />{/* Pública — accesible sin login, para links compartidos */}
++         <Route path="/publicacion/:id" element={<PublicacionDetalle usuario={usuario} />} />
 
 
           {/* ── Protegidas ── */}

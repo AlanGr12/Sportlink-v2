@@ -1,108 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { createPortal } from 'react-dom'
 import api from '../axiosConfig.js'
-import { PostCard, PostAcciones } from './PostCard.jsx'
+import { PostCompleto } from './PostCard.jsx'
 import CrearPost from './CrearPost.jsx'
 import Avatar from '../components/Avatar.jsx'
 import './FeedView.css'
-
-// ─── Referencia de post vinculado ────────────────────────────────────────────
-function ReferenciaBloque({ tipo, ref: refData }) {
-  if (!refData) return null
-  let contenido = null
-  if (tipo === 'PRUEBA') {
-    contenido = (
-      <>
-        <strong>Prueba deportiva</strong>
-        {refData.categoria && <span> · {refData.categoria}</span>}
-        {refData.zona && <span> · {refData.zona}</span>}
-      </>
-    )
-  } else if (tipo === 'ENTRENAMIENTO') {
-    contenido = (
-      <>
-        <strong>{refData.titulo || 'Entrenamiento'}</strong>
-        {refData.ubicacion && <span> · {refData.ubicacion}</span>}
-        {refData.nivel && <span> · {refData.nivel}</span>}
-      </>
-    )
-  } else if (tipo === 'EMPLEO') {
-    contenido = (
-      <>
-        <strong>{refData.nombre || 'Empleo'}</strong>
-        {refData.horasreq && <span> · {refData.horasreq}h</span>}
-      </>
-    )
-  }
-  if (!contenido) return null
-  return <div className="post-referencia-bloque">{contenido}</div>
-}
-
-// ─── Modal de imagen ampliada ────────────────────────────────────────────────
-function ModalImagen({ src, onClose }) {
-  useEffect(() => {
-    const fn = (e) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', fn)
-    return () => document.removeEventListener('keydown', fn)
-  }, [onClose])
-
-  return createPortal(
-    <div className="feed-modal-imagen" onClick={onClose}>
-      <button className="feed-modal-imagen-close" onClick={onClose}>✕</button>
-      <img src={src} alt="Imagen ampliada" onClick={(e) => e.stopPropagation()} />
-    </div>,
-    document.body
-  )
-}
-
-// ─── Tarjeta completa (PostCard + PostAcciones juntas) ───────────────────────
-function PostCompleto({ post, usuario, onEliminar }) {
-  const [imagenModal, setImagenModal] = useState(null)
-
-  return (
-    <article className="post-card">
-      {/* Encabezado del post (autor, menú) */}
-      <PostCard
-        post={post}
-        usuario={usuario}
-        onImagenClick={setImagenModal}
-        onEliminar={onEliminar}
-      />
-
-      {/* Texto */}
-      {post.contenido && (
-        <div className="post-card-contenido">{post.contenido}</div>
-      )}
-
-      {/* Referencia vinculada */}
-      {post.tipopublicacion !== 'NORMAL' && post.referencia && (
-        <ReferenciaBloque tipo={post.tipopublicacion} ref={post.referencia} />
-      )}
-
-      {/* Media (Imagen o Video) */}
-      {post.imagen && (
-        <div className="post-card-imagen">
-          {post.imagen.match(/\.(mp4|webm|ogg)$/i) ? (
-            <video src={post.imagen} controls className="post-media-video" />
-          ) : (
-            <img
-              src={post.imagen}
-              alt="Publicación"
-              onClick={() => setImagenModal(post.imagen)}
-              loading="lazy"
-            />
-          )}
-        </div>
-      )}
-
-      {/* Acciones: likes + comentarios */}
-      <PostAcciones post={post} usuario={usuario} />
-
-      {/* Modal imagen */}
-      {imagenModal && <ModalImagen src={imagenModal} onClose={() => setImagenModal(null)} />}
-    </article>
-  )
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VISTA PRINCIPAL: FeedView
@@ -361,4 +262,3 @@ export default function FeedView({ usuario }) {
     </div>
   )
 }
-

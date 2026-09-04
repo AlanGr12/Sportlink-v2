@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import Avatar from '../components/Avatar.jsx'
 import api from '../axiosConfig.js'
 
@@ -87,12 +89,6 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
     }
   }
 
-  const handleCompartir = () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href).then(() => alert('Link copiado al portapapeles.'))
-    }
-  }
-
   const rolTraducido = post.autor?.tipousuario === 'jugador'
     ? 'Atleta Profesional'
     : post.autor?.tipousuario === 'entrenador'
@@ -144,9 +140,132 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// COMPONENTE: ReferenciaBloque — con link a la página real
+// ═══════════════════════════════════════════════════════════
+export function ReferenciaBloque({ tipo, ref: refData }) {
+  const navigate = useNavigate()
+  if (!refData) return null
+
+  const rutas = { PRUEBA: '/pruebas', ENTRENAMIENTO: '/entrenamientos', EMPLEO: '/empleos' }
+  const etiquetaBoton = { PRUEBA: 'Ver prueba', ENTRENAMIENTO: 'Ver entrenamiento', EMPLEO: 'Ver empleo' }
+
+  let contenido = null
+  if (tipo === 'PRUEBA') {
+    contenido = (
+      <>
+        <strong>Prueba deportiva</strong>
+        {refData.categoria && <span> · {refData.categoria}</span>}
+        {refData.zona && <span> · {refData.zona}</span>}
+      </>
+    )
+  } else if (tipo === 'ENTRENAMIENTO') {
+    contenido = (
+      <>
+        <strong>{refData.titulo || 'Entrenamiento'}</strong>
+        {refData.ubicacion && <span> · {refData.ubicacion}</span>}
+        {refData.nivel && <span> · {refData.nivel}</span>}
+      </>
+    )
+  } else if (tipo === 'EMPLEO') {
+    contenido = (
+      <>
+        <strong>{refData.nombre || 'Empleo'}</strong>
+        {refData.horasreq && <span> · {refData.horasreq}h</span>}
+      </>
+    )
+  }
+  if (!contenido) return null
+
+  return (
+    <div className="post-referencia-bloque" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+      <div>{contenido}</div>
+      {rutas[tipo] && (
+        <button
+          className="post-referencia-ver-btn"
+          onClick={() => navigate(rutas[tipo])}
+          style={{
+            background: 'transparent', border: '1px solid #2DEFF2', color: '#2DEFF2',
+            borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 700,
+            textTransform: 'uppercase', letterSpacing: '0.04em', cursor: 'pointer', whiteSpace: 'nowrap'
+          }}
+        >
+          {etiquetaBoton[tipo]}
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
+// COMPONENTE: ModalImagen
+// ═══════════════════════════════════════════════════════════
+export function ModalImagen({ src, onClose }) {
+  useEffect(() => {
+    const fn = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', fn)
+    return () => document.removeEventListener('keydown', fn)
+  }, [onClose])
+
+  return createPortal(
+    <div className="feed-modal-imagen" onClick={onClose}>
+      <button className="feed-modal-imagen-close" onClick={onClose}>✕</button>
+      <img src={src} alt="Imagen ampliada" onClick={(e) => e.stopPropagation()} />
+    </div>,
+    document.body
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
+// COMPONENTE: PostCompleto (PostCard + contenido + PostAcciones)
+// Se usa tanto en el feed como en la página pública de detalle.
+// ═══════════════════════════════════════════════════════════
+export function PostCompleto({ post, usuario, onEliminar }) {
+  const [imagenModal, setImagenModal] = useState(null)
+
+  return (
+    <article className="post-card">
+      <PostCard
+        post={post}
+        usuario={usuario}
+        onImagenClick={setImagenModal}
+        onEliminar={onEliminar}
+      />
+
+      {post.contenido && (
+        <div className="post-card-contenido">{post.contenido}</div>
+      )}
+
+      {post.tipopublicacion !== 'NORMAL' && post.referencia && (
+        <ReferenciaBloque tipo={post.tipopublicacion} ref={post.referencia} />
+      )}
+
+      {post.imagen && (
+        <div className="post-card-imagen">
+          {post.imagen.match(/\.(mp4|webm|ogg)$/i) ? (
+            <video src={post.imagen} controls className="post-media-video" />
+          ) : (
+            <img
+              src={post.imagen}
+              alt="Publicación"
+              onClick={() => setImagenModal(post.imagen)}
+              loading="lazy"
+            />
+          )}
+        </div>
+      )}
+
+      <PostAcciones post={post} usuario={usuario} />
+
+      {imagenModal && <ModalImagen src={imagenModal} onClose={() => setImagenModal(null)} />}
+    </article>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
 // COMPONENTE: PostAcciones — likes + comentarios
 // ═══════════════════════════════════════════════════════════
 export function PostAcciones({ post: postInicial, usuario, onEliminarComentario }) {
+  const navigate = useNavigate()
   const [post, setPost] = useState(postInicial)
   const [likeAnimando, setLikeAnimando] = useState(false)
   const [comentariosAbiertos, setComentariosAbiertos] = useState(false)
@@ -157,8 +276,20 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
   const [comentarioEditando, setComentarioEditando] = useState(null)
   const [reposts, setReposts] = useState(postInicial.republicaciones || 0)
 
+  // Si un visitante sin cuenta intenta interactuar, lo mandamos a loguearse
+  // en vez de dejar que el request falle en silencio con 401.
+  const requiereLogin = () => {
+    if (usuario) return false
+    if (window.confirm('Necesitás una cuenta para hacer esto. ¿Querés iniciar sesión?')) {
+      navigate('/login')
+    }
+    return true
+  }
+
   // ── Like optimista ─────────────────────────────────────
   const handleLike = async () => {
+    if (requiereLogin()) return
+
     const yaLiked = post.usuarioDioLike
     setPost(p => ({
       ...p,
@@ -203,6 +334,7 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
   }
 
   const handleEnviarComentario = async () => {
+    if (requiereLogin()) return
     if (!nuevoComentario.trim() || enviandoComentario) return
     setEnviandoComentario(true)
     try {
@@ -243,13 +375,15 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
   }
 
   const handleRepublicar = () => {
+    if (requiereLogin()) return
     setReposts(r => r + 1)
   }
 
+  // Copia el link específico a ESTA publicación, no la URL actual de la pestaña
   const handleEnviar = () => {
+    const url = `${window.location.origin}/publicacion/${post.idpublicacion}`
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href)
-      alert('Enlace copiado al portapapeles')
+      navigator.clipboard.writeText(url).then(() => alert('Enlace de la publicación copiado al portapapeles'))
     }
   }
 
@@ -258,7 +392,6 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
   return (
     <>
       <div className="post-acciones-wrapper">
-        {/* Botones de acción minimalistas con tooltip al pasar el mouse */}
         <div className="post-acciones-botones">
           <button
             className={`post-accion-btn${post.usuarioDioLike ? ' liked' : ''}`}
@@ -298,16 +431,14 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
             aria-label="Enviar"
           >
             <IcoSend />
-            <span className="post-accion-tooltip">Enviar</span>
+            <span className="post-accion-tooltip">Copiar enlace</span>
           </button>
         </div>
       </div>
 
-      {/* Sección de comentarios */}
       {comentariosAbiertos && (
         <div className="post-comentarios-seccion">
-          {/* Input nuevo comentario */}
-          {usuario && (
+          {usuario ? (
             <div className="post-nuevo-comentario">
               <Avatar src={usuario.fotoperfil} nombre={usuario.nombre || 'Yo'} size={32} />
               <textarea
@@ -327,9 +458,18 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
                 <IcoSend />
               </button>
             </div>
+          ) : (
+            <p style={{ color: '#4a5060', fontSize: '13px', margin: '0 0 12px' }}>
+              <button
+                onClick={() => navigate('/login')}
+                style={{ background: 'none', border: 'none', color: '#2DEFF2', cursor: 'pointer', padding: 0, font: 'inherit' }}
+              >
+                Iniciá sesión
+              </button>{' '}
+              para comentar.
+            </p>
           )}
 
-          {/* Lista */}
           {loadingComentarios ? (
             <div className="feed-spinner-wrapper" style={{ padding: '16px 0' }}>
               <div className="feed-spinner" style={{ width: 22, height: 22, borderWidth: 2 }} />
