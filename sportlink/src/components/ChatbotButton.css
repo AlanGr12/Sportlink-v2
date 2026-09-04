@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════
    ChatbotButton.css — Botón flotante chatbot
-   Posición: fija, esquina inferior derecha
+   Paleta: celeste #2DEFF2 / negro — sin órbita
    ═══════════════════════════════════════════════════════ */
 
 /* ── Contenedor wrapper ── */
@@ -13,16 +13,13 @@
   height: 68px;
   cursor: pointer;
   outline: none;
-  transition:
-    transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
-    filter 0.38s ease;
-  filter: drop-shadow(0 4px 16px rgba(0, 240, 255, 0.15));
-}
-
-/* ── Hover: agranda y aumenta el glow ── */
-.chatbot-wrapper.chatbot-hovered {
-  transform: scale(1.18);
-  filter: drop-shadow(0 6px 32px rgba(0, 240, 255, 0.6));
+  border-radius: 50%;
+  isolation: isolate;
+  /* Float suave tipo burbuja */
+  animation: floatBubble 4s ease-in-out infinite;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.5s ease;
+  filter: drop-shadow(0 4px 18px rgba(45, 239, 242, 0.18));
 }
 
 /* ── SVG ocupa todo el wrapper ── */
@@ -34,30 +31,73 @@
 }
 
 /* ──────────────────────────────────────────
-   Borde celeste completo (visible en hover)
+   ANIMACIÓN IDLE: float suave tipo burbuja
    ────────────────────────────────────────── */
-.chatbot-full-border {
-  opacity: 0;
-  transition: opacity 0.38s ease;
-}
-
-.chatbot-hovered .chatbot-full-border {
-  opacity: 1;
+@keyframes floatBubble {
+  0%,  100% { transform: translateY(0px);  }
+  45%        { transform: translateY(-6px); }
+  80%        { transform: translateY(-3px); }
 }
 
 /* ──────────────────────────────────────────
-   Arco giratorio — LENTO y suave
+   HOVER: escala suave + glow más vivo
+   (sin animación de transform para no conflictuar)
+   ────────────────────────────────────────── */
+.chatbot-wrapper:hover,
+.chatbot-wrapper.chatbot-hovered {
+  animation-play-state: paused;
+  transform: translateY(-2px) scale(1.12);
+  filter: drop-shadow(0 6px 28px rgba(45, 239, 242, 0.55));
+}
+
+/* ──────────────────────────────────────────
+   Anillos de pulso externos
+   ────────────────────────────────────────── */
+.chatbot-pulse-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(45, 239, 242, 0.55);
+  animation: ringPulse 3s ease-out infinite;
+  pointer-events: none;
+  display: block;
+}
+
+.chatbot-pulse-ring:nth-child(2) {
+  inset: -13px;
+  border-color: rgba(45, 239, 242, 0.28);
+  animation-delay: 1s;
+}
+
+.chatbot-pulse-ring:nth-child(3) {
+  inset: -20px;
+  border-color: rgba(45, 239, 242, 0.12);
+  animation-delay: 2s;
+}
+
+@keyframes ringPulse {
+  0%   { transform: scale(0.88); opacity: 0.9; }
+  70%  { transform: scale(1.06); opacity: 0.2; }
+  100% { transform: scale(1.12); opacity: 0;   }
+}
+
+/* Pulso se pausa en hover */
+.chatbot-hovered .chatbot-pulse-ring {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* ──────────────────────────────────────────
+   Arco giratorio externo (simple, elegante)
    ────────────────────────────────────────── */
 .chatbot-arc {
   transform-origin: 50px 50px;
-  /* 6 segundos = giro lento y elegante */
   animation: spinArc 6s linear infinite;
-  transition: opacity 0.38s ease;
+  transition: opacity 0.5s ease;
 }
 
-/* En hover el arco se oculta, toma protagonismo el borde completo */
 .chatbot-hovered .chatbot-arc {
-  opacity: 0;
+  animation-duration: 2s;
 }
 
 @keyframes spinArc {
@@ -65,21 +105,66 @@
   to   { transform: rotate(360deg); }
 }
 
+/* Arco secundario (sentido inverso, más sutil) */
+.chatbot-arc-reverse {
+  transform-origin: 50px 50px;
+  animation: spinArcReverse 9s linear infinite;
+  opacity: 0.4;
+  transition: opacity 0.5s ease;
+}
+
+.chatbot-hovered .chatbot-arc-reverse {
+  animation-duration: 3s;
+  opacity: 0.75;
+}
+
+@keyframes spinArcReverse {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+
 /* ──────────────────────────────────────────
-   Pulso suave en reposo
+   Parpadeo suave de los ojos del robot
    ────────────────────────────────────────── */
-.chatbot-wrapper:not(.chatbot-hovered) {
-  animation: idlePulse 3.5s ease-in-out infinite;
+.chatbot-eye {
+  animation: eyeBlink 5s ease-in-out infinite;
 }
 
-@keyframes idlePulse {
-  0%,  100% { filter: drop-shadow(0 4px 16px rgba(0, 240, 255, 0.15)); }
-  50%        { filter: drop-shadow(0 4px 26px rgba(0, 240, 255, 0.38)); }
+.chatbot-eye-r {
+  animation: eyeBlink 5s ease-in-out infinite;
+  animation-delay: 0.07s;
 }
 
-/* ── Accesibilidad: focus visible ── */
+@keyframes eyeBlink {
+  0%, 88%, 100% { transform: scaleY(1);    }
+  93%            { transform: scaleY(0.07); }
+}
+
+/* ──────────────────────────────────────────
+   Shimmer / destello en hover (suave)
+   ────────────────────────────────────────── */
+.chatbot-shimmer {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.chatbot-hovered .chatbot-shimmer {
+  opacity: 1;
+  animation: shimmerLoop 2.5s ease-in-out infinite;
+}
+
+@keyframes shimmerLoop {
+  0%   { opacity: 0;   }
+  25%  { opacity: 0.6; }
+  50%  { opacity: 0;   }
+  100% { opacity: 0;   }
+}
+
+/* ──────────────────────────────────────────
+   Accesibilidad: focus visible
+   ────────────────────────────────────────── */
 .chatbot-wrapper:focus-visible {
-  outline: 2px solid #00f0ff;
-  outline-offset: 4px;
+  outline: 2px solid #2DEFF2;
+  outline-offset: 6px;
   border-radius: 50%;
 }

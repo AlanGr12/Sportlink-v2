@@ -2,17 +2,15 @@ import { useState } from 'react'
 import './ChatbotButton.css'
 
 /**
- * ChatbotButton
+ * ChatbotButton — Redesign 2.0 (paleta Sportlink)
  *
- * Icono SVG fijo en la esquina inferior derecha.
- * Paths extraídos del SVG tracezado de la imagen de referencia,
- * limpiados (solo subpaths válidos) y coloreados en cyan sobre
- * fondo oscuro.
- *
- * Coordinate pipeline:
- *   1. Paths viven en espacio ~0-1210 × ~0-1030
- *   2. <g transform="translate(0,103) scale(0.1,-0.1)"> los mapea a 121×103
- *   3. <g transform="translate(15,20) scale(0.58)">   los centra en el viewBox 100×100
+ * Paleta oficial: celeste #2DEFF2 / negro
+ * - Fondo: degradado radial oscuro con toque celeste
+ * - Highlight especular (efecto burbuja/vidrio)
+ * - Arcos dobles giratorios (horario + antihorario)
+ * - Ojos con parpadeo animado
+ * - Shimmer suave en hover
+ * - Sin elemento orbital
  */
 export default function ChatbotButton() {
   const [hovered, setHovered] = useState(false)
@@ -26,30 +24,77 @@ export default function ChatbotButton() {
       role="button"
       tabIndex={0}
       aria-label="Abrir chatbot"
+      onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}
     >
+      {/* Anillos de pulso externos */}
+      <span className="chatbot-pulse-ring" aria-hidden="true" />
+      <span className="chatbot-pulse-ring" aria-hidden="true" />
+      <span className="chatbot-pulse-ring" aria-hidden="true" />
+
       <svg
         viewBox="0 0 100 100"
         xmlns="http://www.w3.org/2000/svg"
         className="chatbot-svg"
+        aria-hidden="true"
       >
         <defs>
-          {/* Fondo oscuro radial */}
-          <radialGradient id="cb-bg" cx="40%" cy="35%" r="65%">
-            <stop offset="0%" stopColor="#0d1117" />
-            <stop offset="100%" stopColor="#060610" />
+          {/* ── Fondo principal: negro profundo con toque celeste ── */}
+          <radialGradient id="cb-bg-radial" cx="38%" cy="32%" r="72%">
+            <stop offset="0%"   stopColor="#0a1a1e" />
+            <stop offset="40%"  stopColor="#071015" />
+            <stop offset="80%"  stopColor="#040c10" />
+            <stop offset="100%" stopColor="#020608" />
           </radialGradient>
 
-          {/* Glow del icono */}
-          <filter id="cb-glow-icon" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
+          {/* ── Overlay celeste sutil (desde esquina opuesta) ── */}
+          <radialGradient id="cb-overlay" cx="72%" cy="75%" r="55%">
+            <stop offset="0%"   stopColor="#2DEFF2" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#2DEFF2" stopOpacity="0" />
+          </radialGradient>
 
-          {/* Glow del arco giratorio */}
-          <filter id="cb-glow-arc" x="-30%" y="-30%" width="160%" height="160%">
+          {/* ── Highlight especular (efecto burbuja) ── */}
+          <radialGradient id="cb-glass" cx="30%" cy="20%" r="42%">
+            <stop offset="0%"   stopColor="#ffffff"  stopOpacity="0.22" />
+            <stop offset="55%"  stopColor="#2DEFF2"  stopOpacity="0.06" />
+            <stop offset="100%" stopColor="#ffffff"  stopOpacity="0" />
+          </radialGradient>
+
+          {/* ── Shimmer hover (diagonal celeste→blanco) ── */}
+          <linearGradient id="cb-shimmer" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stopColor="#ffffff"  stopOpacity="0" />
+            <stop offset="42%"  stopColor="#2DEFF2"  stopOpacity="0.45" />
+            <stop offset="52%"  stopColor="#ffffff"  stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#ffffff"  stopOpacity="0" />
+          </linearGradient>
+
+          {/* ── Degradado arco horario ── */}
+          <linearGradient id="cb-arc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stopColor="#2DEFF2" />
+            <stop offset="100%" stopColor="#2DEFF2" stopOpacity="0.25" />
+          </linearGradient>
+
+          {/* ── Degradado arco antihorario ── */}
+          <linearGradient id="cb-arc-grad2" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stopColor="#2DEFF2" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="#2DEFF2" stopOpacity="0.1" />
+          </linearGradient>
+
+          {/* ── Degradado robot (silueta) ── */}
+          <linearGradient id="cb-robot-fill" x1="10%" y1="0%" x2="90%" y2="100%">
+            <stop offset="0%"   stopColor="#7ffcff" />
+            <stop offset="45%"  stopColor="#2DEFF2" />
+            <stop offset="100%" stopColor="#0abcc0" />
+          </linearGradient>
+
+          {/* ── Degradado ojos ── */}
+          <radialGradient id="cb-eye-fill" cx="38%" cy="32%" r="68%">
+            <stop offset="0%"   stopColor="#e0fffe" />
+            <stop offset="55%"  stopColor="#2DEFF2" />
+            <stop offset="100%" stopColor="#0c9ea0" />
+          </radialGradient>
+
+          {/* ── Glow suave para iconografía ── */}
+          <filter id="cb-glow-soft" x="-40%" y="-40%" width="180%" height="180%">
             <feGaussianBlur stdDeviation="2.2" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
@@ -57,58 +102,88 @@ export default function ChatbotButton() {
             </feMerge>
           </filter>
 
-          {/* Glow hover */}
-          <filter id="cb-glow-hover" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="3.5" result="blur" />
+          {/* ── Glow arcos ── */}
+          <filter id="cb-glow-arc" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="1.8" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+
+          {/* Clip de burbuja */}
+          <clipPath id="cb-circle-clip">
+            <circle cx="50" cy="50" r="46" />
+          </clipPath>
         </defs>
 
-        {/* ── Fondo oscuro ── */}
-        <circle cx="50" cy="50" r="47" fill="url(#cb-bg)" />
+        {/* ════════════════════════════════════════
+            CAPA 1: Fondo burbuja oscuro
+            ════════════════════════════════════════ */}
+        <circle cx="50" cy="50" r="46" fill="url(#cb-bg-radial)" />
 
-        {/* ── Borde base gris oscuro ── */}
-        <circle cx="50" cy="50" r="47" fill="none" stroke="#1e2030" strokeWidth="2.5" />
+        {/* CAPA 2: Overlay celeste sutil */}
+        <circle cx="50" cy="50" r="46" fill="url(#cb-overlay)" />
 
-        {/* ── Borde hover celeste completo (oculto por defecto) ── */}
+        {/* CAPA 3: Borde celeste semitransparente */}
         <circle
-          cx="50" cy="50" r="47"
-          fill="none" stroke="#00f0ff" strokeWidth="2.8"
-          className="chatbot-full-border"
-          filter="url(#cb-glow-hover)"
+          cx="50" cy="50" r="46"
+          fill="none"
+          stroke="#2DEFF2"
+          strokeWidth="1.2"
+          strokeOpacity="0.3"
         />
 
-        {/* ── Arco giratorio lento ── */}
+        {/* ════════════════════════════════════════
+            ARCOS GIRATORIOS DOBLES
+            ════════════════════════════════════════ */}
+
+        {/* Arco 1: horario principal */}
         <circle
-          cx="50" cy="50" r="47"
-          fill="none" stroke="#00f0ff" strokeWidth="3"
-          strokeLinecap="round" strokeDasharray="28 268"
+          cx="50" cy="50" r="47.5"
+          fill="none"
+          stroke="url(#cb-arc-grad)"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeDasharray="24 274"
           className="chatbot-arc"
           filter="url(#cb-glow-arc)"
         />
 
-        {/* ══════════════════════════════════════════════════════
+        {/* Arco 1 sombra difusa */}
+        <circle
+          cx="50" cy="50" r="47.5"
+          fill="none"
+          stroke="#2DEFF2"
+          strokeWidth="5.5"
+          strokeLinecap="round"
+          strokeDasharray="24 274"
+          className="chatbot-arc"
+          opacity="0.12"
+        />
+
+        {/* Arco 2: antihorario sutil */}
+        <circle
+          cx="50" cy="50" r="47.5"
+          fill="none"
+          stroke="url(#cb-arc-grad2)"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeDasharray="10 288"
+          className="chatbot-arc-reverse"
+          filter="url(#cb-glow-arc)"
+        />
+
+        {/* ════════════════════════════════════════
             ICONO ROBOT
-            Pipeline de transformaciones (derecha→izquierda):
-              1. scale(0.1,-0.1) + translate(0,103) : coords a 121×103
-              2. translate(15,20) scale(0.58)         : centra en 100×100
-            ══════════════════════════════════════════════════════ */}
+            ════════════════════════════════════════ */}
         <g transform="translate(15,20) scale(0.58)">
           <g transform="translate(0,103) scale(0.1,-0.1)">
 
-            {/*
-              ── SILUETA EXTERIOR (cyan) ──
-              Subpath limpio extraído del path original M526.
-              El subpath M618 1003 es la forma completa del robot
-              (cabeza redondeada + cola de burbuja + antena).
-              Los subpaths ruidosos del path original fueron eliminados.
-            */}
+            {/* Silueta exterior con degradado celeste */}
             <path
-              fill="#00f0ff"
-              filter="url(#cb-glow-icon)"
+              fill="url(#cb-robot-fill)"
+              filter="url(#cb-glow-soft)"
               d="
                 M618 1003
                 c34 -30 37 -59 8 -88
@@ -135,13 +210,9 @@ export default function ChatbotButton() {
               "
             />
 
-            {/*
-              ── RECORTE INTERIOR OSCURO (crea el borde/rim cyan) ──
-              Primer subpath de M305: la cara interna del robot
-              (rectángulo redondeado que forma la "pantalla" del chatbot).
-            */}
+            {/* Recorte interior oscuro (pantalla del robot) */}
             <path
-              fill="#090d16"
+              fill="#030a0c"
               d="
                 M305 681
                 c-166 -77 -174 -337 -12 -424
@@ -156,44 +227,93 @@ export default function ChatbotButton() {
               "
             />
 
-            {/*
-              ── OJO IZQUIERDO (cyan) ──
-              Segundo subpath de M381, convertido a absoluto:
-              M(381+86, 543-15) = M467 528
-            */}
+            {/* Reflejo interior sutil celeste */}
             <path
-              fill="#00f0ff"
-              filter="url(#cb-glow-icon)"
+              fill="#2DEFF2"
+              fillOpacity="0.06"
               d="
-                M467 528
-                c32 -30 32 -102 1 -135
-                -28 -30 -52 -29 -78 4
-                -17 22 -20 36 -16 72
-                6 46 29 81 54 81
-                9 0 26 -10 39 -22
+                M305 681
+                c-166 -77 -174 -337 -12 -424
+                40 -21 52 -22 293 -22
+                l251 0 49 30
+                c30 19 60 49 78 79
+                27 42 30 58 30 120
+                0 79 -21 131 -71 178
+                -56 54 -81 58 -340 58
+                -210 0 -243 -3 -278 -19
                 z
               "
             />
 
-            {/*
-              ── OJO DERECHO (cyan) ──
-              Segundo subpath de M692, convertido a absoluto:
-              M(692+87, 558-34) = M779 524
-            */}
-            <path
-              fill="#00f0ff"
-              filter="url(#cb-glow-icon)"
-              d="
-                M779 524
-                c38 -49 11 -154 -41 -154
-                -56 0 -81 109 -36 157
-                28 30 52 29 77 -3
-                z
-              "
-            />
+            {/* OJO IZQUIERDO */}
+            <g style={{ transformOrigin: '450px 490px' }} className="chatbot-eye">
+              <path
+                fill="url(#cb-eye-fill)"
+                filter="url(#cb-glow-soft)"
+                d="
+                  M467 528
+                  c32 -30 32 -102 1 -135
+                  -28 -30 -52 -29 -78 4
+                  -17 22 -20 36 -16 72
+                  6 46 29 81 54 81
+                  9 0 26 -10 39 -22
+                  z
+                "
+              />
+              <ellipse cx="442" cy="475" rx="17" ry="21" fill="#020c0d" />
+              <ellipse cx="435" cy="463" rx="7" ry="7" fill="#e0fffe" fillOpacity="0.9" />
+            </g>
+
+            {/* OJO DERECHO */}
+            <g style={{ transformOrigin: '760px 490px' }} className="chatbot-eye-r">
+              <path
+                fill="url(#cb-eye-fill)"
+                filter="url(#cb-glow-soft)"
+                d="
+                  M779 524
+                  c38 -49 11 -154 -41 -154
+                  -56 0 -81 109 -36 157
+                  28 30 52 29 77 -3
+                  z
+                "
+              />
+              <ellipse cx="752" cy="470" rx="17" ry="21" fill="#020c0d" />
+              <ellipse cx="744" cy="458" rx="7" ry="7" fill="#e0fffe" fillOpacity="0.9" />
+            </g>
 
           </g>
         </g>
+
+        {/* ════════════════════════════════════════
+            HIGHLIGHT ESPECULAR — efecto burbuja
+            ════════════════════════════════════════ */}
+        <ellipse
+          cx="37" cy="25"
+          rx="21" ry="13"
+          fill="url(#cb-glass)"
+          clipPath="url(#cb-circle-clip)"
+        />
+
+        {/* Reflejo inferior sutil */}
+        <ellipse
+          cx="63" cy="77"
+          rx="12" ry="6"
+          fill="#2DEFF2"
+          fillOpacity="0.06"
+          clipPath="url(#cb-circle-clip)"
+        />
+
+        {/* ════════════════════════════════════════
+            SHIMMER hover (destello diagonal)
+            ════════════════════════════════════════ */}
+        <rect
+          x="-10" y="-10"
+          width="120" height="120"
+          fill="url(#cb-shimmer)"
+          className="chatbot-shimmer"
+          clipPath="url(#cb-circle-clip)"
+        />
+
       </svg>
     </div>
   )
