@@ -6,6 +6,7 @@ import { IconoFecha } from "../iconos/IconoFecha.jsx";
 import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
 import "./empleos.css";
 import "../pruebas/pruebas.css";
+import { formatearFechaLocal } from '../utils/dateUtils.js';
 
 // ── Íconos inline (SVG) ──────────────────────────────────────
 const IconoReloj = ({ size = 16 }) => (
@@ -53,13 +54,13 @@ const IconoOjo = ({ size = 16 }) => (
 // ── Formato de fecha ─────────────────────────────────────────
 const formatearFecha = (fechaStr) => {
   try {
-    return new Date(fechaStr).toLocaleDateString("es-AR", {
+    return formatearFechaLocal(fechaStr, {
       day: "2-digit",
       month: "long",
       year: "numeric",
-    });
+    }) || 'Fecha no disponible';
   } catch {
-    return "Sin fecha";
+    return "Fecha no disponible";
   }
 };
 

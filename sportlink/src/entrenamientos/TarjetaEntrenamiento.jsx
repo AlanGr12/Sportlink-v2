@@ -8,6 +8,7 @@ import { IconoUbicacion } from '../iconos/IconoUbicacion.jsx';
 import fallbackFutbol from '../assets/entrenador1.png';
 import fallbackBasket from '../assets/entrenador2.png';
 import fallbackDefault from '../assets/entrenador3.png';
+import { formatearFechaLocal } from '../utils/dateUtils.js';
 import './TarjetaEntrenamiento.css';
 
 const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar, usuarioActual }) => {
@@ -55,15 +56,12 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
 
   const formatearFecha = (fechaStr) => {
     try {
-      const fecha = new Date(fechaStr);
-      return fecha.toLocaleDateString('es-AR', {
+      return formatearFechaLocal(fechaStr, {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+        day: 'numeric'
+      }) || fechaStr;
     } catch {
       return fechaStr;
     }
@@ -130,6 +128,11 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
               {entrenamiento.fechaentr
                 ? formatearFecha(entrenamiento.fechaentr)
                 : 'Fecha a confirmar'}
+              {entrenamiento.horainicio && entrenamiento.horafin && (
+                <span style={{ display: 'block', fontSize: '0.9em', color: '#666', marginTop: '2px' }}>
+                  {entrenamiento.horainicio.substring(0, 5)} - {entrenamiento.horafin.substring(0, 5)} hs
+                </span>
+              )}
             </p>
           </div>
 

@@ -9,6 +9,7 @@ import iconFutbol from '../assets/futbol.png';
 import iconModalidad from '../assets/modalidad.png';
 import iconFecha from '../assets/fecha.png';
 import iconUbicacion from '../assets/ubicacion.png';
+import { formatearFechaLocal } from '../utils/dateUtils.js';
 
 import './DetalleEntrenamiento.css';
 
@@ -191,15 +192,12 @@ console.log(entrenamiento)
 
   const formatearFecha = (fechaStr) => {
     try {
-      const fecha = new Date(fechaStr);
-      return fecha.toLocaleDateString('es-AR', {
+      return formatearFechaLocal(fechaStr, {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }) + ' hs';
+        day: 'numeric'
+      }) || fechaStr;
     } catch {
       return fechaStr;
     }
@@ -285,7 +283,14 @@ console.log(entrenamiento)
 
           <div className="detalle-item-caja">
             <span className="detalle-item-label"><img src={iconFecha} alt="Horario" className="icon-small" /> Horario</span>
-            <span className="detalle-item-valor small">{formatearFecha(entrenamiento.fechaentr)}</span>
+            <span className="detalle-item-valor small">
+              {formatearFecha(entrenamiento.fechaentr)}
+              {entrenamiento.horainicio && entrenamiento.horafin && (
+                <span style={{ display: 'block', marginTop: '4px', color: '#888', fontWeight: '500' }}>
+                  {entrenamiento.horainicio.substring(0, 5)} - {entrenamiento.horafin.substring(0, 5)} hs
+                </span>
+              )}
+            </span>
           </div>
         </div>
       </div>

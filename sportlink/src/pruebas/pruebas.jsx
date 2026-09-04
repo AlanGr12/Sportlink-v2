@@ -6,6 +6,8 @@ import PruebasHeader from "./pruebasHeader";
 import FormularioPrueba from "./FormularioPrueba";
 import Footer from "../footer/footer";
 import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
+import ModalConfirmacionEliminar from '../calendario/ModalConfirmacionEliminar.jsx';
+import { parsearFechaLocal, formatearFechaLocal } from '../utils/dateUtils.js';
 
 // Iconos hechos con codigo
 import { IconoMedalla } from "../iconos/IconoMedalla.jsx";
@@ -585,9 +587,9 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
     // Zona: comparación exacta (sidebar usa select controlado)
     const coincideZona = zona === "" || prueba.zona === zona;
 
-    const fechaPrueba = prueba.fechaprueba ? new Date(prueba.fechaprueba) : null;
-    const coincideFechaDesde = !fechaDesde || (fechaPrueba && fechaPrueba >= new Date(fechaDesde));
-    const coincideFechaHasta = !fechaHasta || (fechaPrueba && fechaPrueba <= new Date(fechaHasta));
+    const fechaPrueba = prueba.fechaprueba ? parsearFechaLocal(prueba.fechaprueba) : null;
+    const coincideFechaDesde = !fechaDesde || (fechaPrueba && fechaPrueba >= parsearFechaLocal(fechaDesde));
+    const coincideFechaHasta = !fechaHasta || (fechaPrueba && fechaPrueba <= parsearFechaLocal(fechaHasta));
 
     return coincideBusqueda && coincideDeporte && coincideCategoria && coincideZona && coincideFechaDesde && coincideFechaHasta;
   });
@@ -602,9 +604,9 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
   // ── Formato de fecha ──────────────────────────────────────
   const formatearFecha = (fechaStr) => {
     try {
-      return new Date(fechaStr).toLocaleDateString("es-AR", {
+      return formatearFechaLocal(fechaStr, {
         day: "2-digit", month: "long", year: "numeric"
-      });
+      }) || "Fecha a confirmar";
     } catch {
       return "Fecha a confirmar";
     }

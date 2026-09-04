@@ -11,11 +11,13 @@ import iconoModalidad from '../assets/modalidad.png';
 import '../pruebas/pruebas.css';
 import '../entrenamientos/entrenamientos.css';
 
+import { formatearFechaLocal } from '../utils/dateUtils.js';
+
 const formatearFecha = (fechaStr) => {
   try {
-    return new Date(fechaStr).toLocaleDateString('es-AR', {
+    return formatearFechaLocal(fechaStr, {
       day: '2-digit', month: 'long', year: 'numeric'
-    });
+    }) || 'Fecha a confirmar';
   } catch {
     return 'Fecha a confirmar';
   }

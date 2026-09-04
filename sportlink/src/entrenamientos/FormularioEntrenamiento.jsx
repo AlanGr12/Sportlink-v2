@@ -29,6 +29,8 @@ const FormularioEntrenamiento = ({
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [fechaentr, setFechaentr] = useState('');
+  const [horainicio, setHorainicio] = useState('');
+  const [horafin, setHorafin] = useState('');
   const [ubicacion, setUbicacion] = useState('');
   const [iddeporte, setIddeporte] = useState(deportesDisponibles[0].id);
   const [precio, setPrecio] = useState(0);
@@ -50,6 +52,8 @@ const FormularioEntrenamiento = ({
       setTitulo(entrenamiento.titulo || '');
       setDescripcion(entrenamiento.descripcion || '');
       setFechaentr(entrenamiento.fechaentr ? entrenamiento.fechaentr.substring(0, 10) : '');
+      setHorainicio(entrenamiento.horainicio ? entrenamiento.horainicio.substring(0, 5) : '');
+      setHorafin(entrenamiento.horafin ? entrenamiento.horafin.substring(0, 5) : '');
       setUbicacion(entrenamiento.ubicacion || '');
       setIddeporte(entrenamiento.iddeporte || entrenamiento.deporte?.iddeporte || deportesDisponibles[0].id);
       setPrecio(entrenamiento.precio ?? 0);
@@ -66,6 +70,8 @@ const FormularioEntrenamiento = ({
       manana.setDate(manana.getDate() + 1);
       const pad = (n) => String(n).padStart(2, '0');
       setFechaentr(`${manana.getFullYear()}-${pad(manana.getMonth() + 1)}-${pad(manana.getDate())}`);
+      setHorainicio('');
+      setHorafin('');
       setUbicacion('Cancha 1');
       setIddeporte(deportesDisponibles[0].id);
       setPrecio(0);
@@ -89,6 +95,12 @@ const FormularioEntrenamiento = ({
     }
     if (!fechaentr) {
       nuevosErrores.fechaentr = 'La fecha es requerida';
+    }
+    if (!horainicio) {
+      nuevosErrores.horainicio = 'La hora de inicio es requerida';
+    }
+    if (!horafin) {
+      nuevosErrores.horafin = 'La hora de fin es requerida';
     }
     if (!ubicacion || ubicacion.trim().length === 0) {
       nuevosErrores.ubicacion = 'La ubicación es obligatoria';
@@ -131,6 +143,8 @@ const FormularioEntrenamiento = ({
     formData.append('titulo', titulo);
     formData.append('descripcion', descripcion);
     formData.append('fechaentr', fechaentr);
+    formData.append('horainicio', horainicio);
+    formData.append('horafin', horafin);
     formData.append('ubicacion', ubicacion);
     formData.append('iddeporte', iddeporte);
     formData.append('precio', precio);
@@ -223,6 +237,35 @@ const FormularioEntrenamiento = ({
             required
           />
           {errores.ubicacion && <span className="error-feedback">{errores.ubicacion}</span>}
+        </div>
+      </div>
+
+      {/* ── Fila doble: Hora inicio + Hora fin ─────────────────────── */}
+      <div className="form-fila-doble">
+        <div className="form-grupo">
+          <label className="form-label">
+            Hora de inicio<span>*</span>
+          </label>
+          <input
+            type="time"
+            className="form-input"
+            value={horainicio}
+            onChange={(e) => setHorainicio(e.target.value)}
+          />
+          {errores.horainicio && <span className="error-feedback">{errores.horainicio}</span>}
+        </div>
+
+        <div className="form-grupo">
+          <label className="form-label">
+            Hora de fin<span>*</span>
+          </label>
+          <input
+            type="time"
+            className="form-input"
+            value={horafin}
+            onChange={(e) => setHorafin(e.target.value)}
+          />
+          {errores.horafin && <span className="error-feedback">{errores.horafin}</span>}
         </div>
       </div>
 
