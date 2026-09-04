@@ -1,0 +1,85 @@
+/* ═══════════════════════════════════════════════════════
+   ChatbotButton.css — Botón flotante chatbot
+   Posición: fija, esquina inferior derecha
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Contenedor wrapper ── */
+.chatbot-wrapper {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9999;
+  width: 68px;
+  height: 68px;
+  cursor: pointer;
+  outline: none;
+  transition:
+    transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 0.38s ease;
+  filter: drop-shadow(0 4px 16px rgba(0, 240, 255, 0.15));
+}
+
+/* ── Hover: agranda y aumenta el glow ── */
+.chatbot-wrapper.chatbot-hovered {
+  transform: scale(1.18);
+  filter: drop-shadow(0 6px 32px rgba(0, 240, 255, 0.6));
+}
+
+/* ── SVG ocupa todo el wrapper ── */
+.chatbot-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+/* ──────────────────────────────────────────
+   Borde celeste completo (visible en hover)
+   ────────────────────────────────────────── */
+.chatbot-full-border {
+  opacity: 0;
+  transition: opacity 0.38s ease;
+}
+
+.chatbot-hovered .chatbot-full-border {
+  opacity: 1;
+}
+
+/* ──────────────────────────────────────────
+   Arco giratorio — LENTO y suave
+   ────────────────────────────────────────── */
+.chatbot-arc {
+  transform-origin: 50px 50px;
+  /* 6 segundos = giro lento y elegante */
+  animation: spinArc 6s linear infinite;
+  transition: opacity 0.38s ease;
+}
+
+/* En hover el arco se oculta, toma protagonismo el borde completo */
+.chatbot-hovered .chatbot-arc {
+  opacity: 0;
+}
+
+@keyframes spinArc {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ──────────────────────────────────────────
+   Pulso suave en reposo
+   ────────────────────────────────────────── */
+.chatbot-wrapper:not(.chatbot-hovered) {
+  animation: idlePulse 3.5s ease-in-out infinite;
+}
+
+@keyframes idlePulse {
+  0%,  100% { filter: drop-shadow(0 4px 16px rgba(0, 240, 255, 0.15)); }
+  50%        { filter: drop-shadow(0 4px 26px rgba(0, 240, 255, 0.38)); }
+}
+
+/* ── Accesibilidad: focus visible ── */
+.chatbot-wrapper:focus-visible {
+  outline: 2px solid #00f0ff;
+  outline-offset: 4px;
+  border-radius: 50%;
+}

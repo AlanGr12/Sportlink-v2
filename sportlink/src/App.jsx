@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import api from './axiosConfig.js'
+import ChatbotButton from './components/ChatbotButton.jsx'
 
 
 import Login from './log in/Login.jsx'
@@ -282,6 +283,9 @@ function App() {
           <Route path="*" element={<NotFound404 />} />
         </Routes>
       </main>
+
+      {/* ── Chatbot flotante: siempre visible en todas las vistas ── */}
+      <ChatbotButton />
     </div>
   )
 }
