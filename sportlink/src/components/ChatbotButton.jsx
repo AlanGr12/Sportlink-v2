@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import axios from 'axios'
 import './ChatbotButton.css'
 
 /**
@@ -10,22 +11,170 @@ import './ChatbotButton.css'
  * - Arcos dobles giratorios (horario + antihorario)
  * - Ojos con parpadeo animado
  * - Shimmer suave en hover
- * - Sin elemento orbital
+ * - Ventana de chat funcional conectada al backend IA
  */
+
+const MENSAJE_BIENVENIDA = {
+  rol: 'assistant',
+  texto: '¡Hola! Soy el asistente inteligente de SportLink. Puedo ayudarte a buscar pruebas de jugadores, ofertas de empleo en clubes y entrenamientos. ¿En qué te puedo consultar hoy?',
+}
+
 export default function ChatbotButton() {
   const [hovered, setHovered] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const [mensajes, setMensajes] = useState([MENSAJE_BIENVENIDA])
+  const [inputTexto, setInputTexto] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const mensajesEndRef = useRef(null)
+
+  // Auto-scroll al último mensaje cada vez que cambia la lista o se abre el chat
+  useEffect(() => {
+    if (isOpen) {
+      mensajesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [mensajes, isLoading, isOpen])
+
+  const enviarMensaje = async () => {
+    const texto = inputTexto.trim()
+    if (!texto || isLoading) return
+
+    // 1. Agregar mensaje del usuario inmediatamente
+    const nuevosMensajes = [...mensajes, { rol: 'user', texto }]
+    setMensajes(nuevosMensajes)
+    setInputTexto('')
+    setIsLoading(true)
+
+    try {
+      // 2. Construir historial en el formato esperado por el backend
+      const historialBackend = nuevosMensajes
+        .slice(0, -1)
+        .map((m) => ({ role: m.rol, content: m.texto }))
+
+      // 3. Llamar al backend
+      const res = await axios.post('http://localhost:3000/api/ia/chat', {
+        mensaje: texto,
+        historial: historialBackend,
+      })
+
+      // 4. Agregar respuesta del bot
+      setMensajes((prev) => [
+        ...prev,
+        { rol: 'assistant', texto: res.data.respuesta },
+      ])
+    } catch (error) {
+      console.error('Error al contactar con el asistente:', error)
+      setMensajes((prev) => [
+        ...prev,
+        {
+          rol: 'assistant',
+          texto: '⚠️ Ocurrió un error al conectar con el asistente. Por favor, intentá de nuevo.',
+          isError: true,
+        },
+      ])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      enviarMensaje()
+    }
+  }
 
   return (
-    <div
-      className={`chatbot-wrapper${hovered ? ' chatbot-hovered' : ''}`}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      title="Chatbot SportLink"
-      role="button"
-      tabIndex={0}
-      aria-label="Abrir chatbot"
-      onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}
-    >
+    <>
+      {/* ══════════════════════════════════════
+          VENTANA DE CHAT FLOTANTE
+          ══════════════════════════════════════ */}
+      {isOpen && (
+        <div className="chatbot-window">
+          {/* Header */}
+          <div className="chatbot-header">
+            <div className="chatbot-header-info">
+              <span className="chatbot-header-dot" />
+              <span className="chatbot-header-title">Asistente SportLink</span>
+            </div>
+            <button
+              className="chatbot-close-btn"
+              onClick={() => setIsOpen(false)}
+              aria-label="Cerrar chat"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Área de mensajes con scroll */}
+          <div className="chatbot-messages">
+            {mensajes.map((msg, i) => (
+              <div
+                key={i}
+                className={`chatbot-msg-wrapper ${msg.rol === 'user' ? 'msg-user' : 'msg-bot'}`}
+              >
+                <div
+                  className={`chatbot-bubble ${msg.rol === 'user' ? 'bubble-user' : 'bubble-bot'}${msg.isError ? ' bubble-error' : ''}`}
+                >
+                  {msg.texto}
+                </div>
+              </div>
+            ))}
+
+            {/* Indicador animado "Escribiendo..." */}
+            {isLoading && (
+              <div className="chatbot-msg-wrapper msg-bot">
+                <div className="chatbot-bubble bubble-bot chatbot-typing">
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                </div>
+              </div>
+            )}
+
+            {/* Ancla de auto-scroll */}
+            <div ref={mensajesEndRef} />
+          </div>
+
+          {/* Área de input */}
+          <div className="chatbot-input-area">
+            <input
+              type="text"
+              className="chatbot-input"
+              placeholder={isLoading ? 'Escribiendo...' : 'Escribí tu consulta...'}
+              value={inputTexto}
+              onChange={(e) => setInputTexto(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isLoading}
+              autoFocus
+            />
+            <button
+              className="chatbot-send-btn"
+              onClick={enviarMensaje}
+              disabled={isLoading || !inputTexto.trim()}
+              aria-label="Enviar mensaje"
+            >
+              ➤
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════
+          BOTÓN FLOTANTE SVG ANIMADO (original)
+          ══════════════════════════════════════ */}
+      <div
+        className={`chatbot-wrapper${hovered ? ' chatbot-hovered' : ''}${isOpen ? ' chatbot-active' : ''}`}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onClick={() => setIsOpen((prev) => !prev)}
+        title="Chatbot SportLink"
+        role="button"
+        tabIndex={0}
+        aria-label={isOpen ? 'Cerrar chatbot' : 'Abrir chatbot'}
+        onKeyDown={(e) => e.key === 'Enter' && setIsOpen((prev) => !prev)}
+      >
+
       {/* Anillos de pulso externos */}
       <span className="chatbot-pulse-ring" aria-hidden="true" />
       <span className="chatbot-pulse-ring" aria-hidden="true" />
@@ -316,5 +465,6 @@ export default function ChatbotButton() {
 
       </svg>
     </div>
+    </>
   )
 }
