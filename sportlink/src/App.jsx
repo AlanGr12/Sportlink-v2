@@ -255,6 +255,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/perfil/:idusuario"
+            element={
+              <ProtectedRoute usuario={usuario}>
+                <MiPerfil usuario={usuario} />
+              </ProtectedRoute>
+            }
+          />
 
 
           <Route

@@ -65,6 +65,7 @@ const IcoDots = () => (
 // COMPONENTE: PostCard  — solo la publicación
 // ═══════════════════════════════════════════════════════════
 export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
+  const navigate = useNavigate()
   const [menuAbierto, setMenuAbierto] = useState(false)
   const menuRef = useRef(null)
 
@@ -100,7 +101,15 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
   return (
     <div className="post-card-header">
       {/* Autor */}
-      <div className="post-card-autor">
+      <div 
+        className="post-card-autor"
+        onClick={() => {
+          if (post.autor?.idusuario) {
+            navigate(`/perfil/${post.autor.idusuario}`)
+          }
+        }}
+        style={{ cursor: post.autor?.idusuario ? 'pointer' : 'default' }}
+      >
         <Avatar
           src={post.autor?.fotoperfil}
           nombre={post.autor?.nombre || '?'}

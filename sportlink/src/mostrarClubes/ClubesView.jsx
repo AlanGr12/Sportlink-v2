@@ -374,12 +374,20 @@ function ClubesView(props) {
 
 
                     {/* ── Botón de acción ── */}
-                    <div className="card-club-acciones">
+                    <div className="card-club-acciones" style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        className="btn-entrenador-perfil"
+                        style={{ flex: 1 }}
+                        onClick={() => navigate(`/perfil/${club.idusuario}`)}
+                      >
+                        Perfil
+                      </button>
                       <button
                         className="btn-club-info"
+                        style={{ flex: 1 }}
                         onClick={() => handleVerClub(club)}
                       >
-                        Más información
+                        Más info
                       </button>
                     </div>
 
@@ -495,9 +503,20 @@ function ClubesView(props) {
               )}
 
 
-              <div className="detalle-club-acciones">
+              <div className="detalle-club-acciones" style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  className="btn-entrenador-perfil"
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setModalDetalleAbierto(false)
+                    navigate(`/perfil/${clubSeleccionado.idusuario}`)
+                  }}
+                >
+                  Ver Perfil
+                </button>
                 <button
                   className="btn-entrenador-contactar"
+                  style={{ flex: 1 }}
                   onClick={() => handleContactar(clubSeleccionado)}
                 >
                   Contactar

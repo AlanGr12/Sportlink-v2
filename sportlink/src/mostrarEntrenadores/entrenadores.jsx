@@ -519,7 +519,12 @@ function EntrenadoresView(props) {
 
                   {/* ── Botones de acción ── */}
                   <div className="card-entrenador-acciones">
-                    <button className="btn-entrenador-perfil">Perfil</button>
+                    <button 
+                      className="btn-entrenador-perfil"
+                      onClick={() => navigate(`/perfil/${Entrenador.idusuario}`)}
+                    >
+                      Perfil
+                    </button>
                     <button
                       className="btn-entrenador-contactar"
                       onClick={() => handleContactar(Entrenador)}

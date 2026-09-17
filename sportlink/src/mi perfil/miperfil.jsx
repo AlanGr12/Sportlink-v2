@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../axiosConfig.js';
 import Avatar from '../components/Avatar.jsx';
-import './miperfil.css';
 import Footer from '../footer/footer.jsx';
+import CrearPost from '../feed/CrearPost.jsx';
+import { PostCompleto } from '../feed/PostCard.jsx';
+import '../feed/FeedView.css';
+import './miperfil.css';
 
 const MESES = [
   'Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -55,110 +59,70 @@ const IconoEditar = () => (
 );
 
 const MiPerfil = (props) => {
+  const navigate = useNavigate();
+  const { idusuario: paramIdUsuario } = useParams();
+
   const [perfil, setPerfil] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [errorMensaje, setErrorMensaje] = useState(null);
-  const [tabActiva, setTabActiva] = useState('sobremi');
+  const [tabActiva, setTabActiva] = useState('sobremi');  // se sincroniza en el efecto de abajo
   
   // Estados para Modal de Edición
   const [modalAbierto, setModalAbierto] = useState(false);
   const [formEdicion, setFormEdicion] = useState({});
   const [toastMensaje, setToastMensaje] = useState('');
 
-  // Estados de Red Social Mock
+  // Estados de Red Social
   const [seguidores, setSeguidores] = useState(1240);
   const [seguidos, setSeguidos] = useState(384);
-  const [nuevoPostTexto, setNuevoPostTexto] = useState('');
-  const [nuevoPostImagen, setNuevoPostImagen] = useState('');
-  const [comentariosInputs, setComentariosInputs] = useState({});
-  const [publicaciones, setPublicaciones] = useState([
-    {
-      id: 1,
-      autor: 'Mi Perfil',
-      fecha: 'Hace 2 días',
-      contenido: '¡Excelente entrenamiento hoy por la mañana con el equipo! Enfocados en la táctica de juego y pases rápidos. ⚽🔥',
-      imagen: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=600&auto=format&fit=crop',
-      likes: 124,
-      liked: false,
-      comentarios: [
-        { autor: 'Carlos Perez', texto: '¡Grande crack! Seguí así.' },
-        { autor: 'Martín DT', texto: 'Muy buen ritmo en el circuito.' }
-      ]
-    },
-    {
-      id: 2,
-      autor: 'Mi Perfil',
-      fecha: 'Hace 1 semana',
-      contenido: 'Superado el test de velocidad de hoy. Nueva marca personal lograda. ¡El esfuerzo da sus frutos! 🏃💨 #Rendimiento #Sportlink',
-      imagen: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?q=80&w=600&auto=format&fit=crop',
-      likes: 98,
-      liked: false,
-      comentarios: []
-    }
-  ]);
-
-  const handleLikePost = (postId) => {
-    setPublicaciones(prev => prev.map(p => {
-      if (p.id === postId) {
-        return {
-          ...p,
-          likes: p.liked ? p.likes - 1 : p.likes + 1,
-          liked: !p.liked
-        };
-      }
-      return p;
-    }));
-  };
-
-  const handleAddComment = (postId, e) => {
-    e.preventDefault();
-    const commentText = comentariosInputs[postId];
-    if (!commentText || !commentText.trim()) return;
-
-    setPublicaciones(prev => prev.map(p => {
-      if (p.id === postId) {
-        return {
-          ...p,
-          comentarios: [
-            ...p.comentarios,
-            { autor: nombreCompleto, texto: commentText.trim() }
-          ]
-        };
-      }
-      return p;
-    }));
-
-    setComentariosInputs(prev => ({
-      ...prev,
-      [postId]: ''
-    }));
-  };
-
-  const handleCrearPost = (e) => {
-    e.preventDefault();
-    if (!nuevoPostTexto.trim()) return;
-
-    const nuevoPost = {
-      id: Date.now(),
-      autor: nombreCompleto,
-      fecha: 'Ahora mismo',
-      contenido: nuevoPostTexto,
-      imagen: nuevoPostImagen || null,
-      likes: 0,
-      liked: false,
-      comentarios: []
-    };
-
-    setPublicaciones([nuevoPost, ...publicaciones]);
-    setNuevoPostTexto('');
-    setNuevoPostImagen('');
-  };
-
-  const totalLikes = publicaciones.reduce((acc, p) => acc + p.likes, 0);
+  const [publicaciones, setPublicaciones] = useState([]);
+  const [cargandoPublicaciones, setCargandoPublicaciones] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
 
   // Usuario viene del prop (App.jsx es la fuente de verdad de sesión)
-  const usuario = props.usuario;
-  const idUsuario = usuario?.idusuario || usuario?.idUsuario || usuario?.id;
+  const usuarioEnSesion = props.usuario;
+  const idSesion = usuarioEnSesion?.idusuario || usuarioEnSesion?.idUsuario || usuarioEnSesion?.id;
+
+  // idUsuario a visualizar (si viene paramIdUsuario se usa ese, sino el propio)
+  const idUsuario = paramIdUsuario || idSesion;
+  const esPerfilPropio = Number(idUsuario) === Number(idSesion);
+
+  // Resetear tab a "Sobre mí" cada vez que se navega a un perfil diferente
+  useEffect(() => {
+    setTabActiva('sobremi');
+  }, [idUsuario]);
+
+  const cargarPublicaciones = useCallback(async () => {
+    if (!idUsuario) return;
+    setCargandoPublicaciones(true);
+    try {
+      const res = await api.get('/api/publicaciones', {
+        params: { usuarioId: idUsuario, page: 1, limit: 50 }
+      });
+      setPublicaciones(res.data?.publicaciones || []);
+      setTotalItems(res.data?.totalItems || (res.data?.publicaciones || []).length);
+    } catch (err) {
+      console.error('Error al cargar publicaciones del perfil:', err);
+    } finally {
+      setCargandoPublicaciones(false);
+    }
+  }, [idUsuario]);
+
+  useEffect(() => {
+    cargarPublicaciones();
+  }, [cargarPublicaciones]);
+
+  const handlePostCreado = (nuevoPost) => {
+    setPublicaciones(prev => [nuevoPost, ...prev]);
+    setTotalItems(prev => prev + 1);
+  };
+
+  const handleEliminarPost = (idpublicacion) => {
+    setPublicaciones(prev => prev.filter(p => p.idpublicacion !== idpublicacion));
+    setTotalItems(prev => Math.max(0, prev - 1));
+  };
+
+  const totalLikes = publicaciones.reduce((acc, p) => acc + (p.totalLikes || 0), 0);
 
   useEffect(() => {
     let montado = true;
@@ -353,12 +317,16 @@ const MiPerfil = (props) => {
                 {perfil?.descripcion ? (
                   <p className="profile-bio-text">"{perfil.descripcion}"</p>
                 ) : (
-                  <p className="profile-bio-text empty">Sin descripción en tu perfil. Hacé clic en "Editar perfil" para agregar una biografía y destacar en SportLink.</p>
+                  <p className="profile-bio-text empty">
+                    {esPerfilPropio 
+                      ? 'Sin descripción en tu perfil. Hacé clic en "Editar perfil" para agregar una biografía y destacar en SportLink.'
+                      : 'Este usuario aún no ha agregado una biografía.'}
+                  </p>
                 )}
 
                 <div className="profile-social-stats">
                   <div className="social-stat-item">
-                    <span className="stat-number">{publicaciones.length}</span>
+                    <span className="stat-number">{totalItems}</span>
                     <span className="stat-label-text">publicaciones</span>
                   </div>
                   <div className="social-stat-item" onClick={() => setSeguidores(s => s + 1)} style={{ cursor: 'pointer' }}>
@@ -377,10 +345,23 @@ const MiPerfil = (props) => {
               </div>
 
               <div className="profile-actions-area">
-                <button className="profile-btn-edit" onClick={abrirModalEdicion}>
-                  <IconoEditar />
-                  EDITAR PERFIL
-                </button>
+                {esPerfilPropio ? (
+                  <button className="profile-btn-edit" onClick={abrirModalEdicion}>
+                    <IconoEditar />
+                    EDITAR PERFIL
+                  </button>
+                ) : (
+                  <button 
+                    className="profile-btn-edit" 
+                    onClick={() => navigate('/mensajes')}
+                    style={{ background: '#2DEFF2', color: '#090a0c', border: 'none', fontWeight: 700 }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    MENSAJE
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -404,6 +385,21 @@ const MiPerfil = (props) => {
                   onClick={() => setTabActiva('publicaciones')}
                 >
                   Publicaciones
+                  {totalItems > 0 && (
+                    <span style={{
+                      marginLeft: '6px',
+                      background: tabActiva === 'publicaciones' ? '#2DEFF2' : 'rgba(45,239,242,0.18)',
+                      color: tabActiva === 'publicaciones' ? '#090a0c' : '#2DEFF2',
+                      borderRadius: '999px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      padding: '1px 7px',
+                      lineHeight: '18px',
+                      display: 'inline-block',
+                      verticalAlign: 'middle',
+                      transition: 'all 0.2s',
+                    }}>{totalItems}</span>
+                  )}
                 </button>
                 <button 
                   className={`profile-tab-button ${tabActiva === 'recomendaciones' ? 'active' : ''}`}
@@ -451,113 +447,34 @@ const MiPerfil = (props) => {
 
                 {/* 3. Tab: Publicaciones (Feed de Red Social) */}
                 {tabActiva === 'publicaciones' && (
-                  <div className="tab-pane-content pane-publicaciones" style={{ padding: 0, backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }}>
-                    {/* Crear publicación */}
-                    <div className="create-post-card">
-                      <h4 className="create-post-header">Crear Publicación</h4>
-                      <form onSubmit={handleCrearPost} className="create-post-form">
-                        <textarea
-                          className="create-post-textarea"
-                          placeholder="¿Qué entrenaste hoy? Comparte tus logros..."
-                          value={nuevoPostTexto}
-                          onChange={(e) => setNuevoPostTexto(e.target.value)}
-                          maxLength={280}
-                          required
-                        />
-                        <input
-                          type="text"
-                          className="create-post-input-url"
-                          placeholder="URL de imagen opcional (ej. https://...)"
-                          value={nuevoPostImagen}
-                          onChange={(e) => setNuevoPostImagen(e.target.value)}
-                        />
-                        <button type="submit" className="create-post-submit-btn">
-                          Publicar
-                        </button>
-                      </form>
-                    </div>
+                  <div className="tab-pane-content pane-publicaciones" style={{ padding: 0, backgroundColor: 'transparent', border: 'none', boxShadow: 'none', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {/* Crear publicación (si se está viendo el perfil propio) */}
+                    {usuarioEnSesion && Number(idUsuario) === Number(usuarioEnSesion.idusuario || usuarioEnSesion.idUsuario || usuarioEnSesion.id) && (
+                      <CrearPost usuario={usuarioEnSesion} onPostCreado={handlePostCreado} />
+                    )}
 
-                    {/* Feed de Publicaciones */}
-                    {publicaciones.length === 0 ? (
+                    {/* Feed de Publicaciones Reales */}
+                    {cargandoPublicaciones ? (
+                      <div className="feed-spinner-wrapper" style={{ padding: '30px 0' }}>
+                        <div className="feed-spinner" />
+                      </div>
+                    ) : publicaciones.length === 0 ? (
                       <div className="empty-feed-graphic">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="empty-feed-svg">
                           <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                           <circle cx="12" cy="13" r="4" />
                         </svg>
                         <h4>Sin publicaciones recientes</h4>
+                        <p>Aún no se han realizado publicaciones en este perfil.</p>
                       </div>
                     ) : (
                       publicaciones.map(post => (
-                        <div key={post.id} className="feed-post-card">
-                          <div className="post-card-header">
-                            <div className="post-author-info">
-                              <Avatar
-                                src={perfil?.fotoperfil}
-                                nombre={nombreCompleto}
-                                size="36px"
-                                className="post-author-avatar"
-                                style={{ border: 'none' }}
-                              />
-                              <div>
-                                <span className="post-author-name">{post.id === 1 || post.id === 2 ? nombreCompleto : post.autor}</span>
-                                <span className="post-date">{post.fecha}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <p className="post-content">{post.contenido}</p>
-
-                          {post.imagen && (
-                            <img src={post.imagen} alt="Publicación" className="post-image" />
-                          )}
-
-                          <div className="post-actions-row">
-                            <button 
-                              className={`post-action-btn ${post.liked ? 'liked' : ''}`}
-                              onClick={() => handleLikePost(post.id)}
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                              </svg>
-                              {post.likes} {post.likes === 1 ? 'Me gusta' : 'Me gustas'}
-                            </button>
-                            <button className="post-action-btn">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                              </svg>
-                              {post.comentarios.length} {post.comentarios.length === 1 ? 'Comentario' : 'Comentarios'}
-                            </button>
-                          </div>
-
-                          {/* Sección de Comentarios */}
-                          <div className="post-comments-section">
-                            {post.comentarios.map((c, i) => (
-                              <div key={i} className="comment-item">
-                                <span className="comment-author">{c.autor}</span>
-                                <span className="comment-text">{c.texto}</span>
-                              </div>
-                            ))}
-                            <form 
-                              onSubmit={(e) => handleAddComment(post.id, e)} 
-                              className="comment-form"
-                            >
-                              <input
-                                type="text"
-                                className="comment-input"
-                                placeholder="Escribe un comentario..."
-                                value={comentariosInputs[post.id] || ''}
-                                onChange={(e) => setComentariosInputs(prev => ({
-                                  ...prev,
-                                  [post.id]: e.target.value
-                                }))}
-                                required
-                              />
-                              <button type="submit" className="comment-submit-btn">
-                                Comentar
-                              </button>
-                            </form>
-                          </div>
-                        </div>
+                        <PostCompleto
+                          key={post.idpublicacion || post.id}
+                          post={post}
+                          usuario={usuarioEnSesion}
+                          onEliminar={handleEliminarPost}
+                        />
                       ))
                     )}
                   </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../axiosConfig.js'
 import { PostCompleto } from './PostCard.jsx'
 import CrearPost from './CrearPost.jsx'
@@ -9,6 +10,7 @@ import './FeedView.css'
 // VISTA PRINCIPAL: FeedView
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function FeedView({ usuario }) {
+  const navigate = useNavigate()
   const [posts, setPosts] = useState([])
   const [page, setPage] = useState(1)
   const [totalPaginas, setTotalPaginas] = useState(1)
@@ -115,7 +117,7 @@ export default function FeedView({ usuario }) {
         {/* ════ Columna Izquierda: Perfil + Seguidos ════ */}
         <aside className="feed-sidebar-izquierda">
           {/* Card Resumen Perfil */}
-          <div className="feed-profile-card">
+          <div className="feed-profile-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/perfil')}>
             <div className="feed-profile-banner" />
             <div className="feed-profile-avatar-container">
               <Avatar src={usuario?.fotoperfil} nombre={usuario?.nombre || 'Usuario'} size={72} />
@@ -210,13 +212,18 @@ export default function FeedView({ usuario }) {
             {recomendaciones && recomendaciones.length > 0 ? (
               <div className="feed-recomendados-lista">
                 {recomendaciones.map((rec) => (
-                  <div key={rec.idjugador || rec.idusuario} className="feed-recomendado-item">
+                  <div 
+                    key={rec.idjugador || rec.idusuario} 
+                    className="feed-recomendado-item"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => navigate(`/perfil/${rec.idusuario}`)}
+                  >
                     <Avatar src={rec.fotoperfil} nombre={rec.nombre || 'Usuario'} size={40} />
                     <div className="feed-recomendado-info">
                       <span className="feed-recomendado-nombre">{rec.nombre}</span>
                       <span className="feed-recomendado-sub">{rec.posicion || rec.deporte || 'Deportista'}</span>
                     </div>
-                    <button className="feed-btn-conectar">Conectar</button>
+                    <button className="feed-btn-conectar" onClick={(e) => { e.stopPropagation(); navigate(`/perfil/${rec.idusuario}`) }}>Perfil</button>
                   </div>
                 ))}
               </div>
