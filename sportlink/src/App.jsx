@@ -235,7 +235,7 @@ function App() {
               </ProtectedRoute>
             }
           />{/* Pública — accesible sin login, para links compartidos */}
-+         <Route path="/publicacion/:id" element={<PublicacionDetalle usuario={usuario} />} />
+         <Route path="/publicacion/:id" element={<PublicacionDetalle usuario={usuario} />} />
 
 
           {/* ── Protegidas ── */}

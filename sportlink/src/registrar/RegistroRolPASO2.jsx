@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import RegistroJugador from './registrarUser/RegistrojugadorPASO3.jsx'
-import RegistroEntrenador from './registrarUser/RegistroEntrenador.jsx'
+import RegistroEntrenador from './registrarUser/Registroentrenador.jsx'
 import RegistroClub from './registrarUser/Registroclub.jsx'
 import Header from '../header/header.jsx'
 import Footer from '../footer/footer.jsx'

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import api from '../../axiosConfig.js'
-import './RegistroClub.css'
+import './Registroclub.css'
 import Header from "../../header/header.jsx"
 import Footer from "../../footer/footer.jsx"
 import logoSportlink from "../../assets/logoSportlink.png"
