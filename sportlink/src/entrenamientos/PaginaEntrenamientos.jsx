@@ -17,7 +17,7 @@ import CustomSelect from '../components/CustomSelect.jsx';
 
 
 
-const API_BASE = 'http://localhost:3000/api/entrenamientos';
+const API_BASE = '/api/entrenamientos';
 
 const deportesDisponibles = [
   { id: 1, nombre: 'Fútbol' },

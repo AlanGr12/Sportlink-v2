@@ -15,7 +15,7 @@ import { IconoMensajes } from '../iconos/IconoMensajes.jsx';
 import './calendario.css';
 import Footer from '../footer/footer.jsx';
 
-const API = 'http://localhost:3000/api';
+const API = '/api';
 
 const CATEGORIAS = [
   { id: 'pruebas',        label: 'PRUEBAS DEPORTIVAS', color: '#23e7f5' },

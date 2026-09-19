@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import axios from 'axios'
+import api from '../axiosConfig.js'
 import './ChatbotButton.css'
 
 /**
@@ -52,7 +52,7 @@ export default function ChatbotButton() {
         .map((m) => ({ role: m.rol, content: m.texto }))
 
       // 3. Llamar al backend
-      const res = await axios.post('http://localhost:3000/api/ia/chat', {
+      const res = await api.post('/api/ia/chat', {
         mensaje: texto,
         historial: historialBackend,
       })
