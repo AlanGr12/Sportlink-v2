@@ -43,49 +43,60 @@
   gap: 4px;
 }
 
+.perfil-info-row,
 .perfil-stat-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 12px 8px;
-  border-radius: var(--radius-sm);
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  width: 100%;
   border-bottom: 1px solid rgba(255, 255, 255, 0.02);
   transition: var(--transition);
 }
 
+.perfil-info-row:hover,
 .perfil-stat-row:hover {
   background: rgba(255, 255, 255, 0.015);
   transform: translateX(2px);
   border-bottom-color: rgba(45, 239, 242, 0.1);
 }
 
+.perfil-info-row:last-child,
 .perfil-stat-row:last-child {
   border-bottom: none;
 }
 
+.perfil-info-label,
 .perfil-stat-label {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
+  gap: 8px;
+  color: #8A9099;
+  font-size: 0.88rem;
+  flex-shrink: 0; /* Evita que la etiqueta se aplaste */
 }
 
 .field-icon {
   width: 16px;
   height: 16px;
-  color: var(--text-muted);
+  color: #8A9099;
+  flex-shrink: 0;
   transition: var(--transition);
 }
 
+.perfil-info-row:hover .field-icon,
 .perfil-stat-row:hover .field-icon {
-  color: var(--cyan);
+  color: #2DEFF2;
 }
 
+.perfil-info-value,
 .perfil-stat-value {
+  color: #2DEFF2;
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-align: right;
+  word-break: break-word; /* Para que 'Agronomía, Buenos Aires' baje de línea prolijamente si no cabe */
+  max-width: 60%;
   font-family: var(--font-display) !important;
-  font-weight: 700;
-  color: var(--cyan);
-  font-size: 0.95rem;
 }

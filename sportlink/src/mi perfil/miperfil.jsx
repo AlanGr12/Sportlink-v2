@@ -6,6 +6,8 @@ import Avatar from '../components/Avatar.jsx';
 import Footer from '../footer/footer.jsx';
 import CrearPost from '../feed/CrearPost.jsx';
 import { PostCompleto } from '../feed/PostCard.jsx';
+import PerfilSidebar from './PerfilSidebar.jsx';
+import PerfilResenas from './PerfilResenas.jsx';
 import '../feed/FeedView.css';
 import './miperfil.css';
 
@@ -138,7 +140,29 @@ const MiPerfil = (props) => {
       try {
         const res = await api.get(`/api/login/perfil/${idUsuario}`);
         if (montado) {
-          setPerfil(res.data || null);
+          const datos = res.data || {};
+          console.log('[SportLink] Respuesta de /api/login/perfil/:id ->', datos);
+
+          // Fallbacks encadenados para capturar la foto de perfil sin importar la anidación del backend
+          const fotoDetectada =
+            datos.fotoperfil ||
+            datos.entrenador?.fotoperfil ||
+            datos.club?.fotoperfil ||
+            datos.usuario?.fotoperfil ||
+            datos.jugador?.fotoperfil ||
+            datos.foto_perfil ||
+            datos.entrenador?.foto_perfil ||
+            datos.club?.foto_perfil ||
+            datos.usuario?.foto_perfil ||
+            datos.jugador?.foto_perfil ||
+            datos.foto ||
+            datos.imagen ||
+            datos.avatar_url;
+
+          setPerfil({
+            ...datos,
+            fotoperfil: fotoDetectada || datos.fotoperfil || null,
+          });
           setErrorMensaje(null);
         }
       } catch (err) {
@@ -152,6 +176,110 @@ const MiPerfil = (props) => {
     obtenerPerfil();
     return () => { montado = false };
   }, [idUsuario]);
+
+  // ── Módulo de Reseñas (SOLO para Clubes y Entrenadores) ─────────────────────
+  const rolNormalizado = perfil?.tipousuario?.toLowerCase() || '';
+  const esClub = rolNormalizado === 'club';
+  const esEntrenador = rolNormalizado === 'entrenador';
+  const esJugador = rolNormalizado === 'jugador';
+  const esClubOEntrenador = esClub || esEntrenador;
+
+  const tipoEntidad = esClub ? 'club' : 'entrenador';
+  const idEntidad = esEntrenador
+    ? (perfil?.identrenador || perfil?.idEntrenador || perfil?.id_entrenador || perfil?.idusuario || idUsuario)
+    : esClub
+      ? (perfil?.idclub || perfil?.idClub || perfil?.id_club || perfil?.idusuario || idUsuario)
+      : null;
+
+  const rolSesion = usuarioEnSesion?.tipousuario?.toLowerCase() || '';
+  const esJugadorEnSesion = rolSesion === 'jugador';
+  const esEntrenadorEnSesion = rolSesion === 'entrenador';
+
+  const idJugadorSesion =
+    usuarioEnSesion?.idjugador ||
+    usuarioEnSesion?.idJugador ||
+    usuarioEnSesion?.jugador?.idjugador ||
+    (esJugadorEnSesion ? idSesion : null);
+
+  const idEntrenadorSesion =
+    usuarioEnSesion?.identrenador ||
+    usuarioEnSesion?.idEntrenador ||
+    usuarioEnSesion?.entrenador?.identrenador ||
+    (esEntrenadorEnSesion ? idSesion : null);
+
+  // Puede participar en reseñas si es jugador (visita entrenador/club) o si es entrenador visitando club
+  const puedeParticiparEnResenas =
+    esJugadorEnSesion || (esClub && esEntrenadorEnSesion);
+
+  const [reseniasData, setReseniasData] = useState({ promedio: 0, total: 0, opiniones: [] });
+  const [cargandoResenias, setCargandoResenias] = useState(false);
+  const [verificacionResenas, setVerificacionResenas] = useState({ puedeCalificar: false, yaCalifico: false, eventosPasados: [] });
+
+  const cargarResenias = useCallback(async () => {
+    if (!esClubOEntrenador || !idEntidad) return;
+    setCargandoResenias(true);
+    try {
+      // GET http://localhost:3000/api/resenias/entrenador/:id o /api/resenias/club/:id
+      const res = await api.get(`/api/resenias/${tipoEntidad}/${idEntidad}`);
+      const data = res.data || {};
+      const promedio = Number(data.promedio ?? data.rating ?? data.average ?? 0);
+      const opiniones = Array.isArray(data.opiniones)
+        ? data.opiniones
+        : Array.isArray(data.resenias)
+          ? data.resenias
+          : Array.isArray(data)
+            ? data
+            : [];
+      const total = Number(data.total ?? data.count ?? opiniones.length);
+      setReseniasData({ promedio, total, opiniones });
+    } catch (err) {
+      console.error('Error al cargar reseñas:', err);
+      setReseniasData({ promedio: 0, total: 0, opiniones: [] });
+    } finally {
+      setCargandoResenias(false);
+    }
+  }, [esClubOEntrenador, tipoEntidad, idEntidad]);
+
+  const verificarCalificacion = useCallback(async () => {
+    if (!esClubOEntrenador || !idEntidad || !puedeParticiparEnResenas || !idSesion) {
+      setVerificacionResenas({ puedeCalificar: false, yaCalifico: false, eventosPasados: [] });
+      return;
+    }
+    try {
+      // GET /api/resenias/verificar/:tipo/:id?idusuario=ID_SESION&tipousuario=...
+      const res = await api.get(`/api/resenias/verificar/${tipoEntidad}/${idEntidad}`, {
+        params: {
+          idusuario: idSesion,
+          tipousuario: rolSesion,
+          idjugador: idJugadorSesion || undefined,
+          identrenador: idEntrenadorSesion || undefined,
+        }
+      });
+      const data = res.data || {};
+      setVerificacionResenas({
+        puedeCalificar: data.puedeCalificar === true,
+        yaCalifico: data.yaCalifico === true,
+        eventosPasados: data.eventosPasados || data.eventos || [],
+        ...data,
+      });
+    } catch (err) {
+      console.error('Error al verificar calificación de reseñas:', err);
+    }
+  }, [esClubOEntrenador, tipoEntidad, idEntidad, puedeParticiparEnResenas, idSesion, rolSesion, idJugadorSesion, idEntrenadorSesion]);
+
+  useEffect(() => {
+    if (esClubOEntrenador && idEntidad) {
+      cargarResenias();
+      verificarCalificacion();
+    }
+  }, [esClubOEntrenador, idEntidad, cargarResenias, verificarCalificacion]);
+
+  const handleResenaAgregada = () => {
+    setToastMensaje('¡Tu reseña fue enviada con éxito!');
+    setTimeout(() => setToastMensaje(''), 4000);
+    cargarResenias();
+    verificarCalificacion();
+  };
 
   // Control del scroll del fondo cuando el modal de edición está abierto
   useEffect(() => {
@@ -279,7 +407,16 @@ const MiPerfil = (props) => {
               <div className="profile-avatar-area">
                 <div className="profile-avatar-border-svg">
                   <Avatar 
-                    src={perfil?.fotoperfil} 
+                    src={
+                      perfil?.fotoperfil ||
+                      perfil?.entrenador?.fotoperfil ||
+                      perfil?.club?.fotoperfil ||
+                      perfil?.usuario?.fotoperfil ||
+                      perfil?.jugador?.fotoperfil ||
+                      perfil?.foto_perfil ||
+                      perfil?.foto ||
+                      perfil?.imagen
+                    } 
                     nombre={nombreCompleto || perfil?.email || nombre} 
                     size="130px" 
                     className="profile-avatar-img" 
@@ -401,12 +538,14 @@ const MiPerfil = (props) => {
                     }}>{totalItems}</span>
                   )}
                 </button>
-                <button 
-                  className={`profile-tab-button ${tabActiva === 'recomendaciones' ? 'active' : ''}`}
-                  onClick={() => setTabActiva('recomendaciones')}
-                >
-                  Recomendaciones
-                </button>
+                {!esJugador && (
+                  <button 
+                    className={`profile-tab-button ${tabActiva === 'recomendaciones' ? 'active' : ''}`}
+                    onClick={() => setTabActiva('recomendaciones')}
+                  >
+                    Recomendaciones
+                  </button>
+                )}
               </nav>
 
               {/* Contenido según Tab */}
@@ -480,8 +619,8 @@ const MiPerfil = (props) => {
                   </div>
                 )}
 
-                {/* 4. Tab: Recomendaciones (Reseñas Deportivas) */}
-                {tabActiva === 'recomendaciones' && (
+                {/* 4. Tab: Recomendaciones (SOLO si NO es jugador) */}
+                {!esJugador && tabActiva === 'recomendaciones' && (
                   <div className="tab-pane-content pane-recomendaciones">
                     <h3 className="tab-pane-title">Recomendaciones de Clubes y Entrenadores</h3>
                     <div className="reviews-section-list">
@@ -516,24 +655,51 @@ const MiPerfil = (props) => {
               </div>
             </div>
 
-            {/* COLUMNA DERECHA: SIDEBAR DE COMPLETADO Y DATOS DE CONTACTO */}
+            {/* COLUMNA DERECHA: SIDEBAR DE COMPLETADO, TARJETA PERFIL, RESEÑAS Y CONTACTO */}
             <div className="new-profile-side-col">
               
-              {/* Box 1: Barra de Completado de Perfil */}
-              <div className="profile-side-card card-completado">
-                <div className="side-card-header">
-                  <h4>Estado del Perfil</h4>
-                  <span className="completado-percent">{porcentajeCompletado}%</span>
+              {/* Box 1: Barra de Completado de Perfil (sólo perfil propio) */}
+              {esPerfilPropio && (
+                <div className="profile-side-card card-completado">
+                  <div className="side-card-header">
+                    <h4>Estado del Perfil</h4>
+                    <span className="completado-percent">{porcentajeCompletado}%</span>
+                  </div>
+                  <div className="completado-bar-track">
+                    <div className="completado-bar-fill" style={{ width: `${porcentajeCompletado}%` }} />
+                  </div>
+                  <p className="completado-text">
+                    {porcentajeCompletado === 100 
+                      ? '¡Tu perfil está completamente configurado! Estás listo para captar la atención de reclutadores.'
+                      : 'Añade información de contacto y tu descripción para que más clubes puedan encontrarte fácilmente.'}
+                  </p>
                 </div>
-                <div className="completado-bar-track">
-                  <div className="completado-bar-fill" style={{ width: `${porcentajeCompletado}%` }} />
-                </div>
-                <p className="completado-text">
-                  {porcentajeCompletado === 100 
-                    ? '¡Tu perfil está completamente configurado! Estás listo para captar la atención de reclutadores.'
-                    : 'Añade información de contacto y tu descripción para que más clubes puedan encontrarte fácilmente.'}
-                </p>
-              </div>
+              )}
+
+              {/* Tarjeta lateral "PERFIL": muestra datos y métrica dinámica RATING */}
+              <PerfilSidebar
+                perfil={perfil}
+                ratingPromedio={esClubOEntrenador ? reseniasData.promedio : null}
+                totalResenas={esClubOEntrenador ? reseniasData.total : null}
+              />
+
+              {/* Tarjeta lateral "RESEÑAS": Inmediatamente debajo de la tarjeta "PERFIL" */}
+              {/* REGLA ESTRICTA DE NEGOCIO: SOLO para Clubes y Entrenadores, NUNCA para Jugadores */}
+              {esClubOEntrenador && (
+                <PerfilResenas
+                  perfil={perfil}
+                  usuarioEnSesion={usuarioEnSesion}
+                  reseniasData={reseniasData}
+                  cargando={cargandoResenias}
+                  verificacion={verificacionResenas}
+                  onResenaCreada={handleResenaAgregada}
+                  tipoEntidad={tipoEntidad}
+                  idEntidad={idEntidad}
+                  idJugadorSesion={idJugadorSesion}
+                  idEntrenadorSesion={idEntrenadorSesion}
+                  esPerfilPropio={esPerfilPropio}
+                />
+              )}
 
               {/* Box 2: Información de Contacto */}
               <div className="profile-side-card card-contacto">
