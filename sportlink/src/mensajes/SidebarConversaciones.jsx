@@ -30,25 +30,7 @@ function rolBadgeClass(rol) {
   return 'mensajes-role-badge grupo'
 }
 
-function formatearFechaRelativa(fechaString) {
-  if (!fechaString) return ''
-  const date = new Date(fechaString)
-  const hoy = new Date()
-  const ayer = new Date()
-  ayer.setDate(hoy.getDate() - 1)
-
-  const mismaFecha = (a, b) =>
-    a.getDate() === b.getDate() &&
-    a.getMonth() === b.getMonth() &&
-    a.getFullYear() === b.getFullYear()
-
-  if (mismaFecha(date, hoy)) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  }
-  if (mismaFecha(date, ayer)) return 'Ayer'
-  const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-  return dias[date.getDay()]
-}
+import { formatearFechaRelativa } from './utilsFecha.js'
 
 const FILTROS = [
   { label: 'Todos', value: 'todos' },

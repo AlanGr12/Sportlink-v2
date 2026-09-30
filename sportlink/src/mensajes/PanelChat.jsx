@@ -77,30 +77,13 @@ function rolBadgeClass(rol) {
   return 'mensajes-panel-rol-badge grupo'
 }
 
-function formatearHora(fechaString) {
-  if (!fechaString) return ''
-  return new Date(fechaString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
+import { formatearHoraMensaje, etiquetaFecha, parsearFechaUtc } from './utilsFecha.js'
 
-function etiquetaFecha(fechaString) {
-  const date = new Date(fechaString)
-  const hoy = new Date()
-  const ayer = new Date()
-  ayer.setDate(hoy.getDate() - 1)
+// Exportar también desde PanelChat por compatibilidad
+export { formatearHoraMensaje }
 
-  const mismaFecha = (a, b) =>
-    a.getDate() === b.getDate() &&
-    a.getMonth() === b.getMonth() &&
-    a.getFullYear() === b.getFullYear()
-
-  if (mismaFecha(date, hoy)) return 'HOY'
-  if (mismaFecha(date, ayer)) return 'AYER'
-  return date.toLocaleDateString('es-AR', {
-    day: 'numeric',
-    month: 'long',
-    year: date.getFullYear() !== hoy.getFullYear() ? 'numeric' : undefined,
-  }).toUpperCase()
-}
+// Alias para compatibilidad interna
+const formatearHora = formatearHoraMensaje
 
 function buildMensajesConSeparadores(mensajes) {
   const items = []
@@ -698,7 +681,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
                 )}
               </div>
               <div className="mensaje-hora">
-                {formatearHora(msg.createdat)}
+                {formatearHoraMensaje(msg.createdat)}
                 {esPropio && <DoubleCheck leido={msg.leido} />}
               </div>
             </div>

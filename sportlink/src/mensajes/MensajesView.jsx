@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import api from '../axiosConfig.js'
 import SidebarConversaciones from './SidebarConversaciones.jsx'
 import PanelChat from './PanelChat.jsx'
+import { parsearFechaUtc } from './utilsFecha.js'
 import './mensajes.css'
 import { createClient } from '@supabase/supabase-js'
 
@@ -82,8 +83,8 @@ export default function MensajesView({ usuario }) {
       prev
         .map((c) => {
           if (c.idconversacion === idconversacion) {
-            const actualFecha = c.ultimoMensaje?.createdat ? new Date(c.ultimoMensaje.createdat).getTime() : 0
-            const msgFecha = mensaje.createdat ? new Date(mensaje.createdat).getTime() : 0
+            const actualFecha = c.ultimoMensaje?.createdat ? (parsearFechaUtc(c.ultimoMensaje.createdat)?.getTime() || 0) : 0
+            const msgFecha = mensaje.createdat ? (parsearFechaUtc(mensaje.createdat)?.getTime() || 0) : 0
 
             if (!c.ultimoMensaje || c.ultimoMensaje.idmensaje === mensaje.idmensaje || msgFecha >= actualFecha) {
               return { ...c, ultimoMensaje: mensaje, updatedat: mensaje.createdat || c.updatedat }
@@ -91,7 +92,7 @@ export default function MensajesView({ usuario }) {
           }
           return c
         })
-        .sort((a, b) => new Date(b.updatedat) - new Date(a.updatedat))
+        .sort((a, b) => (parsearFechaUtc(b.updatedat)?.getTime() || 0) - (parsearFechaUtc(a.updatedat)?.getTime() || 0))
     )
   }, [])
 
