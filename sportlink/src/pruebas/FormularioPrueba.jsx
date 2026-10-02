@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../axiosConfig.js";
 import CustomSelect from "../components/CustomSelect.jsx";
+import { obtenerFechaHoyLocal } from "../utils/dateUtils.js";
 
 // ── Deportes disponibles (mismo listado que FormularioEntrenamiento) ──────────
 const deportesDisponibles = [
@@ -69,8 +70,22 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
     if (!categoria.trim())            e.categoria   = "La categoría es obligatoria.";
     if (!zona.trim())                 e.zona        = "La zona es obligatoria.";
     if (!genero.trim())               e.genero      = "El género es obligatorio.";
-    if (!fechaprueba)                 e.fechaprueba = "La fecha de prueba es obligatoria.";
-    if (!fechacierre)                 e.fechacierre = "La fecha de cierre es obligatoria.";
+
+    const hoyStr = obtenerFechaHoyLocal();
+    if (!fechaprueba) {
+      e.fechaprueba = "La fecha de prueba es obligatoria.";
+    } else if (fechaprueba < hoyStr) {
+      e.fechaprueba = "La fecha de la prueba no puede ser anterior a la fecha actual.";
+    }
+
+    if (!fechacierre) {
+      e.fechacierre = "La fecha de cierre es obligatoria.";
+    } else if (fechacierre < hoyStr) {
+      e.fechacierre = "La fecha de cierre no puede ser anterior a la fecha actual.";
+    } else if (fechaprueba && fechacierre > fechaprueba) {
+      e.fechacierre = "La fecha de cierre no puede ser posterior a la fecha de la prueba.";
+    }
+
     setErrores(e);
     return Object.keys(e).length === 0;
   };
@@ -212,6 +227,7 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
           <input
             type="date"
             className="form-input"
+            min={obtenerFechaHoyLocal()}
             value={fechaprueba}
             onChange={(e) => setFechaprueba(e.target.value)}
           />
@@ -225,6 +241,8 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
           <input
             type="date"
             className="form-input"
+            min={obtenerFechaHoyLocal()}
+            max={fechaprueba || undefined}
             value={fechacierre}
             onChange={(e) => setFechacierre(e.target.value)}
           />

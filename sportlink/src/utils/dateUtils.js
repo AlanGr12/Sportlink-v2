@@ -31,3 +31,42 @@ export function formatearFechaLocal(fechaStr, opciones = { day: 'numeric', month
   if (!date || isNaN(date.getTime())) return '';
   return date.toLocaleDateString('es-AR', opciones);
 }
+
+/**
+ * Retorna la fecha actual local en formato 'YYYY-MM-DD'.
+ * @returns {string}
+ */
+export function obtenerFechaHoyLocal() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Determina si una fecha (y opcionalmente hora de fin) ya pasó respecto al momento actual.
+ * @param {string} fechaStr Fecha del evento (YYYY-MM-DD o ISO)
+ * @param {string|null} horaFinStr Opcional: hora de finalización (HH:MM o HH:MM:SS)
+ * @returns {boolean} True si ya pasó, false si sigue vigente o futura
+ */
+export function haPasadoFecha(fechaStr, horaFinStr = null) {
+  if (!fechaStr) return false;
+  const hoyStr = obtenerFechaHoyLocal();
+  const fechaLimpia = String(fechaStr).includes('T') ? fechaStr.split('T')[0] : String(fechaStr).substring(0, 10);
+
+  if (fechaLimpia < hoyStr) return true;
+  if (fechaLimpia > hoyStr) return false;
+
+  // Si la fecha es hoy y tiene hora de fin, verificar si la hora ya terminó
+  if (horaFinStr) {
+    const d = new Date();
+    const horaActual = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const horaFin = String(horaFinStr).substring(0, 5);
+    if (horaFin && horaFin < horaActual) {
+      return true;
+    }
+  }
+
+  return false;
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './FormularioEntrenamiento.css';
 import CustomSelect from '../components/CustomSelect.jsx';
+import { obtenerFechaHoyLocal } from '../utils/dateUtils.js';
 
 const deportesDisponibles = [
   { id: 1, nombre: 'Fútbol' },
@@ -95,6 +96,11 @@ const FormularioEntrenamiento = ({
     }
     if (!fechaentr) {
       nuevosErrores.fechaentr = 'La fecha es requerida';
+    } else {
+      const hoyStr = obtenerFechaHoyLocal();
+      if (fechaentr < hoyStr) {
+        nuevosErrores.fechaentr = 'La fecha del entrenamiento no puede ser anterior a la fecha actual';
+      }
     }
     if (!horainicio) {
       nuevosErrores.horainicio = 'La hora de inicio es requerida';
@@ -220,6 +226,7 @@ const FormularioEntrenamiento = ({
             type="date"
             className="form-input"
             value={fechaentr}
+            min={obtenerFechaHoyLocal()}
             onChange={(e) => setFechaentr(e.target.value)}
             required
           />

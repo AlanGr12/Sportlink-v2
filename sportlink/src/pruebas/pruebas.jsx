@@ -7,7 +7,7 @@ import FormularioPrueba from "./FormularioPrueba";
 import Footer from "../footer/footer";
 import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
 import ModalConfirmacionEliminar from '../calendario/ModalConfirmacionEliminar.jsx';
-import { parsearFechaLocal, formatearFechaLocal } from '../utils/dateUtils.js';
+import { parsearFechaLocal, formatearFechaLocal, haPasadoFecha } from '../utils/dateUtils.js';
 
 // Iconos hechos con codigo
 import { IconoMedalla } from "../iconos/IconoMedalla.jsx";
@@ -565,6 +565,9 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
   // ── Filtrado ──────────────────────────────────────────────
   const pruebasFiltradas = pruebas.filter((prueba) => {
+    // No mostrar pruebas viejas cuya fecha ya haya pasado
+    if (haPasadoFecha(prueba.fechaprueba, prueba.horafin)) return false;
+
     // Filtro Estricto de Pruebas para Rol Club
     if (esClub) {
       if (!idclubResuelto) return false;

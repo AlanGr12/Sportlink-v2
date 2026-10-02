@@ -14,8 +14,7 @@ import { IconoBuscador } from '../iconos/IconoBuscador.jsx';
 import Footer from '../footer/footer';
 import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
 import CustomSelect from '../components/CustomSelect.jsx';
-
-
+import { haPasadoFecha, obtenerFechaHoyLocal } from '../utils/dateUtils.js';
 
 const API_BASE = '/api/entrenamientos';
 
@@ -184,7 +183,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
     try {
       const res = await api.get(url, { params });
       if (res.data && res.data.items) {
-        const items = res.data.items.map(normalize);
+        const items = res.data.items.map(normalize).filter(it => !haPasadoFecha(it.fechaentr, it.horafin));
         // Enriquecer cada entrenamiento con conteo de inscritos y estado de inscripción
         const itemsConExtras = await Promise.all(items.map(async (it) => {
           const idEntr = Number(it.id || it.identrenamientos || it.identrenamiento || it.ident || 0);
@@ -226,7 +225,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
         setEntrenamientos(itemsConExtras);
         setTotal(res.data.total || itemsConExtras.length);
       } else if (Array.isArray(res.data)) {
-        const items = res.data.map(normalize);
+        const items = res.data.map(normalize).filter(it => !haPasadoFecha(it.fechaentr, it.horafin));
         const itemsConExtras = await Promise.all(items.map(async (it) => {
           const idEntr = Number(it.id || it.identrenamientos || it.identrenamiento || it.ident || 0);
           let inscritosCount = 0;
@@ -473,12 +472,14 @@ const PaginaEntrenamientos = ({ usuario }) => {
                   type="date" 
                   className="filtro-input" 
                   value={filtroFechaDesde}
+                  min={obtenerFechaHoyLocal()}
                   onChange={(e) => setFiltroFechaDesde(e.target.value)}
                 />
                 <input 
                   type="date" 
                   className="filtro-input" 
                   value={filtroFechaHasta}
+                  min={filtroFechaDesde || obtenerFechaHoyLocal()}
                   onChange={(e) => setFiltroFechaHasta(e.target.value)}
                 />
               </div>
