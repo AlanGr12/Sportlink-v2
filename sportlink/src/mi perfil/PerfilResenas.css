@@ -234,8 +234,8 @@
 .resena-estrella-icon {
   width: 14px;
   height: 14px;
-  fill: #fbbf24;
-  color: #fbbf24;
+  fill: #2DEFF2;
+  color: #2DEFF2;
 }
 
 .resena-estrella-icon.vacia {
@@ -247,7 +247,7 @@
 .resena-puntuacion-num {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #fbbf24;
+  color: #2DEFF2;
   margin-left: 4px;
   font-family: var(--font-display, 'Space Grotesk', sans-serif);
 }
@@ -562,8 +562,8 @@
 }
 
 .star-btn-select.activa svg {
-  fill: #fbbf24;
-  color: #fbbf24;
+  fill: #2DEFF2;
+  color: #2DEFF2;
   filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
 }
 
@@ -577,7 +577,7 @@
   font-family: var(--font-display, 'Space Grotesk', sans-serif);
   font-size: 0.82rem;
   font-weight: 700;
-  color: #fbbf24;
+  color: #2DEFF2;
   min-height: 20px;
   text-align: center;
 }

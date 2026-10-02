@@ -8,6 +8,7 @@ import CrearPost from '../feed/CrearPost.jsx';
 import { PostCompleto } from '../feed/PostCard.jsx';
 import PerfilSidebar from './PerfilSidebar.jsx';
 import PerfilResenas from './PerfilResenas.jsx';
+import PerfilBiografia from './PerfilBiografia.jsx';
 import '../feed/FeedView.css';
 import './miperfil.css';
 
@@ -67,8 +68,7 @@ const MiPerfil = (props) => {
   const [perfil, setPerfil] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [errorMensaje, setErrorMensaje] = useState(null);
-  const [tabActiva, setTabActiva] = useState('sobremi');  // se sincroniza en el efecto de abajo
-  
+
   // Estados para Modal de Edición
   const [modalAbierto, setModalAbierto] = useState(false);
   const [formEdicion, setFormEdicion] = useState({});
@@ -88,11 +88,6 @@ const MiPerfil = (props) => {
   // idUsuario a visualizar (si viene paramIdUsuario se usa ese, sino el propio)
   const idUsuario = paramIdUsuario || idSesion;
   const esPerfilPropio = Number(idUsuario) === Number(idSesion);
-
-  // Resetear tab a "Sobre mí" cada vez que se navega a un perfil diferente
-  useEffect(() => {
-    setTabActiva('sobremi');
-  }, [idUsuario]);
 
   const cargarPublicaciones = useCallback(async () => {
     if (!idUsuario) return;
@@ -122,6 +117,18 @@ const MiPerfil = (props) => {
   const handleEliminarPost = (idpublicacion) => {
     setPublicaciones(prev => prev.filter(p => p.idpublicacion !== idpublicacion));
     setTotalItems(prev => Math.max(0, prev - 1));
+  };
+
+  const handleBiografiaActualizada = (nuevaBiografia) => {
+    setPerfil(prev => ({
+      ...prev,
+      biografia: nuevaBiografia
+    }));
+  };
+
+  const handleMostrarToast = (mensaje) => {
+    setToastMensaje(mensaje);
+    setTimeout(() => setToastMensaje(''), 4000);
   };
 
   const totalLikes = publicaciones.reduce((acc, p) => acc + (p.totalLikes || 0), 0);
@@ -219,7 +226,6 @@ const MiPerfil = (props) => {
     if (!esClubOEntrenador || !idEntidad) return;
     setCargandoResenias(true);
     try {
-      // GET http://localhost:3000/api/resenias/entrenador/:id o /api/resenias/club/:id
       const res = await api.get(`/api/resenias/${tipoEntidad}/${idEntidad}`);
       const data = res.data || {};
       const promedio = Number(data.promedio ?? data.rating ?? data.average ?? 0);
@@ -246,7 +252,6 @@ const MiPerfil = (props) => {
       return;
     }
     try {
-      // GET /api/resenias/verificar/:tipo/:id?idusuario=ID_SESION&tipousuario=...
       const res = await api.get(`/api/resenias/verificar/${tipoEntidad}/${idEntidad}`, {
         params: {
           idusuario: idSesion,
@@ -275,8 +280,7 @@ const MiPerfil = (props) => {
   }, [esClubOEntrenador, idEntidad, cargarResenias, verificarCalificacion]);
 
   const handleResenaAgregada = () => {
-    setToastMensaje('¡Tu reseña fue enviada con éxito!');
-    setTimeout(() => setToastMensaje(''), 4000);
+    handleMostrarToast('¡Tu reseña fue enviada con éxito!');
     cargarResenias();
     verificarCalificacion();
   };
@@ -302,6 +306,7 @@ const MiPerfil = (props) => {
       telefono: perfil?.telefono || '',
       instagram: perfil?.instagram || '',
       descripcion: perfil?.descripcion || '',
+      biografia: perfil?.biografia || '',
       // Atributos de ficha técnica
       edad: perfil?.edad || '',
       altura: perfil?.altura || '',
@@ -312,20 +317,27 @@ const MiPerfil = (props) => {
     setModalAbierto(true);
   };
 
-  const guardarCambios = (e) => {
+  const guardarCambios = async (e) => {
     e.preventDefault();
     
-    // Al no haber endpoint de actualización en backend, actualizamos en local state para excelente UX
+    // Si se modificó la biografía desde el modal general, guardarla en el backend
+    if (formEdicion.biografia !== undefined && formEdicion.biografia !== perfil?.biografia) {
+      try {
+        await api.put('/api/login/perfil/biografia', {
+          biografia: formEdicion.biografia
+        });
+      } catch (err) {
+        console.error('Error al actualizar biografía desde modal:', err);
+      }
+    }
+
     setPerfil(prev => ({
       ...prev,
       ...formEdicion
     }));
 
     setModalAbierto(false);
-    
-    // Mostrar Toast de Éxito
-    setToastMensaje('¡Perfil actualizado con éxito!');
-    setTimeout(() => setToastMensaje(''), 4000);
+    handleMostrarToast('¡Perfil actualizado con éxito!');
   };
 
   if (cargando) {
@@ -359,29 +371,6 @@ const MiPerfil = (props) => {
   const nombreCompleto = `${nombre} ${apellido}`.trim();
   const rol = perfil?.tipousuario || 'Usuario';
 
-  // Calcular porcentaje de completado de perfil
-  const camposRequeridos = [perfil?.nombre, perfil?.apellido, perfil?.ubicacion, perfil?.telefono, perfil?.instagram, perfil?.descripcion];
-  const completados = camposRequeridos.filter(Boolean).length;
-  const porcentajeCompletado = Math.round((completados / camposRequeridos.length) * 100);
-
-  // Estadísticas/métricas de rendimiento predeterminadas para excelente UX
-  const rendimientoMock = perfil?.tipousuario?.toLowerCase() === 'jugador' ? [
-    { label: 'Velocidad / Ritmo', valor: 85, color: '#2deff2' },
-    { label: 'Técnica / Control', valor: 78, color: '#3b82f6' },
-    { label: 'Resistencia física', valor: 90, color: '#8b5cf6' },
-    { label: 'Juego colectivo', valor: 82, color: '#f59e0b' },
-  ] : perfil?.tipousuario?.toLowerCase() === 'entrenador' ? [
-    { label: 'Táctica / Estrategia', valor: 88, color: '#2deff2' },
-    { label: 'Gestión de vestuario', valor: 92, color: '#3b82f6' },
-    { label: 'Liderazgo técnico', valor: 85, color: '#8b5cf6' },
-    { label: 'Desarrollo de juveniles', valor: 80, color: '#f59e0b' },
-  ] : [
-    { label: 'Infraestructura', valor: 80, color: '#2deff2' },
-    { label: 'Prestigio competitivo', valor: 85, color: '#3b82f6' },
-    { label: 'Cuerpo técnico', valor: 75, color: '#8b5cf6' },
-    { label: 'Desarrollo de atletas', valor: 90, color: '#f59e0b' },
-  ];
-
   return (
     <>
       <div className="miPerfil-root">
@@ -396,7 +385,7 @@ const MiPerfil = (props) => {
 
         <div className="miPerfil-container">
           
-          {/* ── CARD HEADER DEL PERFIL (REDISÈÑADO) ── */}
+          {/* ── CARD HEADER DEL PERFIL (INTACTO) ── */}
           <div className="new-profile-header">
             <div className="profile-cover-image">
               <div className="profile-cover-gradient" />
@@ -456,8 +445,8 @@ const MiPerfil = (props) => {
                 ) : (
                   <p className="profile-bio-text empty">
                     {esPerfilPropio 
-                      ? 'Sin descripción en tu perfil. Hacé clic en "Editar perfil" para agregar una biografía y destacar en SportLink.'
-                      : 'Este usuario aún no ha agregado una biografía.'}
+                      ? 'Sin descripción en tu perfil. Hacé clic en "Editar perfil" para agregar una descripción y destacar en SportLink.'
+                      : 'Este usuario aún no ha agregado una descripción.'}
                   </p>
                 )}
 
@@ -506,176 +495,69 @@ const MiPerfil = (props) => {
           {/* ── GRID DE CONTENIDO PRINCIPAL ── */}
           <div className="new-profile-grid">
             
-            {/* COLUMNA IZQUIERDA: PANELES E INTERACTIVIDAD DE TABS */}
+            {/* COLUMNA IZQUIERDA/CENTRAL: FLUJO VERTICAL UNIFICADO (BIOGRAFÍA Y PUBLICACIONES) */}
             <div className="new-profile-main-col">
               
-              {/* Barra de Navegación de Tabs */}
-              <nav className="profile-tabs-nav">
-                <button 
-                  className={`profile-tab-button ${tabActiva === 'sobremi' ? 'active' : ''}`}
-                  onClick={() => setTabActiva('sobremi')}
-                >
-                  Sobre mí
-                </button>
-                <button 
-                  className={`profile-tab-button ${tabActiva === 'publicaciones' ? 'active' : ''}`}
-                  onClick={() => setTabActiva('publicaciones')}
-                >
-                  Publicaciones
-                  {totalItems > 0 && (
-                    <span style={{
-                      marginLeft: '6px',
-                      background: tabActiva === 'publicaciones' ? '#2DEFF2' : 'rgba(45,239,242,0.18)',
-                      color: tabActiva === 'publicaciones' ? '#090a0c' : '#2DEFF2',
-                      borderRadius: '999px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      padding: '1px 7px',
-                      lineHeight: '18px',
-                      display: 'inline-block',
-                      verticalAlign: 'middle',
-                      transition: 'all 0.2s',
-                    }}>{totalItems}</span>
-                  )}
-                </button>
-                {!esJugador && (
-                  <button 
-                    className={`profile-tab-button ${tabActiva === 'recomendaciones' ? 'active' : ''}`}
-                    onClick={() => setTabActiva('recomendaciones')}
-                  >
-                    Recomendaciones
-                  </button>
-                )}
-              </nav>
+              {/* 1. Box de Biografía (Visualización + Edición integrada) */}
+              <PerfilBiografia 
+                biografia={perfil?.biografia}
+                esDuenio={esPerfilPropio}
+                onActualizar={handleBiografiaActualizada}
+                onToast={handleMostrarToast}
+              />
 
-              {/* Contenido según Tab */}
-              <div className="profile-tab-content-panel">
+              {/* 2. Feed de Publicaciones con Scrollbar Dedicado */}
+              <div className="perfil-feed-section">
                 
-                {/* 1. Tab: Sobre mí (Ficha Técnica Integrada) */}
-                {tabActiva === 'sobremi' && (
-                  <div className="tab-pane-content pane-sobremi">
-                    <h3 className="tab-pane-title">Ficha Deportiva Completa</h3>
-                    <div className="profile-details-grid">
-                      <div className="detail-item-box">
-                        <span className="detail-label">Edad</span>
-                        <span className="detail-value">{perfil?.edad ? `${perfil.edad} años` : 'No especificada'}</span>
-                      </div>
-                      <div className="detail-item-box">
-                        <span className="detail-label">Altura</span>
-                        <span className="detail-value">{perfil?.altura || 'No especificada'}</span>
-                      </div>
-                      <div className="detail-item-box">
-                        <span className="detail-label">Posición principal</span>
-                        <span className="detail-value">{perfil?.posicion || 'No especificada'}</span>
-                      </div>
-                      <div className="detail-item-box">
-                        <span className="detail-label">Experiencia</span>
-                        <span className="detail-value">{perfil?.experiencia || 'No especificada'}</span>
-                      </div>
-                      <div className="detail-item-box">
-                        <span className="detail-label">Categoría</span>
-                        <span className="detail-value">{perfil?.categoria || 'No especificada'}</span>
-                      </div>
-                      <div className="detail-item-box">
-                        <span className="detail-label">Género</span>
-                        <span className="detail-value">{perfil?.genero || 'No especificado'}</span>
-                      </div>
+                <div className="perfil-feed-header">
+                  <div className="perfil-feed-title-wrap">
+                    <span className="perfil-feed-title-indicator" />
+                    <h3 className="perfil-feed-title">Publicaciones</h3>
+                  </div>
+                  <span className="perfil-feed-counter">
+                    {totalItems} {totalItems === 1 ? 'publicación' : 'publicaciones'}
+                  </span>
+                </div>
+
+                {/* Formulario Crear publicación (si se está viendo el perfil propio) */}
+                {esPerfilPropio && usuarioEnSesion && (
+                  <CrearPost usuario={usuarioEnSesion} onPostCreado={handlePostCreado} />
+                )}
+
+                {/* Contenedor de Publicaciones con Scrollbar Dedicado */}
+                <div className="perfil-publicaciones-scroll-container">
+                  {cargandoPublicaciones ? (
+                    <div className="feed-spinner-wrapper" style={{ padding: '30px 0' }}>
+                      <div className="feed-spinner" />
                     </div>
-                  </div>
-                )}
-
-                {/* 3. Tab: Publicaciones (Feed de Red Social) */}
-                {tabActiva === 'publicaciones' && (
-                  <div className="tab-pane-content pane-publicaciones" style={{ padding: 0, backgroundColor: 'transparent', border: 'none', boxShadow: 'none', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {/* Crear publicación (si se está viendo el perfil propio) */}
-                    {usuarioEnSesion && Number(idUsuario) === Number(usuarioEnSesion.idusuario || usuarioEnSesion.idUsuario || usuarioEnSesion.id) && (
-                      <CrearPost usuario={usuarioEnSesion} onPostCreado={handlePostCreado} />
-                    )}
-
-                    {/* Feed de Publicaciones Reales */}
-                    {cargandoPublicaciones ? (
-                      <div className="feed-spinner-wrapper" style={{ padding: '30px 0' }}>
-                        <div className="feed-spinner" />
-                      </div>
-                    ) : publicaciones.length === 0 ? (
-                      <div className="empty-feed-graphic">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="empty-feed-svg">
-                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                          <circle cx="12" cy="13" r="4" />
-                        </svg>
-                        <h4>Sin publicaciones recientes</h4>
-                        <p>Aún no se han realizado publicaciones en este perfil.</p>
-                      </div>
-                    ) : (
-                      publicaciones.map(post => (
-                        <PostCompleto
-                          key={post.idpublicacion || post.id}
-                          post={post}
-                          usuario={usuarioEnSesion}
-                          onEliminar={handleEliminarPost}
-                        />
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {/* 4. Tab: Recomendaciones (SOLO si NO es jugador) */}
-                {!esJugador && tabActiva === 'recomendaciones' && (
-                  <div className="tab-pane-content pane-recomendaciones">
-                    <h3 className="tab-pane-title">Recomendaciones de Clubes y Entrenadores</h3>
-                    <div className="reviews-section-list">
-                      {perfil?.resenas && perfil.resenas.length > 0 ? (
-                        perfil.resenas.map((resena, idx) => (
-                          <div key={idx} className="review-card-modern">
-                            <p className="review-text">"{resena.texto}"</p>
-                            <div className="review-author-info">
-                              <span className="review-author-circle">
-                                {(resena.autor || 'A').charAt(0).toUpperCase()}
-                              </span>
-                              <div>
-                                <span className="review-author-name">{resena.autor || 'Anónimo'}</span>
-                                <span className="review-author-desc">Recomendación verificada de SportLink</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="empty-feed-graphic">
-                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="empty-feed-svg">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                          </svg>
-                          <h4>Sin recomendaciones aún</h4>
-                          <p>Las recomendaciones de veedores, entrenadores y directivos aparecerán listadas aquí.</p>
-                        </div>
-                      )}
+                  ) : publicaciones.length === 0 ? (
+                    <div className="empty-feed-graphic">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="empty-feed-svg">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                      <h4>Sin publicaciones recientes</h4>
+                      <p>Aún no se han realizado publicaciones en este perfil.</p>
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    publicaciones.map(post => (
+                      <PostCompleto
+                        key={post.idpublicacion || post.id}
+                        post={post}
+                        usuario={usuarioEnSesion}
+                        onEliminar={handleEliminarPost}
+                      />
+                    ))
+                  )}
+                </div>
 
               </div>
+
             </div>
 
-            {/* COLUMNA DERECHA: SIDEBAR DE COMPLETADO, TARJETA PERFIL, RESEÑAS Y CONTACTO */}
+            {/* COLUMNA DERECHA: TARJETA PERFIL, RESEÑAS Y CONTACTO */}
             <div className="new-profile-side-col">
               
-              {/* Box 1: Barra de Completado de Perfil (sólo perfil propio) */}
-              {esPerfilPropio && (
-                <div className="profile-side-card card-completado">
-                  <div className="side-card-header">
-                    <h4>Estado del Perfil</h4>
-                    <span className="completado-percent">{porcentajeCompletado}%</span>
-                  </div>
-                  <div className="completado-bar-track">
-                    <div className="completado-bar-fill" style={{ width: `${porcentajeCompletado}%` }} />
-                  </div>
-                  <p className="completado-text">
-                    {porcentajeCompletado === 100 
-                      ? '¡Tu perfil está completamente configurado! Estás listo para captar la atención de reclutadores.'
-                      : 'Añade información de contacto y tu descripción para que más clubes puedan encontrarte fácilmente.'}
-                  </p>
-                </div>
-              )}
-
               {/* Tarjeta lateral "PERFIL": muestra datos y métrica dinámica RATING */}
               <PerfilSidebar
                 perfil={perfil}
@@ -735,7 +617,7 @@ const MiPerfil = (props) => {
       </div>
       <Footer />
 
-      {/* ── MODAL EDITAR PERFIL (REDISÈÑADO) ── */}
+      {/* ── MODAL EDITAR PERFIL ── */}
       {modalAbierto && createPortal(
         <div className="profile-modal-overlay">
           <div className="profile-modal-card">
@@ -828,14 +710,26 @@ const MiPerfil = (props) => {
               </div>
 
               <div className="form-field-group">
-                <label>Descripción / Biografía</label>
+                <label>Descripción / Frase</label>
                 <textarea 
                   value={formEdicion.descripcion} 
                   onChange={e => setFormEdicion(p => ({ ...p, descripcion: e.target.value }))}
-                  placeholder="Escribe algo sobre ti, tus metas y tu carrera deportiva..."
+                  placeholder="Frase o lema destacado..."
                   maxLength={400}
                 />
                 <span className="char-count-modal">{formEdicion.descripcion?.length || 0} / 400</span>
+              </div>
+
+              <div className="form-field-group">
+                <label>Biografía</label>
+                <textarea 
+                  value={formEdicion.biografia} 
+                  onChange={e => setFormEdicion(p => ({ ...p, biografia: e.target.value }))}
+                  placeholder="Escribe sobre ti, tu trayectoria deportiva, logros y metas..."
+                  maxLength={1000}
+                  rows={3}
+                />
+                <span className="char-count-modal">{formEdicion.biografia?.length || 0} / 1000</span>
               </div>
 
               <div className="profile-modal-actions">

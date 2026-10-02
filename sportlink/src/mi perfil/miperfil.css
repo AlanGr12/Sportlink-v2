@@ -1083,3 +1083,109 @@
   color: #000;
 }
 
+
+/* ── CONTENEDOR DE FEED UNIFICADO CON SCROLLBAR DEDICADO ── */
+.perfil-feed-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.perfil-feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px;
+}
+
+.perfil-feed-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.perfil-feed-title-indicator {
+  width: 3px;
+  height: 16px;
+  background-color: var(--cyan);
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(45, 239, 242, 0.5);
+}
+
+.perfil-feed-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.perfil-feed-counter {
+  background: rgba(45, 239, 242, 0.12);
+  color: var(--cyan);
+  border: 1px solid rgba(45, 239, 242, 0.25);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  line-height: 1.4;
+  font-family: var(--font-display);
+}
+
+/* ── SCROLLBAR DEL CONTENEDOR DE PUBLICACIONES ── */
+.perfil-publicaciones-scroll-container,
+.perfil-feed-scrollable {
+  max-height: 650px; /* Ajusta la altura visible según la pantalla */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  /* Scrollbar nativa y Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45, 239, 242, 0.3) rgba(255, 255, 255, 0.03);
+}
+
+/* Scrollbar personalizada con la paleta de SportLink */
+.perfil-publicaciones-scroll-container::-webkit-scrollbar,
+.perfil-feed-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.perfil-publicaciones-scroll-container::-webkit-scrollbar-track,
+.perfil-feed-scrollable::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.perfil-publicaciones-scroll-container::-webkit-scrollbar-thumb,
+.perfil-feed-scrollable::-webkit-scrollbar-thumb {
+  background: rgba(45, 239, 242, 0.3);
+  border-radius: 8px;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.perfil-publicaciones-scroll-container::-webkit-scrollbar-thumb:hover,
+.perfil-feed-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #2DEFF2;
+  box-shadow: 0 0 10px rgba(45, 239, 242, 0.6);
+}
+
+/* ── PREVENIR COLAPSO Y SUPERPOSICIÓN DE LAS CARDS DE PUBLICACIÓN ── */
+.perfil-publicaciones-scroll-container .post-card,
+.perfil-publicaciones-scroll-container article.post-card,
+.perfil-feed-scrollable .post-card,
+.perfil-feed-scrollable article.post-card {
+  height: auto !important;
+  max-height: none !important;
+  min-height: fit-content !important;
+  flex-shrink: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+

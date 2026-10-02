@@ -1,0 +1,228 @@
+/* ── CARD BIOGRAFÍA UNIFICADA ── */
+.perfil-biografia-card {
+  background-color: #161819;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 22px 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  position: relative;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.perfil-biografia-card:hover {
+  border-color: rgba(45, 239, 242, 0.2);
+}
+
+.perfil-biografia-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.perfil-biografia-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.perfil-biografia-title-indicator {
+  width: 3px;
+  height: 16px;
+  background-color: #2DEFF2;
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(45, 239, 242, 0.5);
+}
+
+.perfil-biografia-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* Botón Editar sutil con ícono de lápiz */
+.perfil-biografia-btn-edit {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #aaaaab;
+  padding: 6px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.perfil-biografia-btn-edit:hover {
+  background: rgba(45, 239, 242, 0.08);
+  border-color: rgba(45, 239, 242, 0.35);
+  color: #2DEFF2;
+  box-shadow: 0 0 10px rgba(45, 239, 242, 0.2);
+}
+
+.perfil-biografia-btn-edit svg {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.perfil-biografia-btn-edit:hover svg {
+  transform: scale(1.1);
+}
+
+/* Modo Visualización */
+.perfil-biografia-content {
+  font-family: 'Manrope', sans-serif;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: #cfd3dc;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.perfil-biografia-placeholder {
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #636874;
+  margin: 0;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.perfil-biografia-placeholder.clickable {
+  cursor: pointer;
+  color: #828a9b;
+  transition: color 0.2s ease;
+}
+
+.perfil-biografia-placeholder.clickable:hover {
+  color: #2DEFF2;
+}
+
+/* Modo Edición */
+.perfil-biografia-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.perfil-biografia-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #0e1012;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13.5px;
+  line-height: 1.6;
+  padding: 12px 14px;
+  min-height: 110px;
+  max-height: 250px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.perfil-biografia-textarea:focus {
+  border-color: #2DEFF2;
+  box-shadow: 0 0 0 2px rgba(45, 239, 242, 0.15);
+}
+
+.perfil-biografia-textarea::placeholder {
+  color: #555861;
+}
+
+.perfil-biografia-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.perfil-biografia-edit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.perfil-biografia-char-count {
+  font-size: 11px;
+  color: #6b7280;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.perfil-biografia-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.perfil-biografia-btn-cancel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #aaaaab;
+  padding: 7px 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.perfil-biografia-btn-cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.perfil-biografia-btn-save {
+  background-color: #2DEFF2;
+  border: none;
+  border-radius: 6px;
+  color: #090a0c;
+  padding: 7px 18px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 12px rgba(45, 239, 242, 0.25);
+  transition: all 0.2s ease;
+}
+
+.perfil-biografia-btn-save:hover:not(:disabled) {
+  background-color: #4ef2f5;
+  box-shadow: 0 0 18px rgba(45, 239, 242, 0.45);
+  transform: translateY(-1px);
+}
+
+.perfil-biografia-btn-save:disabled,
+.perfil-biografia-btn-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.perfil-biografia-error {
+  color: #f87171;
+  font-size: 12px;
+  margin-top: 6px;
+}

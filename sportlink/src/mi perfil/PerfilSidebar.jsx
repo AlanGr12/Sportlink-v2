@@ -19,7 +19,7 @@ const PerfilSidebar = ({ perfil, ratingPromedio, totalResenas }) => {
     switch (key) {
       case 'rating':
         return (
-          <svg className="field-icon" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1.5">
+          <svg className="field-icon" viewBox="0 0 24 24" fill="#2DEFF2" stroke="#2DEFF2" strokeWidth="1.5">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
         );
@@ -103,8 +103,8 @@ const PerfilSidebar = ({ perfil, ratingPromedio, totalResenas }) => {
   // Rating formateado dinámicamente
   const tieneRatingCalculado = ratingPromedio !== undefined && ratingPromedio !== null;
   const ratingValor = tieneRatingCalculado && Number(ratingPromedio) > 0
-    ? `${Number(ratingPromedio).toFixed(1)} ★`
-    : '— ★';
+    ? `${Number(ratingPromedio).toFixed(1)} `
+    : '— ';
 
   // Configuración de campos dinámicos
   const items = [];
@@ -116,7 +116,10 @@ const PerfilSidebar = ({ perfil, ratingPromedio, totalResenas }) => {
       label: 'Rating',
       value: (
         <span style={{ color: '#fbbf24', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-          {ratingValor}
+          {tieneRatingCalculado && Number(ratingPromedio) > 0
+            ? ratingValor
+            : <span style={{ color: '#2DEFF2' }}>—</span>}
+          <span style={{ color: '#2DEFF2' }}>★</span>
           {totalResenas !== undefined && totalResenas > 0 && (
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
               ({totalResenas})
