@@ -9,7 +9,9 @@ import iconFutbol from '../assets/futbol.png';
 import iconModalidad from '../assets/modalidad.png';
 import iconFecha from '../assets/fecha.png';
 import iconUbicacion from '../assets/ubicacion.png';
+import MapaUbicacionDark from '../components/maps/MapaUbicacionDark.jsx';
 import { formatearFechaLocal } from '../utils/dateUtils.js';
+import { formatearUbicacionCorta } from '../utils/mapUtils.js';
 
 import './DetalleEntrenamiento.css';
 
@@ -278,7 +280,9 @@ console.log(entrenamiento)
 
           <div className="detalle-item-caja">
             <span className="detalle-item-label"><img src={iconUbicacion} alt="Ubicación" className="icon-small" /> Ubicación</span>
-            <span className="detalle-item-valor">{entrenamiento.ubicacion || 'Predio Deportivo'}</span>
+            <span className="detalle-item-valor" title={entrenamiento.ubicacion || ''}>
+              {formatearUbicacionCorta(entrenamiento.ubicacion) || 'Predio Deportivo'}
+            </span>
           </div>
 
           <div className="detalle-item-caja">
@@ -294,6 +298,47 @@ console.log(entrenamiento)
           </div>
         </div>
       </div>
+
+      {/* Ubicación en Mapa Dark (si el entrenamiento tiene coordenadas) */}
+      {(() => {
+        const lat = entrenamiento.latitud;
+        const lon = entrenamiento.longitud;
+        const tieneCoords =
+          lat !== null && lat !== undefined && lat !== '' && !isNaN(Number(lat)) &&
+          lon !== null && lon !== undefined && lon !== '' && !isNaN(Number(lon)) &&
+          (Number(lat) !== 0 || Number(lon) !== 0);
+
+        if (!tieneCoords) return null;
+
+        const latNum = Number(lat);
+        const lonNum = Number(lon);
+
+        return (
+          <div className="detalle-seccion detalle-mapa-seccion">
+            <h4 className="detalle-seccion-titulo">Ubicación en el Mapa</h4>
+            <MapaUbicacionDark
+              latitud={latNum}
+              longitud={lonNum}
+              direccion={entrenamiento.direccion || entrenamiento.ubicacion || ''}
+              zona={formatearUbicacionCorta(entrenamiento.ubicacion || entrenamiento.direccion || '')}
+              nombre={entrenamiento.titulo || 'Entrenamiento'}
+              tipo="entrenamiento"
+              esEditable={false}
+              height="180px"
+            />
+            <button
+              type="button"
+              className="btn-como-llegar-sportlink"
+              onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${latNum},${lonNum}`, '_blank', 'noopener,noreferrer')}
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="3 11 22 2 13 21 11 13 3 11" />
+              </svg>
+              ¿CÓMO LLEGAR? (ABRIR EN GOOGLE MAPS)
+            </button>
+          </div>
+        );
+      })()}
 
       {entrenamiento.recurrente && entrenamiento.recurrente.frecuencia && (
         <div className="detalle-seccion">

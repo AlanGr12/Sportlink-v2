@@ -1,4 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
+import api from '../axiosConfig.js';
+import MapaUbicacionDark from '../components/maps/MapaUbicacionDark.jsx';
+import InputDireccionOSM from '../components/maps/InputDireccionOSM.jsx';
+import { formatearUbicacionCorta } from '../utils/mapUtils.js';
 import './PerfilSidebar.css';
 
 /*
@@ -7,12 +12,103 @@ import './PerfilSidebar.css';
   - Para Clubes y Entrenadores, muestra el valor dinámico RATING (ej: 4.9 ★)
     calculado a partir del promedio devuelto por el backend (GET /api/resenias/:tipo/:id).
   - Para Jugadores, muestra los campos deportivos específicos sin incluir el rating de reseñas.
+  - Para Clubes o Entrenadores con latitud y longitud, renderiza MapaUbicacionDark.
+  - Si es perfil propio, permite editar la ubicación en el mapa.
 */
-const PerfilSidebar = ({ perfil, ratingPromedio, totalResenas }) => {
+const PerfilSidebar = ({
+  perfil,
+  ratingPromedio,
+  totalResenas,
+  esPerfilPropio = false,
+  onUbicacionActualizada,
+}) => {
   if (!perfil) return null;
+
+  const [modalUbicacionAbierto, setModalUbicacionAbierto] = useState(false);
+  const [nuevaUbicacion, setNuevaUbicacion] = useState(null);
+  const [guardandoUbicacion, setGuardandoUbicacion] = useState(false);
+  const [errorUbicacion, setErrorUbicacion] = useState('');
+
+  const lat = perfil?.latitud;
+  const lon = perfil?.longitud;
+  const tieneCoordenadas =
+    lat !== null &&
+    lat !== undefined &&
+    lat !== '' &&
+    !isNaN(Number(lat)) &&
+    lon !== null &&
+    lon !== undefined &&
+    lon !== '' &&
+    !isNaN(Number(lon)) &&
+    (Number(lat) !== 0 || Number(lon) !== 0);
 
   const rol = perfil?.tipousuario?.toLowerCase();
   const esClubOEntrenador = rol === 'entrenador' || rol === 'club';
+
+  const abrirModalUbicacion = () => {
+    setNuevaUbicacion(null);
+    setErrorUbicacion('');
+    setModalUbicacionAbierto(true);
+  };
+
+  const cerrarModalUbicacion = () => {
+    if (guardandoUbicacion) return;
+    setModalUbicacionAbierto(false);
+    setNuevaUbicacion(null);
+    setErrorUbicacion('');
+  };
+
+  const handleGuardarUbicacion = async () => {
+    if (!nuevaUbicacion || !nuevaUbicacion.latitud || !nuevaUbicacion.longitud) {
+      setErrorUbicacion('Por favor seleccioná una dirección de la lista desplegable.');
+      return;
+    }
+
+    setGuardandoUbicacion(true);
+    setErrorUbicacion('');
+
+    try {
+      const idEntidad =
+        perfil?.idclub ||
+        perfil?.idClub ||
+        perfil?.id_club ||
+        perfil?.identrenador ||
+        perfil?.idEntrenador ||
+        perfil?.idusuario ||
+        perfil?.idUsuario;
+
+      const payload = {
+        direccion: nuevaUbicacion.direccion,
+        latitud: Number(nuevaUbicacion.latitud),
+        longitud: Number(nuevaUbicacion.longitud),
+        ubicacion:
+          nuevaUbicacion.zona ||
+          nuevaUbicacion.direccion.split(',')[1]?.trim() ||
+          perfil.ubicacion ||
+          'CABA',
+      };
+
+      // Si es club o tiene idclub, actualizar mediante PUT /api/clubes/perfil/:id
+      await api.put(`/api/clubes/perfil/${idEntidad}`, payload);
+
+      if (onUbicacionActualizada) {
+        onUbicacionActualizada(payload);
+      }
+
+      setModalUbicacionAbierto(false);
+      setNuevaUbicacion(null);
+    } catch (err) {
+      console.error('Error al actualizar ubicación en perfil:', err);
+      setErrorUbicacion(
+        err?.response?.data?.error ||
+          err?.message ||
+          'Error al actualizar la ubicación.'
+      );
+    } finally {
+      setGuardandoUbicacion(false);
+    }
+  };
+
 
   // Helper para renderizar iconos de atributos
   const getFieldIcon = (key) => {
@@ -115,7 +211,7 @@ const PerfilSidebar = ({ perfil, ratingPromedio, totalResenas }) => {
       key: 'rating',
       label: 'Rating',
       value: (
-        <span style={{ color: '#fbbf24', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+        <span style={{ color: '#2DEFF2', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
           {tieneRatingCalculado && Number(ratingPromedio) > 0
             ? ratingValor
             : <span style={{ color: '#2DEFF2' }}>—</span>}
@@ -134,8 +230,31 @@ const PerfilSidebar = ({ perfil, ratingPromedio, totalResenas }) => {
     items.push({ key: 'deporte', label: 'Deporte', value: deporteStr });
   }
 
-  if (perfil.ubicacion) {
-    items.push({ key: 'ubicacion', label: 'Ubicación', value: perfil.ubicacion });
+  if (esClubOEntrenador) {
+    // Si no tiene coordenadas cargadas pero tiene texto o es dueño, mostrar fila con opción de editar
+    if (!tieneCoordenadas && (perfil.ubicacion || perfil.direccion || esPerfilPropio)) {
+      items.push({
+        key: 'ubicacion',
+        label: 'Ubicación',
+        value: (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <span>{formatearUbicacionCorta(perfil.ubicacion || perfil.direccion) || 'Sin configurar'}</span>
+            {esPerfilPropio && (
+              <button
+                type="button"
+                className="perfil-sidebar-btn-edit-ubicacion"
+                onClick={abrirModalUbicacion}
+                title="Configurar ubicación en el mapa"
+              >
+                ✎
+              </button>
+            )}
+          </span>
+        ),
+      });
+    }
+  } else if (perfil.ubicacion) {
+    items.push({ key: 'ubicacion', label: 'Ubicación', value: formatearUbicacionCorta(perfil.ubicacion) });
   }
 
   if (perfil.titulo) {
@@ -166,31 +285,123 @@ const PerfilSidebar = ({ perfil, ratingPromedio, totalResenas }) => {
     items.push({ key: 'genero', label: 'Género', value: perfil.genero });
   }
 
-  if (items.length === 0) return null;
+  if (items.length === 0 && !(esClubOEntrenador && tieneCoordenadas)) return null;
 
   return (
-    <div className="perfil-sidebar-card">
-      <div className="sidebar-card-header">
-        <svg className="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" strokeLinecap="round" strokeLinejoin="round"/>
-          <polyline points="14 2 14 8 20 8" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        <h3>PERFIL</h3>
-      </div>
-      <div className="sidebar-card-body">
-        {items.map((item) => (
-          <div key={item.key} className="perfil-info-row perfil-stat-row">
-            <div className="perfil-info-label perfil-stat-label">
-              {getFieldIcon(item.key)}
-              <span>{item.label}</span>
+    <>
+      <div className="perfil-sidebar-card">
+        <div className="sidebar-card-header">
+          <svg className="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" strokeLinecap="round" strokeLinejoin="round"/>
+            <polyline points="14 2 14 8 20 8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <h3>PERFIL</h3>
+        </div>
+        <div className="sidebar-card-body">
+          {items.map((item) => (
+            <div key={item.key} className="perfil-info-row perfil-stat-row">
+              <div className="perfil-info-label perfil-stat-label">
+                {getFieldIcon(item.key)}
+                <span>{item.label}</span>
+              </div>
+              <div className="perfil-info-value perfil-stat-value">
+                {item.value}
+              </div>
             </div>
-            <div className="perfil-info-value perfil-stat-value">
-              {item.value}
+          ))}
+        </div>
+      </div>
+
+      {/* Tarjeta INDEPENDIENTE de Ubicación / Mapa (entre tarjeta PERFIL y tarjeta RESEÑAS) */}
+      {esClubOEntrenador && tieneCoordenadas && (
+        <div className="perfil-sidebar-mapa-independiente">
+          <MapaUbicacionDark
+            latitud={lat}
+            longitud={lon}
+            direccion={perfil.direccion || perfil.ubicacion || ''}
+            zona={formatearUbicacionCorta(perfil.ubicacion || perfil.direccion || 'CABA')}
+            nombre={perfil.nombre || perfil.club?.nombre || ''}
+            tipo={perfil.tipousuario || 'club'}
+            esEditable={esPerfilPropio}
+            onEditar={abrirModalUbicacion}
+            height="180px"
+          />
+        </div>
+      )}
+
+      {/* Mini-modal para editar/configurar ubicación */}
+      {modalUbicacionAbierto && createPortal(
+        <div className="profile-modal-overlay" onClick={cerrarModalUbicacion}>
+          <div className="profile-modal-card modal-ubicacion-card" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-modal-header">
+              <h3>Actualizar Ubicación en el Mapa</h3>
+              <button
+                type="button"
+                className="profile-modal-btn-close"
+                onClick={cerrarModalUbicacion}
+                disabled={guardandoUbicacion}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="modal-ubicacion-body">
+              <p className="modal-ubicacion-desc">
+                Buscá y seleccioná la dirección exacta para ubicar tu club en el mapa y permitir a los deportistas saber cómo llegar.
+              </p>
+
+              <div className="form-field-group">
+                <label>Dirección / Ubicación *</label>
+                <InputDireccionOSM
+                  placeholder="Ej: Av. San Martín 5125, Agronomía"
+                  value={nuevaUbicacion ? nuevaUbicacion.direccion : (perfil.direccion || perfil.ubicacion || '')}
+                  onSelectUbicacion={(loc) => {
+                    setNuevaUbicacion(loc);
+                    setErrorUbicacion('');
+                  }}
+                />
+              </div>
+
+              {nuevaUbicacion && (
+                <div className="modal-ubicacion-preview-box">
+                  <span className="modal-ubicacion-badge-check">✓ Ubicación confirmada</span>
+                  <p className="modal-ubicacion-dir-res">{nuevaUbicacion.direccion}</p>
+                  <span className="modal-ubicacion-coords">
+                    Latitud: {Number(nuevaUbicacion.latitud).toFixed(5)} | Longitud: {Number(nuevaUbicacion.longitud).toFixed(5)}
+                  </span>
+                </div>
+              )}
+
+              {errorUbicacion && (
+                <div className="modal-ubicacion-error">
+                  {errorUbicacion}
+                </div>
+              )}
+
+              <div className="modal-ubicacion-actions">
+                <button
+                  type="button"
+                  className="btn-modal-cancelar"
+                  onClick={cerrarModalUbicacion}
+                  disabled={guardandoUbicacion}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn-modal-guardar"
+                  onClick={handleGuardarUbicacion}
+                  disabled={!nuevaUbicacion || guardandoUbicacion}
+                >
+                  {guardandoUbicacion ? 'Guardando...' : 'Confirmar Ubicación'}
+                </button>
+              </div>
             </div>
           </div>
-        ))}
-      </div>
-    </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 };
 

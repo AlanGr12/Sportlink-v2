@@ -9,6 +9,7 @@ import fallbackFutbol from '../assets/entrenador1.png';
 import fallbackBasket from '../assets/entrenador2.png';
 import fallbackDefault from '../assets/entrenador3.png';
 import { formatearFechaLocal } from '../utils/dateUtils.js';
+import { formatearUbicacionCorta } from '../utils/mapUtils.js';
 import './TarjetaEntrenamiento.css';
 
 const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar, usuarioActual }) => {
@@ -162,9 +163,11 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
             })()}
           </div>
 
-          <div className="card-prueba-detalle-item">
-            <IconoUbicacion size={16} />
-            <p>{entrenamiento.ubicacion || 'Ubicación no especificada'}</p>
+          <div className="card-prueba-detalle-item item-ubicacion">
+            <IconoUbicacion size={20} color="currentColor" className="card-icon-ubicacion" />
+            <p className="detalle-ubicacion-texto" title={entrenamiento.ubicacion || ''}>
+              {formatearUbicacionCorta(entrenamiento.ubicacion) || 'Ubicación no especificada'}
+            </p>
           </div>
 
         </div>

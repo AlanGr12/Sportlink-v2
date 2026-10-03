@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './FormularioEntrenamiento.css';
 import CustomSelect from '../components/CustomSelect.jsx';
+import InputDireccionOSM from '../components/maps/InputDireccionOSM.jsx';
 import { obtenerFechaHoyLocal } from '../utils/dateUtils.js';
 
 const deportesDisponibles = [
@@ -33,6 +34,9 @@ const FormularioEntrenamiento = ({
   const [horainicio, setHorainicio] = useState('');
   const [horafin, setHorafin] = useState('');
   const [ubicacion, setUbicacion] = useState('');
+  const [direccion, setDireccion] = useState('');
+  const [latitud, setLatitud] = useState(null);
+  const [longitud, setLongitud] = useState(null);
   const [iddeporte, setIddeporte] = useState(deportesDisponibles[0].id);
   const [precio, setPrecio] = useState(0);
   const [cantidad, setCantidad] = useState(1);
@@ -56,6 +60,9 @@ const FormularioEntrenamiento = ({
       setHorainicio(entrenamiento.horainicio ? entrenamiento.horainicio.substring(0, 5) : '');
       setHorafin(entrenamiento.horafin ? entrenamiento.horafin.substring(0, 5) : '');
       setUbicacion(entrenamiento.ubicacion || '');
+      setDireccion(entrenamiento.direccion || '');
+      setLatitud(entrenamiento.latitud ?? null);
+      setLongitud(entrenamiento.longitud ?? null);
       setIddeporte(entrenamiento.iddeporte || entrenamiento.deporte?.iddeporte || deportesDisponibles[0].id);
       setPrecio(entrenamiento.precio ?? 0);
       setCantidad(entrenamiento.cantidad ?? 1);
@@ -74,6 +81,9 @@ const FormularioEntrenamiento = ({
       setHorainicio('');
       setHorafin('');
       setUbicacion('Cancha 1');
+      setDireccion('');
+      setLatitud(null);
+      setLongitud(null);
       setIddeporte(deportesDisponibles[0].id);
       setPrecio(0);
       setCantidad(1);
@@ -152,6 +162,13 @@ const FormularioEntrenamiento = ({
     formData.append('horainicio', horainicio);
     formData.append('horafin', horafin);
     formData.append('ubicacion', ubicacion);
+    formData.append('direccion', (direccion || ubicacion).trim());
+    if (latitud != null && !isNaN(Number(latitud))) {
+      formData.append('latitud', String(latitud));
+    }
+    if (longitud != null && !isNaN(Number(longitud))) {
+      formData.append('longitud', String(longitud));
+    }
     formData.append('iddeporte', iddeporte);
     formData.append('precio', precio);
     formData.append('cantidad', cantidad);
@@ -235,13 +252,19 @@ const FormularioEntrenamiento = ({
 
         <div className="form-grupo">
           <label className="form-label">Ubicación / Cancha<span>*</span></label>
-          <input
-            type="text"
-            className="form-input"
+          <InputDireccionOSM
             value={ubicacion}
-            onChange={(e) => setUbicacion(e.target.value)}
-            placeholder="ej. Cancha Auxiliar N° 2"
-            required
+            onChangeText={(txt) => setUbicacion(txt)}
+            onSelectUbicacion={(loc) => {
+              setUbicacion(loc.zona || loc.direccion);
+              setDireccion(loc.direccion);
+              setLatitud(loc.latitud);
+              setLongitud(loc.longitud);
+              if (errores.ubicacion) {
+                setErrores((prev) => ({ ...prev, ubicacion: null }));
+              }
+            }}
+            placeholder="ej. Cancha Auxiliar N° 2 o Av. Corrientes 1234"
           />
           {errores.ubicacion && <span className="error-feedback">{errores.ubicacion}</span>}
         </div>

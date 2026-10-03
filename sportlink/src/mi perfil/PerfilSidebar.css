@@ -100,3 +100,95 @@
   max-width: 60%;
   font-family: var(--font-display) !important;
 }
+
+/* Integración de Mapa en Sidebar de Perfil */
+.perfil-sidebar-mapa-container,
+.perfil-sidebar-mapa-independiente {
+  width: 100%;
+}
+
+.perfil-sidebar-btn-edit-ubicacion {
+  background: transparent;
+  border: none;
+  color: var(--cyan);
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.perfil-sidebar-btn-edit-ubicacion:hover {
+  transform: scale(1.2);
+  color: #ffffff;
+}
+
+/* Mini modal ubicacion */
+.modal-ubicacion-card {
+  max-width: 520px !important;
+  width: 90% !important;
+}
+
+.modal-ubicacion-body {
+  padding: 10px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-ubicacion-desc {
+  color: #8a9099;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.modal-ubicacion-preview-box {
+  background: rgba(45, 239, 242, 0.05);
+  border: 1px solid rgba(45, 239, 242, 0.25);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-ubicacion-badge-check {
+  color: #2DEFF2;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-ubicacion-dir-res {
+  color: #f3f4f6;
+  font-size: 0.88rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.modal-ubicacion-coords {
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-family: monospace;
+}
+
+.modal-ubicacion-error {
+  color: #f87171;
+  font-size: 0.82rem;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.modal-ubicacion-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+

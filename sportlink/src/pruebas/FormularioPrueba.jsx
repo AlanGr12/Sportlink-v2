@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../axiosConfig.js";
 import CustomSelect from "../components/CustomSelect.jsx";
+import InputDireccionOSM from "../components/maps/InputDireccionOSM.jsx";
 import { obtenerFechaHoyLocal } from "../utils/dateUtils.js";
 
 // ── Deportes disponibles (mismo listado que FormularioEntrenamiento) ──────────
@@ -38,6 +39,9 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
   const [descripcion,  setDescripcion]  = useState("");
   const [categoria,    setCategoria]    = useState("");
   const [zona,         setZona]         = useState("");
+  const [direccion,    setDireccion]    = useState("");
+  const [latitud,      setLatitud]      = useState(null);
+  const [longitud,     setLongitud]     = useState(null);
   const [genero,       setGenero]       = useState("");
   const [fechaprueba,  setFechaprueba]  = useState("");
   const [fechacierre,  setFechacierre]  = useState("");
@@ -121,6 +125,13 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
       formData.append("descripcion", descripcion.trim());
       formData.append("categoria",   categoria.trim());
       formData.append("zona",        zona.trim());
+      formData.append("direccion",   (direccion || zona).trim());
+      if (latitud != null && !isNaN(Number(latitud))) {
+        formData.append("latitud",   String(latitud));
+      }
+      if (longitud != null && !isNaN(Number(longitud))) {
+        formData.append("longitud",  String(longitud));
+      }
       formData.append("genero",      genero.trim());
       formData.append("fechaprueba", fechaprueba);
       formData.append("fechacierre", fechacierre);
@@ -289,11 +300,18 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
         <label className="form-label">
           Zona / Lugar<span>*</span>
         </label>
-        <input
-          type="text"
-          className="form-input"
+        <InputDireccionOSM
           value={zona}
-          onChange={(e) => setZona(e.target.value)}
+          onChangeText={(txt) => setZona(txt)}
+          onSelectUbicacion={(loc) => {
+            setZona(loc.zona || loc.direccion);
+            setDireccion(loc.direccion);
+            setLatitud(loc.latitud);
+            setLongitud(loc.longitud);
+            if (errores.zona) {
+              setErrores((prev) => ({ ...prev, zona: null }));
+            }
+          }}
           placeholder="ej. Buenos Aires, Cancha Central"
         />
         {errores.zona && <span className="error-feedback">{errores.zona}</span>}

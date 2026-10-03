@@ -563,6 +563,14 @@ const MiPerfil = (props) => {
                 perfil={perfil}
                 ratingPromedio={esClubOEntrenador ? reseniasData.promedio : null}
                 totalResenas={esClubOEntrenador ? reseniasData.total : null}
+                esPerfilPropio={esPerfilPropio}
+                onUbicacionActualizada={(nuevaLoc) => {
+                  setPerfil(prev => ({
+                    ...prev,
+                    ...nuevaLoc
+                  }));
+                  handleMostrarToast('¡Ubicación de mapa actualizada con éxito!');
+                }}
               />
 
               {/* Tarjeta lateral "RESEÑAS": Inmediatamente debajo de la tarjeta "PERFIL" */}
@@ -582,32 +590,6 @@ const MiPerfil = (props) => {
                   esPerfilPropio={esPerfilPropio}
                 />
               )}
-
-              {/* Box 2: Información de Contacto */}
-              <div className="profile-side-card card-contacto">
-                <div className="side-card-header">
-                  <h4>Información de Contacto</h4>
-                </div>
-                
-                <div className="contact-list-items">
-                  <div className="contact-item">
-                    <span className="contact-item-label">Email</span>
-                    <span className="contact-item-val" title={perfil?.email}>{perfil?.email || 'No disponible'}</span>
-                  </div>
-                  
-                  <div className="contact-item">
-                    <span className="contact-item-label">Teléfono</span>
-                    <span className="contact-item-val">{perfil?.telefono || 'No disponible'}</span>
-                  </div>
-                  
-                  <div className="contact-item">
-                    <span className="contact-item-label">Instagram</span>
-                    <span className="contact-item-val">
-                      {perfil?.instagram ? `@${perfil.instagram.replace(/^@/, '')}` : 'No disponible'}
-                    </span>
-                  </div>
-                </div>
-              </div>
 
             </div>
 

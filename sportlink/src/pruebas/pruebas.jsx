@@ -7,6 +7,8 @@ import FormularioPrueba from "./FormularioPrueba";
 import Footer from "../footer/footer";
 import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
 import ModalConfirmacionEliminar from '../calendario/ModalConfirmacionEliminar.jsx';
+import MapaUbicacionDark from '../components/maps/MapaUbicacionDark.jsx';
+import { formatearUbicacionCorta } from '../utils/mapUtils.js';
 import { parsearFechaLocal, formatearFechaLocal, haPasadoFecha } from '../utils/dateUtils.js';
 
 // Iconos hechos con codigo
@@ -701,9 +703,11 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
                         <p>{prueba.deporte?.deporte || "Deporte no especificado"}</p>
                       </div>
 
-                      <div className="card-prueba-detalle-item">
-                        <IconoUbicacion size={16} color="currentColor" className="card-icon-asset" />
-                        <p>{prueba.zona || "Zona no especificada"}</p>
+                      <div className="card-prueba-detalle-item item-ubicacion">
+                        <IconoUbicacion size={20} color="currentColor" className="card-icon-ubicacion" />
+                        <p className="detalle-ubicacion-texto" title={prueba.direccion || prueba.zona || ""}>
+                          {formatearUbicacionCorta(prueba.direccion || prueba.zona) || "Zona no especificada"}
+                        </p>
                       </div>
 
                       <div className="card-prueba-detalle-item">
@@ -850,8 +854,8 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
                     <IconoUbicacion size={16} color="currentColor" />
                     Zona
                   </span>
-                  <span className="modal-prueba-spec-valor">
-                    {pruebaSeleccionada.zona || "No especificada"}
+                  <span className="modal-prueba-spec-valor" title={pruebaSeleccionada.direccion || pruebaSeleccionada.zona || ''}>
+                    {formatearUbicacionCorta(pruebaSeleccionada.zona || pruebaSeleccionada.direccion) || "No especificada"}
                   </span>
                 </div>
 
@@ -878,6 +882,47 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
                   </p>
                 </>
               )}
+
+              {/* Ubicación en Mapa Dark (si la prueba tiene coordenadas) */}
+              {(() => {
+                const lat = pruebaSeleccionada.latitud ?? pruebaSeleccionada.club?.latitud;
+                const lon = pruebaSeleccionada.longitud ?? pruebaSeleccionada.club?.longitud;
+                const tieneCoords =
+                  lat !== null && lat !== undefined && lat !== '' && !isNaN(Number(lat)) &&
+                  lon !== null && lon !== undefined && lon !== '' && !isNaN(Number(lon)) &&
+                  (Number(lat) !== 0 || Number(lon) !== 0);
+
+                if (!tieneCoords) return null;
+
+                const latNum = Number(lat);
+                const lonNum = Number(lon);
+
+                return (
+                  <div className="modal-prueba-mapa-seccion" style={{ marginTop: '16px', marginBottom: '16px' }}>
+                    <p className="modal-prueba-descripcion-titulo" style={{ marginBottom: '10px' }}>Ubicación en el Mapa</p>
+                    <MapaUbicacionDark
+                      latitud={latNum}
+                      longitud={lonNum}
+                      direccion={pruebaSeleccionada.direccion || pruebaSeleccionada.zona || pruebaSeleccionada.club?.direccion || ''}
+                      zona={formatearUbicacionCorta(pruebaSeleccionada.zona || pruebaSeleccionada.direccion || '')}
+                      nombre={pruebaSeleccionada.club?.nombre || pruebaSeleccionada.nombre || 'Prueba'}
+                      tipo="prueba"
+                      esEditable={false}
+                      height="180px"
+                    />
+                    <button
+                      type="button"
+                      className="btn-como-llegar-sportlink"
+                      onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${latNum},${lonNum}`, '_blank', 'noopener,noreferrer')}
+                    >
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                      </svg>
+                      ¿CÓMO LLEGAR? (ABRIR EN GOOGLE MAPS)
+                    </button>
+                  </div>
+                );
+              })()}
 
               {/* Sección de Postulantes (solo para clubes) */}
               {esClub && (

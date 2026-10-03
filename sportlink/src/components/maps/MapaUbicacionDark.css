@@ -1,0 +1,217 @@
+.mapa-ubicacion-dark-card {
+  background-color: #121415;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mapa-ubicacion-dark-card:hover {
+  border-color: rgba(45, 239, 242, 0.25);
+}
+
+.mapa-ubicacion-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.mapa-ubicacion-canvas-wrapper .leaflet-container {
+  width: 100%;
+  height: 100%;
+  background-color: #0b0c0d !important;
+  font-family: inherit;
+}
+
+/* Filtro dark clean de alto contraste para OpenStreetMap sin marcas de agua */
+.mapa-ubicacion-canvas-wrapper .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(88%) contrast(92%);
+}
+
+/* Badge flotante "Abrir en Google Maps" al pasar el cursor */
+.mapa-ubicacion-hover-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(18, 20, 21, 0.88);
+  border: 1px solid rgba(45, 239, 242, 0.3);
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #2DEFF2;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 500;
+  pointer-events: none;
+}
+
+.mapa-ubicacion-canvas-wrapper:hover .mapa-ubicacion-hover-badge {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Estilos del marcador personalizado L.divIcon */
+.mapa-custom-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.mapa-marker-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -100%);
+  position: relative;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7));
+}
+
+.mapa-marker-pill {
+  background: rgba(15, 17, 19, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  white-space: nowrap;
+  margin-bottom: 2px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mapa-marker-tipo {
+  color: #ffffff;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+.mapa-marker-nombre {
+  color: #2DEFF2;
+  font-weight: 700;
+  text-transform: lowercase;
+}
+
+.mapa-marker-pin {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #2DEFF2;
+  line-height: 0;
+}
+
+.mapa-marker-pin svg {
+  filter: drop-shadow(0 2px 6px rgba(45, 239, 242, 0.45));
+}
+
+.mapa-marker-direccion {
+  color: #2DEFF2;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  margin-top: 2px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.85);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Pie de tarjeta */
+.mapa-ubicacion-footer {
+  padding: 14px 16px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background-color: #121415;
+}
+
+.mapa-ubicacion-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mapa-ubicacion-zona-titulo {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.mapa-ubicacion-btn-editar {
+  background: transparent;
+  border: none;
+  color: #8a9096;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.mapa-ubicacion-btn-editar:hover {
+  color: #2DEFF2;
+  transform: scale(1.1);
+}
+
+.mapa-ubicacion-direccion-texto {
+  font-size: 13px;
+  color: #8a9096;
+  margin: 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Botón "¿Cómo llegar? (Abrir en Google Maps)" estilo cian SportLink */
+.btn-como-llegar-sportlink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 18px;
+  background: rgba(45, 239, 242, 0.12);
+  color: #2DEFF2;
+  border: 1px solid #2DEFF2;
+  border-radius: 12px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.92rem;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(45, 239, 242, 0.15);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.btn-como-llegar-sportlink:hover {
+  background: #2DEFF2;
+  color: #0b0c0d;
+  box-shadow: 0 6px 20px rgba(45, 239, 242, 0.35);
+  transform: translateY(-2px);
+}
+
+.btn-como-llegar-sportlink:active {
+  transform: translateY(0);
+}
+
+.btn-como-llegar-sportlink svg {
+  flex-shrink: 0;
+}
+
