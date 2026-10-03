@@ -89,6 +89,13 @@ function PublicOnlyRoute({ usuario, children }) {
 
 // ── Componente principal ─────────────────────────────────────────────────────
 function App() {
+  const { pathname } = useLocation()
+
+  // Al navegar entre rutas, hacer scroll al principio de la página
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+
   /**
    * El backend ahora responde { token, perfil } en el login.
    * Guardamos "usuario" en localStorage con el contenido de "perfil"
@@ -196,8 +203,14 @@ function App() {
       <Header usuario={usuario} onLogout={() => actualizarUsuario(null)} />
       <main className="content-body" style={{ flex: 1 }}>
         <Routes>
-          {/* ── Públicas ── */}
-          <Route path="/" element={<Landing usuario={usuario} />} />
+          {/* ── Inicio: Landing si no hay sesión, Feed si ya está logueado ── */}
+          <Route
+            path="/"
+            element={
+              usuario ? <FeedView usuario={usuario} /> : <Landing usuario={usuario} />
+            }
+          />
+          <Route path="/landing" element={<Landing usuario={usuario} />} />
 
 
           <Route

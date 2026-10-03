@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './landing.css';
 import Footer from '../footer/footer.jsx';
@@ -19,6 +19,11 @@ import calendar from '../assets/calendar.png';
 
 const Landing = ({ usuario }) => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
   return (
     <>
       <main>

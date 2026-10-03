@@ -253,6 +253,8 @@ export default function FeedView({ usuario }) {
           {/* Footer links */}
           <footer className="feed-footer-links">
             <div className="feed-footer-row">
+              <span onClick={() => navigate('/landing')} style={{ cursor: 'pointer' }}>Landing</span>
+              <span>•</span>
               <span>Acerca de</span>
               <span>•</span>
               <span>Accesibilidad</span>

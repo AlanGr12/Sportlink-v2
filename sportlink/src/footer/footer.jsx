@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './footer.css';
 import logoSportlink from '../assets/logoSportlink.png'
 
@@ -10,11 +11,13 @@ const Footer = () => {
       <div className="footer-main">
         {/* BRAND SECTION */}
         <div className="footer-brand">
-          <img
-            className="footer-logo"
-            src={logoSportlink}
-            alt="SportLink"
-          />
+          <Link to="/landing">
+            <img
+              className="footer-logo"
+              src={logoSportlink}
+              alt="SportLink"
+            />
+          </Link>
           <p className="footer-tagline">
             Plataforma de alto rendimiento conectando entrenadores,
             atletas de élite con clubes profesionales a través de
@@ -26,10 +29,10 @@ const Footer = () => {
         <nav className="footer-nav">
           <p className="footer-nav-title">Descubrí</p>
           <ul className="footer-nav-list">
-            <li><a href="#entrenadores">Entrenadores</a></li>
-            <li><a href="#clubes">Clubes</a></li>
-            <li><a href="#jugadores">Jugadores</a></li>
-            <li><a href="#dashboard">Calendario</a></li>
+            <li><Link to="/landing">Inicio (Landing)</Link></li>
+            <li><Link to="/entrenadores">Entrenadores</Link></li>
+            <li><Link to="/clubes">Clubes</Link></li>
+            <li><Link to="/calendario">Calendario</Link></li>
           </ul>
         </nav>
 
