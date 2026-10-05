@@ -139,6 +139,22 @@ function App() {
   }
 
 
+  /**
+   * actualizarCamposUsuario — mezcla cambios parciales (ej. { fotoperfil })
+   * en el usuario de la sesión, para que header, feed, etc. se actualicen
+   * al instante sin cerrar sesión.
+   */
+  const actualizarCamposUsuario = (cambios) => {
+    if (!cambios) return
+    setUsuario((prev) => {
+      if (!prev) return prev
+      const actualizado = { ...prev, ...cambios }
+      localStorage.setItem('usuario', JSON.stringify(actualizado))
+      return actualizado
+    })
+  }
+
+
   // Enriquecer el objeto usuario con idjugador / identrenador si no los tiene
   useEffect(() => {
     const fetchIdJugador = async () => {
@@ -264,7 +280,7 @@ function App() {
             path="/perfil"
             element={
               <ProtectedRoute usuario={usuario}>
-                <MiPerfil usuario={usuario} />
+                <MiPerfil usuario={usuario} onUsuarioActualizado={actualizarCamposUsuario} />
               </ProtectedRoute>
             }
           />
@@ -272,7 +288,7 @@ function App() {
             path="/perfil/:idusuario"
             element={
               <ProtectedRoute usuario={usuario}>
-                <MiPerfil usuario={usuario} />
+                <MiPerfil usuario={usuario} onUsuarioActualizado={actualizarCamposUsuario} />
               </ProtectedRoute>
             }
           />

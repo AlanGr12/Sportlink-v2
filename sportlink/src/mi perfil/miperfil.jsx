@@ -392,6 +392,17 @@ const MiPerfil = (props) => {
       ...(nuevaFoto ? { fotoperfil: nuevaFoto } : {}),
     }));
 
+    // 4. Si cambió la foto del usuario logueado, propagarla a la sesión
+    //    (header, feed, etc.) y a sus publicaciones ya cargadas
+    if (nuevaFoto && esPerfilPropio) {
+      props.onUsuarioActualizado?.({ fotoperfil: nuevaFoto });
+      setPublicaciones(prev => prev.map(p =>
+        Number(p.autor?.idusuario) === Number(idSesion)
+          ? { ...p, autor: { ...p.autor, fotoperfil: nuevaFoto } }
+          : p
+      ));
+    }
+
     cerrarModal();
     setGuardando(false);
     handleMostrarToast('¡Perfil actualizado con éxito!');
