@@ -504,7 +504,7 @@ console.log(entrenamiento)
                   )}
                 </div>
             ) : sinCupos ? (
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
+                <div className="lista-espera-acciones">
                   {listaEspera.enLista && (
                     <div className="lista-espera-info">
                       Estás en el puesto N° {listaEspera.posicion} de la lista de espera

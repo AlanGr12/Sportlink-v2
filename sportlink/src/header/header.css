@@ -533,3 +533,133 @@
   line-height: 1.45;
   font-family: 'Space Grotesk', sans-serif !important;
 }
+/* ── Notificaciones persistentes ── */
+.header-notifications-dropdown {
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  padding: 14px;
+}
+
+.header-notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.header-notifications-markall {
+  background: none;
+  border: none;
+  color: var(--header-accent-color);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: 'Space Grotesk', sans-serif !important;
+}
+
+.header-notifications-markall:hover {
+  text-decoration: underline;
+}
+
+.header-notifications-badge {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  background-color: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #0A0B0C;
+  z-index: 2;
+}
+
+.header-notifications-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.header-notification-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.header-notification-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.header-notification-item--unread {
+  background-color: rgba(45, 239, 242, 0.07);
+}
+
+.header-notification-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  background: transparent;
+}
+
+.header-notification-item--unread .header-notification-dot {
+  background: #3b82f6;
+}
+
+.header-notification-body {
+  flex: 1;
+  min-width: 0;
+  font-family: 'Space Grotesk', sans-serif !important;
+}
+
+.header-notification-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.header-notification-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.header-notification-time {
+  font-size: 11px;
+  color: #888888;
+  white-space: nowrap;
+}
+
+.header-notification-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.header-notification-message {
+  font-size: 12.5px;
+  color: #b5b5b5;
+  line-height: 1.4;
+  word-break: break-word;
+}

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import api from "../axiosConfig.js";
 import MenuPruebas from "./menuPruebas";
@@ -308,6 +309,35 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
     });
     return false;
   };
+
+  // ── Deep link: /pruebas/:id (ej. desde una notificación) abre el detalle de esa prueba ──
+  const { id: idPruebaUrl } = useParams();
+  const deepLinkAbierto = useRef(null);
+  useEffect(() => {
+    if (!idPruebaUrl || deepLinkAbierto.current === idPruebaUrl || pruebas.length === 0) return;
+    const encontrada = pruebas.find((p) => Number(p.idprueba) === Number(idPruebaUrl));
+    if (encontrada) {
+      deepLinkAbierto.current = idPruebaUrl;
+      abrirModal(encontrada);
+      return;
+    }
+    // No está en la lista cargada (p. ej. filtrada por deporte): traerla directo
+    deepLinkAbierto.current = idPruebaUrl;
+    api.get(`/api/pruebas/${idPruebaUrl}`)
+      .then(async (r) => {
+        let inscritosCount = 0;
+        let inscripciones = [];
+        try {
+          const ins = await api.get("/api/inscripcionesprueba", { params: { idprueba: idPruebaUrl } });
+          inscripciones = Array.isArray(ins.data) ? ins.data : [];
+          inscritosCount = inscripciones.length;
+        } catch { /* sin conteo */ }
+        const prueba = { ...r.data, inscritosCount, inscripciones };
+        setPruebas((prev) => (prev.some((p) => Number(p.idprueba) === Number(prueba.idprueba)) ? prev : [...prev, prueba]));
+        abrirModal(prueba);
+      })
+      .catch((e) => console.error("[Pruebas] No se pudo abrir la prueba del enlace:", e));
+  }, [idPruebaUrl, pruebas]);
 
   // Prueba del modal con datos frescos (contador de inscriptos actualizado)
   const pruebaModalActual = () =>
@@ -1150,7 +1180,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
                     </div>
                   ) : (
                     pruebaModalCompleta ? (
-                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', marginRight: '10px' }}>
+                      <div className="lista-espera-acciones">
                         {listaEspera.enLista && (
                           <div className="lista-espera-info">
                             Estás en el puesto N° {listaEspera.posicion} de la lista de espera

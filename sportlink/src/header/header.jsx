@@ -11,6 +11,30 @@ import { IconoEmpleos } from '../iconos/IconoEmpleos.jsx';
 import { IconoEntrenamientos } from '../iconos/IconoEntrenamientos.jsx';
 import { IconoMedalla } from '../iconos/IconoMedalla.jsx';
 
+const TIPOS_NOTIF = {
+  LISTA_ESPERA: { label: 'Lista de espera', color: '#f59e0b' },
+  PRUEBA: { label: 'Prueba', color: '#2DEFF2' },
+  ENTRENAMIENTO: { label: 'Entrenamiento', color: '#34d399' },
+  EMPLEO: { label: 'Empleo', color: '#a78bfa' },
+  CHAT: { label: 'Chat', color: '#60a5fa' },
+  SISTEMA: { label: 'Sistema', color: '#9ca3af' },
+};
+
+// "Hace 10 min", "Hace 3 h", "Hace 2 días"
+const tiempoRelativo = (fechaStr) => {
+  const t = new Date(fechaStr).getTime();
+  if (isNaN(t)) return '';
+  const seg = Math.max(0, Math.floor((Date.now() - t) / 1000));
+  if (seg < 60) return 'Hace un momento';
+  const min = Math.floor(seg / 60);
+  if (min < 60) return `Hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `Hace ${h} h`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `Hace ${d} ${d === 1 ? 'día' : 'días'}`;
+  return new Date(t).toLocaleDateString('es-AR');
+};
+
 const Header = ({ usuario, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,6 +43,9 @@ const Header = ({ usuario, onLogout }) => {
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
   const [notificacionesOpen, setNotificacionesOpen] = useState(false);
   const [unreadMensajes, setUnreadMensajes] = useState(0);
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [unreadNotificaciones, setUnreadNotificaciones] = useState(0);
+  const [notificacionesLoading, setNotificacionesLoading] = useState(false);
 
   const explorarRef = useRef(null);
   const avatarRef = useRef(null);
@@ -48,11 +75,62 @@ const Header = ({ usuario, onLogout }) => {
     setNotificacionesOpen(false);
   };
 
+  const fetchContadorNotificaciones = async () => {
+    try {
+      const { data } = await api.get('/api/notificaciones/no-leidas/count');
+      setUnreadNotificaciones(Number(data?.count) || 0);
+    } catch (err) {
+      console.error('Error fetching unread notifications count', err);
+    }
+  };
+
+  const fetchNotificaciones = async () => {
+    setNotificacionesLoading(true);
+    try {
+      const { data } = await api.get('/api/notificaciones');
+      const lista = Array.isArray(data) ? data : [];
+      setNotificaciones(lista);
+      setUnreadNotificaciones(lista.filter((n) => !n.leido).length);
+    } catch (err) {
+      console.error('Error fetching notifications', err);
+    } finally {
+      setNotificacionesLoading(false);
+    }
+  };
+
   const toggleNotificaciones = (e) => {
     e && e.stopPropagation();
-    setNotificacionesOpen((v) => !v);
+    const abrir = !notificacionesOpen;
+    setNotificacionesOpen(abrir);
     setDropdownOpen(false);
     setAvatarDropdownOpen(false);
+    if (abrir) fetchNotificaciones();
+  };
+
+  const handleClickNotificacion = async (notif) => {
+    if (!notif.leido) {
+      // Actualización optimista
+      setNotificaciones((prev) => prev.map((n) => (n.id === notif.id ? { ...n, leido: true } : n)));
+      setUnreadNotificaciones((c) => Math.max(0, c - 1));
+      try {
+        await api.patch(`/api/notificaciones/${notif.id}/leer`);
+      } catch (err) {
+        console.error('Error marking notification as read', err);
+        fetchNotificaciones();
+      }
+    }
+    if (notif.enlace) ir(notif.enlace);
+  };
+
+  const handleMarcarTodasLeidas = async () => {
+    setNotificaciones((prev) => prev.map((n) => ({ ...n, leido: true })));
+    setUnreadNotificaciones(0);
+    try {
+      await api.patch('/api/notificaciones/leer-todas');
+    } catch (err) {
+      console.error('Error marking all notifications as read', err);
+      fetchNotificaciones();
+    }
   };
 
   const handleLogout = () => {
@@ -90,6 +168,18 @@ const Header = ({ usuario, onLogout }) => {
       };
       fetchUnread();
     }
+  }, [estaLogueado, location.pathname]);
+
+  // Contador de notificaciones no leídas: al montar, al navegar y cada 60 s
+  useEffect(() => {
+    if (!estaLogueado) {
+      setNotificaciones([]);
+      setUnreadNotificaciones(0);
+      return;
+    }
+    fetchContadorNotificaciones();
+    const intervalo = setInterval(fetchContadorNotificaciones, 60000);
+    return () => clearInterval(intervalo);
   }, [estaLogueado, location.pathname]);
 
   // Elementos del dropdown "Explorar" según rol
@@ -243,22 +333,68 @@ const Header = ({ usuario, onLogout }) => {
 
                 {/* Notificaciones */}
                 <div className="header-notifications-container" ref={notificacionesRef}>
-                  <button className="header-action-btn" onClick={toggleNotificaciones}>
+                  <button className="header-action-btn" onClick={toggleNotificaciones} style={{ position: 'relative' }}>
                     <IconoNotificaciones size={22} color="#ffffff" className="header-svg-icon" />
+                    {unreadNotificaciones > 0 && (
+                      <span className="header-notifications-badge">
+                        {unreadNotificaciones > 9 ? '9+' : unreadNotificaciones}
+                      </span>
+                    )}
                   </button>
 
                   {notificacionesOpen && (
                     <div className="header-notifications-dropdown">
                       <div className="header-notifications-header">
                         <h4 className="header-notifications-title">Notificaciones</h4>
+                        {unreadNotificaciones > 0 && (
+                          <button
+                            type="button"
+                            className="header-notifications-markall"
+                            onClick={handleMarcarTodasLeidas}
+                          >
+                            Marcar todas como leídas
+                          </button>
+                        )}
                       </div>
-                      <div className="header-notifications-empty">
-                        <div className="header-notifications-empty-icon">
-                          <IconoNotificaciones size={24} color="rgba(255, 255, 255, 0.4)" />
+
+                      {notificaciones.length === 0 ? (
+                        <div className="header-notifications-empty">
+                          <div className="header-notifications-empty-icon">
+                            <IconoNotificaciones size={24} color="rgba(255, 255, 255, 0.4)" />
+                          </div>
+                          <p className="header-notifications-empty-text">
+                            {notificacionesLoading ? 'Cargando...' : 'No tienes notificaciones pendientes'}
+                          </p>
+                          {!notificacionesLoading && (
+                            <p className="header-notifications-empty-subtext">Te avisaremos cuando recibas una actualización de tus preferencias.</p>
+                          )}
                         </div>
-                        <p className="header-notifications-empty-text">No tienes notificaciones pendientes</p>
-                        <p className="header-notifications-empty-subtext">Te avisaremos cuando recibas una actualización de tus preferencias.</p>
-                      </div>
+                      ) : (
+                        <ul className="header-notifications-list">
+                          {notificaciones.map((n) => {
+                            const tipo = TIPOS_NOTIF[n.tipo] || TIPOS_NOTIF.SISTEMA;
+                            return (
+                              <li
+                                key={n.id}
+                                className={`header-notification-item${n.leido ? '' : ' header-notification-item--unread'}`}
+                                onClick={() => handleClickNotificacion(n)}
+                              >
+                                <span className="header-notification-dot" aria-hidden="true" />
+                                <div className="header-notification-body">
+                                  <div className="header-notification-top">
+                                    <span className="header-notification-tag" style={{ color: tipo.color, borderColor: tipo.color }}>
+                                      {tipo.label}
+                                    </span>
+                                    <span className="header-notification-time">{tiempoRelativo(n.fecha_creacion)}</span>
+                                  </div>
+                                  <div className="header-notification-title">{n.titulo}</div>
+                                  <div className="header-notification-message">{n.mensaje}</div>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
                     </div>
                   )}
                 </div>

@@ -250,7 +250,9 @@ function App() {
 
 
           <Route path="/pruebas" element={<Pruebas idJugador={idJugador} usuario={usuario} />} />
+          <Route path="/pruebas/:id" element={<Pruebas idJugador={idJugador} usuario={usuario} />} />
           <Route path="/entrenamientos" element={<PaginaEntrenamientos usuario={usuario} />} />
+          <Route path="/entrenamientos/:id" element={<PaginaEntrenamientos usuario={usuario} />} />
           <Route path="/entrenadores" element={<EntrenadoresView usuario={usuario} />} />
           <Route path="/clubes" element={<ClubesView usuario={usuario} />} />
           <Route path="/empleos" element={<Empleos usuario={usuario} />} />

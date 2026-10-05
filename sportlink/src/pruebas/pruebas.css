@@ -729,3 +729,34 @@
   font-weight: 600;
   text-align: center;
 }
+
+/* Lista de espera: el aviso ocupa toda la fila y los botones comparten la siguiente */
+.modal-prueba-acciones,
+.detalle-actions {
+  flex-wrap: wrap;
+}
+
+.lista-espera-acciones {
+  display: contents;
+}
+
+.lista-espera-acciones .lista-espera-info {
+  flex: 1 0 100%;
+  box-sizing: border-box;
+}
+
+.lista-espera-acciones .btn-guardar,
+.lista-espera-acciones .btn-cancelar {
+  flex: 1 1 0;
+  width: auto;
+  min-height: 44px;
+  white-space: normal;
+}
+
+.lista-espera-acciones ~ .btn-cancelar {
+  flex: 0 0 auto;
+  min-height: 44px;
+  width: auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}

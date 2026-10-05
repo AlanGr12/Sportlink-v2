@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import api from '../axiosConfig.js';
 import ListaEntrenamientos from './ListaEntrenamientos';
@@ -288,6 +289,42 @@ const PaginaEntrenamientos = ({ usuario }) => {
   useEffect(() => {
     cargarEntrenamientos();
   }, [cargarEntrenamientos]);
+
+  // ── Deep link: /entrenamientos/:id (ej. desde una notificación) abre el detalle ──
+  const { id: idEntrenamientoUrl } = useParams();
+  const deepLinkAbierto = useRef(null);
+  useEffect(() => {
+    if (!idEntrenamientoUrl || deepLinkAbierto.current === idEntrenamientoUrl || loading) return;
+    const idNum = Number(idEntrenamientoUrl);
+    const idDe = (e) => Number(e.id || e.identrenamientos || e.identrenamiento || e.ident);
+    const abrir = (ent) => {
+      setEntrenamientoSeleccionado(ent);
+      setModalDetalleAbierto(true);
+    };
+
+    const encontrado = entrenamientos.find((e) => idDe(e) === idNum);
+    if (encontrado) {
+      deepLinkAbierto.current = idEntrenamientoUrl;
+      abrir(encontrado);
+      return;
+    }
+    if (entrenamientos.length === 0) return; // esperar a que cargue la lista
+
+    deepLinkAbierto.current = idEntrenamientoUrl;
+    api.get(`/api/entrenamientos/${idNum}`)
+      .then(async (r) => {
+        let inscritosCount = 0;
+        let isInscripto = false;
+        try {
+          const ins = await api.get(`/api/inscripcionesentrenamientos?identrenamiento=${idNum}`);
+          const lista = Array.isArray(ins.data) ? ins.data : (ins.data?.items || []);
+          inscritosCount = lista.length;
+          isInscripto = !!idJugadorReal && lista.some((i) => Number(i.idjugadorinscripto || i.idjugador) === Number(idJugadorReal));
+        } catch { /* sin conteo */ }
+        abrir({ ...r.data, id: idNum, inscritosCount, isInscripto });
+      })
+      .catch((e) => console.error('No se pudo abrir el entrenamiento del enlace:', e));
+  }, [idEntrenamientoUrl, entrenamientos, loading]);
 
   // Manejo de Creación / Edición
   const handleGuardarEntrenamiento = async (formData) => {
