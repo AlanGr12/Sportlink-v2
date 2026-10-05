@@ -64,6 +64,9 @@ function Pruebas({ idJugador, usuario }) {
   const [verificandoInscripcion, setVerificandoInscripcion] = useState(false);
   const [inscripcionError, setInscripcionError] = useState("");
   const [isInscripto, setIsInscripto] = useState(false);
+  // ── Lista de espera ──────────────────────────────────────
+  const [listaEspera, setListaEspera] = useState({ enLista: false, posicion: null, total: 0 });
+  const [listaEsperaLoading, setListaEsperaLoading] = useState(false);
   const [desuscripcionLoading, setDesuscripcionLoading] = useState(false);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [mostrarExitoDesuscripcion, setMostrarExitoDesuscripcion] = useState(false);
@@ -306,6 +309,68 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
     return false;
   };
 
+  // Prueba del modal con datos frescos (contador de inscriptos actualizado)
+  const pruebaModalActual = () =>
+    pruebas.find((p) => obtenerIdPrueba(p) === obtenerIdPrueba(pruebaSeleccionada)) || pruebaSeleccionada;
+
+  // Consultar posición en lista de espera cuando la prueba está completa
+  const pruebaModalCompleta = (() => {
+    if (!modalAbierto || !pruebaSeleccionada) return false;
+    const p = pruebaModalActual();
+    const cap = Number(p?.cupo || 0);
+    return cap > 0 && Number(p?.inscritosCount ?? 0) >= cap;
+  })();
+  useEffect(() => {
+    let cancelado = false;
+    setListaEspera({ enLista: false, posicion: null, total: 0 });
+    if (!pruebaModalCompleta || !esJugador || isInscripto || verificandoInscripcion) return;
+
+    const idPrueba = obtenerIdPrueba(pruebaSeleccionada);
+    if (!idPrueba) return;
+    api.get(`/api/pruebas/${idPrueba}/lista-espera/posicion`)
+      .then((r) => { if (!cancelado) setListaEspera(r.data); })
+      .catch((e) => console.error("[Pruebas] Error al obtener posición en lista de espera:", e));
+    return () => { cancelado = true; };
+  }, [pruebaModalCompleta, esJugador, isInscripto, verificandoInscripcion, pruebaSeleccionada]);
+
+  const handleAnotarseListaEspera = async () => {
+    const idPrueba = obtenerIdPrueba(pruebaSeleccionada);
+    if (!idPrueba) return;
+    setInscripcionError("");
+    setListaEsperaLoading(true);
+    try {
+      const r = await api.post(`/api/pruebas/${idPrueba}/lista-espera`);
+      setListaEspera(r.data);
+    } catch (error) {
+      setInscripcionError(error?.response?.data?.error || error?.response?.data?.message || "No se pudo anotar en la lista de espera.");
+    } finally {
+      setListaEsperaLoading(false);
+    }
+  };
+
+  const handleSalirListaEspera = async () => {
+    const idPrueba = obtenerIdPrueba(pruebaSeleccionada);
+    if (!idPrueba) return;
+    setInscripcionError("");
+    setListaEsperaLoading(true);
+    try {
+      const r = await api.delete(`/api/pruebas/${idPrueba}/lista-espera`);
+      setListaEspera(r.data);
+    } catch (error) {
+      setInscripcionError(error?.response?.data?.error || error?.response?.data?.message || "No se pudo salir de la lista de espera.");
+    } finally {
+      setListaEsperaLoading(false);
+    }
+  };
+
+  // Cupos de una prueba: { capacidad, inscritos, restantes, completo }
+  const getCupos = (prueba) => {
+    const capacidad = Number(prueba?.cupo || 0);
+    const inscritos = Number(prueba?.inscritosCount ?? 0);
+    const restantes = capacidad > 0 ? Math.max(0, capacidad - inscritos) : null;
+    return { capacidad, inscritos, restantes, completo: capacidad > 0 && inscritos >= capacidad };
+  };
+
   const handleInscribirse = async () => {
     if (!pruebaSeleccionada) return;
     setInscripcionError("");
@@ -325,6 +390,12 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
     if (isInscripto || verificandoInscripcion || estaInscripto(pruebaSeleccionada)) {
       setInscripcionError("Ya estás inscrito en esta prueba.");
+      return;
+    }
+
+    const pruebaActual = pruebas.find((p) => obtenerIdPrueba(p) === idPruebaNum) || pruebaSeleccionada;
+    if (getCupos(pruebaActual).completo) {
+      setInscripcionError("No hay cupos disponibles.");
       return;
     }
 
@@ -353,6 +424,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
         const inscripcionesActuales = Array.isArray(prueba.inscripciones) ? prueba.inscripciones : [];
         return {
           ...prueba,
+          inscritosCount: Number(prueba.inscritosCount ?? 0) + 1,
           yaInscripto: true,
           inscripciones: [
             ...inscripcionesActuales,
@@ -404,12 +476,15 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
       setIsInscripto(false);
       setMostrarConfirmacion(false);
       setMostrarExitoDesuscripcion(true);
-      
+      // El backend promueve al primero de la lista de espera: resincronizar contadores
+      obtenerPruebas(mostrarTodas);
+
       setPruebas((prevPruebas) => prevPruebas.map((prueba) => {
         if (obtenerIdPrueba(prueba) !== idPruebaNum) return prueba;
         const inscripcionesActuales = Array.isArray(prueba.inscripciones) ? prueba.inscripciones : [];
         return {
           ...prueba,
+          inscritosCount: Math.max(0, Number(prueba.inscritosCount ?? 0) - 1),
           yaInscripto: false,
           inscripciones: inscripcionesActuales.filter(i => 
              Number(i.idjugador || i.idJugador || i.jugadorId) !== Number(idjugadorResuelto)
@@ -534,7 +609,20 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
         : "/api/pruebas";
       const config = filtrarPorDeporte ? { params: { idJugador: idJugadorReal } } : {};
       const response = await api.get(url, config);
-      setPruebas(response.data);
+      // Enriquecer cada prueba con la cantidad de inscriptos (para mostrar cupos)
+      const lista = Array.isArray(response.data) ? response.data : [];
+      const conInscritos = await Promise.all(lista.map(async (p) => {
+        const idP = Number(p.idprueba);
+        if (!idP) return p;
+        try {
+          const r = await api.get("/api/inscripcionesprueba", { params: { idprueba: idP } });
+          const ins = Array.isArray(r.data) ? r.data : (r.data?.items || []);
+          return { ...p, inscritosCount: ins.length, inscripciones: ins };
+        } catch {
+          return { ...p, inscritosCount: Number(p.inscritosCount ?? 0) };
+        }
+      }));
+      setPruebas(Array.isArray(response.data) ? conInscritos : response.data);
 
       // Capturar el deporte del usuario a partir de la primera respuesta filtrada
       if (filtrarPorDeporte && Array.isArray(response.data) && response.data.length > 0) {
@@ -714,11 +802,32 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
                         <IconoFecha size={16} color="currentColor" className="card-icon-asset" />
                         <p>{prueba.fechaprueba ? formatearFecha(prueba.fechaprueba) : "Fecha a confirmar"}</p>
                       </div>
+
+                      <div className="card-prueba-detalle-item">
+                        <IconoModalidad size={16} color="currentColor" className="card-icon-asset" />
+                        <p>
+                          {getCupos(prueba).capacidad > 0
+                            ? `${getCupos(prueba).inscritos} / ${getCupos(prueba).capacidad} cupos`
+                            : "Cupos a confirmar"}
+                        </p>
+                        {getCupos(prueba).restantes > 0 && getCupos(prueba).restantes <= 2 && (
+                          <span className="pocos-cupos">
+                            Quedan {getCupos(prueba).restantes} cupo{getCupos(prueba).restantes > 1 ? "s" : ""}
+                          </span>
+                        )}
+                        {getCupos(prueba).completo && (
+                          <span className="pocos-cupos full">Completo</span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
                   {/* ── Pie: botón siempre dentro de la card ── */}
                   <div className="card-prueba-pie">
+                    {!esClub && idjugadorResuelto && Array.isArray(prueba.inscripciones) &&
+                      prueba.inscripciones.some((i) => Number(i.idjugador ?? i.idJugador ?? i.jugadorId) === Number(idjugadorResuelto)) && (
+                      <div className="inscripto-badge">Estás inscripto</div>
+                    )}
                     <button
                       className="btn-mas-info"
                       onClick={(e) => {
@@ -868,6 +977,20 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
                     {pruebaSeleccionada.fechaprueba
                       ? formatearFecha(pruebaSeleccionada.fechaprueba)
                       : "A confirmar"}
+                  </span>
+                </div>
+
+                <div className="modal-prueba-spec-item">
+                  <span className="modal-prueba-spec-label">
+                    <IconoModalidad size={16} color="currentColor" />
+                    Cupos
+                  </span>
+                  <span className="modal-prueba-spec-valor">
+                    {(() => {
+                      const c = getCupos(pruebas.find((p) => obtenerIdPrueba(p) === obtenerIdPrueba(pruebaSeleccionada)) || pruebaSeleccionada);
+                      if (!c.capacidad) return "A confirmar";
+                      return `${c.inscritos} / ${c.capacidad} (${c.completo ? "Completo" : `quedan ${c.restantes}`})`;
+                    })()}
                   </span>
                 </div>
 
@@ -1026,6 +1149,32 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
                       )}
                     </div>
                   ) : (
+                    pruebaModalCompleta ? (
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', marginRight: '10px' }}>
+                        {listaEspera.enLista && (
+                          <div className="lista-espera-info">
+                            Estás en el puesto N° {listaEspera.posicion} de la lista de espera
+                          </div>
+                        )}
+                        {listaEspera.enLista ? (
+                          <button
+                            className="btn-cancelar"
+                            onClick={handleSalirListaEspera}
+                            disabled={listaEsperaLoading}
+                          >
+                            {listaEsperaLoading ? "Saliendo..." : "Salir de la lista de espera"}
+                          </button>
+                        ) : (
+                          <button
+                            className="btn-guardar"
+                            onClick={handleAnotarseListaEspera}
+                            disabled={listaEsperaLoading || !idjugadorResuelto}
+                          >
+                            {listaEsperaLoading ? "Anotando..." : "Anotarme a Lista de Espera"}
+                          </button>
+                        )}
+                      </div>
+                    ) : (
                     <button
                       className="btn-guardar"
                       onClick={handleInscribirse}
@@ -1037,6 +1186,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
                           ? "INSCRIBIRSE"
                           : "Cargando jugador..."}
                     </button>
+                    )
                   )
                 )}
                 <button className="btn-cancelar" onClick={cerrarModal}>

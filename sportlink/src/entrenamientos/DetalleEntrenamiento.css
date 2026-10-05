@@ -20,3 +20,15 @@
 .adjunto-descargar{ background-color:var(--primary); color:#000; text-decoration:none; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:700 }
 .detalle-actions{ display:flex; justify-content:flex-end; gap:12px; margin-top:16px }
 .detalle-actions .btn-cancelar{ width:100px }
+
+/* Posición en la lista de espera */
+.lista-espera-info {
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #00f0ff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}

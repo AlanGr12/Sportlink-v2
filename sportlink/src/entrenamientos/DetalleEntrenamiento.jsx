@@ -117,6 +117,50 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar, onI
       return () => { cancelado = true; };
   }, [esJugador, idjugadorResuelto, identrenamiento]);
 
+    const capacidadTotal = Number(entrenamiento?.cantidad || entrenamiento?.cantidadJugadores || entrenamiento?.capacidad || 0);
+    const sinCupos = capacidadTotal > 0 && Number(entrenamiento?.inscritosCount ?? entrenamiento?.inscritos ?? 0) >= capacidadTotal;
+
+    // ── Lista de espera ──
+    const [listaEspera, setListaEspera] = useState({ enLista: false, posicion: null, total: 0 });
+    const [listaEsperaLoading, setListaEsperaLoading] = useState(false);
+
+    useEffect(() => {
+      let cancelado = false;
+      setListaEspera({ enLista: false, posicion: null, total: 0 });
+      if (!sinCupos || !esJugador || isInscripto || verificandoInscripcion || !identrenamiento) return;
+
+      api.get(`/api/entrenamientos/${identrenamiento}/lista-espera/posicion`)
+        .then((r) => { if (!cancelado) setListaEspera(r.data); })
+        .catch((e) => console.error('Error al obtener posición en lista de espera:', e));
+      return () => { cancelado = true; };
+    }, [sinCupos, esJugador, isInscripto, verificandoInscripcion, identrenamiento]);
+
+    const handleAnotarseListaEspera = async () => {
+      setInscripcionError("");
+      setListaEsperaLoading(true);
+      try {
+        const r = await api.post(`/api/entrenamientos/${identrenamiento}/lista-espera`);
+        setListaEspera(r.data);
+      } catch (err) {
+        setInscripcionError(err?.response?.data?.error || err?.response?.data?.message || "No se pudo anotar en la lista de espera.");
+      } finally {
+        setListaEsperaLoading(false);
+      }
+    };
+
+    const handleSalirListaEspera = async () => {
+      setInscripcionError("");
+      setListaEsperaLoading(true);
+      try {
+        const r = await api.delete(`/api/entrenamientos/${identrenamiento}/lista-espera`);
+        setListaEspera(r.data);
+      } catch (err) {
+        setInscripcionError(err?.response?.data?.error || err?.response?.data?.message || "No se pudo salir de la lista de espera.");
+      } finally {
+        setListaEsperaLoading(false);
+      }
+    };
+
     const handleInscribirse = async () => {
       if (!identrenamiento || !idjugadorResuelto) {
         setInscripcionError("Datos de inscripción incompletos.");
@@ -272,10 +316,14 @@ console.log(entrenamiento)
           </div>
 
           <div className="detalle-item-caja">
-            <span className="detalle-item-label"><img src={iconModalidad} alt="Cantidad" className="icon-small" /> Cantidad</span>
-            <span className="detalle-item-valor">{entrenamiento.cantidad || entrenamiento.cantidadJugadores || entrenamiento.capacidad
-              ? `${entrenamiento.cantidad || entrenamiento.cantidadJugadores || entrenamiento.capacidad} cupos`
-              : 'A confirmar'}</span>
+            <span className="detalle-item-label"><img src={iconModalidad} alt="Cupos" className="icon-small" /> Cupos</span>
+            <span className="detalle-item-valor">{(() => {
+              const cap = Number(entrenamiento.cantidad || entrenamiento.cantidadJugadores || entrenamiento.capacidad || 0);
+              const ins = Number(entrenamiento.inscritosCount ?? entrenamiento.inscritos ?? 0);
+              if (!cap) return 'A confirmar';
+              const completo = ins >= cap;
+              return `${ins} / ${cap} (${completo ? 'Completo' : `quedan ${cap - ins}`})`;
+            })()}</span>
           </div>
 
           <div className="detalle-item-caja">
@@ -455,11 +503,45 @@ console.log(entrenamiento)
                     </button>
                   )}
                 </div>
+            ) : sinCupos ? (
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
+                  {listaEspera.enLista && (
+                    <div className="lista-espera-info">
+                      Estás en el puesto N° {listaEspera.posicion} de la lista de espera
+                    </div>
+                  )}
+                  {listaEspera.enLista ? (
+                    <button
+                      className="btn-cancelar"
+                      onClick={handleSalirListaEspera}
+                      disabled={listaEsperaLoading}
+                    >
+                      {listaEsperaLoading ? "Saliendo..." : "Salir de la lista de espera"}
+                    </button>
+                  ) : (
+                    <button
+                      className="btn-guardar"
+                      onClick={handleAnotarseListaEspera}
+                      disabled={listaEsperaLoading || !idjugadorResuelto}
+                      style={{
+                        backgroundColor: "#00f0ff",
+                        color: "#000",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: '10px 24px',
+                        borderRadius: '8px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      {listaEsperaLoading ? "Anotando..." : "Anotarme a Lista de Espera"}
+                    </button>
+                  )}
+                </div>
             ) : (
                 <button
                   className="btn-guardar"
                   onClick={handleInscribirse}
-                  disabled={inscripcionLoading || !idjugadorResuelto}
+                  disabled={inscripcionLoading || !idjugadorResuelto || sinCupos}
                   style={{
                     backgroundColor: "#00f0ff",
                     color: "#000",
@@ -472,6 +554,8 @@ console.log(entrenamiento)
                 >
                   {inscripcionLoading
                     ? "Inscribiendo..."
+                    : sinCupos
+                      ? "SIN CUPOS"
                     : idjugadorResuelto
                       ? "INSCRIBIRSE"
                       : "Cargando jugador..."}
