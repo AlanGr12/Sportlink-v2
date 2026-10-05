@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../axiosConfig.js';
@@ -73,6 +73,10 @@ const MiPerfil = (props) => {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [formEdicion, setFormEdicion] = useState({});
   const [toastMensaje, setToastMensaje] = useState('');
+  const [fotoArchivo, setFotoArchivo] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState(null);
+  const [guardando, setGuardando] = useState(false);
+  const inputFotoRef = useRef(null);
 
   // Estados de Red Social
   const [seguidores, setSeguidores] = useState(1240);
@@ -297,8 +301,39 @@ const MiPerfil = (props) => {
     };
   }, [modalAbierto]);
 
+  const limpiarFoto = () => {
+    if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+    setFotoArchivo(null);
+    setFotoPreview(null);
+    if (inputFotoRef.current) inputFotoRef.current.value = '';
+  };
+
+  const cerrarModal = () => {
+    limpiarFoto();
+    setModalAbierto(false);
+  };
+
+  const handleSeleccionFoto = (e) => {
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(archivo.type)) {
+      handleMostrarToast('Formato no válido. Usá JPG, PNG o WEBP.');
+      return;
+    }
+    if (archivo.size > 5 * 1024 * 1024) {
+      handleMostrarToast('La imagen no puede superar los 5 MB.');
+      return;
+    }
+
+    if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+    setFotoArchivo(archivo);
+    setFotoPreview(URL.createObjectURL(archivo));
+  };
+
   // Manejar apertura de modal de edición cargando datos actuales
   const abrirModalEdicion = () => {
+    limpiarFoto();
     setFormEdicion({
       nombre: perfil?.nombre || '',
       apellido: perfil?.apellido || '',
@@ -319,8 +354,27 @@ const MiPerfil = (props) => {
 
   const guardarCambios = async (e) => {
     e.preventDefault();
-    
-    // Si se modificó la biografía desde el modal general, guardarla en el backend
+    if (guardando) return;
+    setGuardando(true);
+
+    let nuevaFoto = null;
+
+    // 1. Subir foto si el usuario eligió una nueva
+    if (fotoArchivo) {
+      try {
+        const fd = new FormData();
+        fd.append('foto', fotoArchivo);
+        const res = await api.put('/api/login/perfil/foto', fd);
+        nuevaFoto = res.data?.fotoperfil || res.data?.url || null;
+      } catch (err) {
+        console.error('Error al subir la foto de perfil:', err);
+        handleMostrarToast(err.response?.data?.error || 'No se pudo subir la foto. Intentá de nuevo.');
+        setGuardando(false);
+        return; // no cerramos el modal para que no pierda los cambios
+      }
+    }
+
+    // 2. Si se modificó la biografía desde el modal general, guardarla en el backend
     if (formEdicion.biografia !== undefined && formEdicion.biografia !== perfil?.biografia) {
       try {
         await api.put('/api/login/perfil/biografia', {
@@ -331,12 +385,15 @@ const MiPerfil = (props) => {
       }
     }
 
+    // 3. Actualizar estado local
     setPerfil(prev => ({
       ...prev,
-      ...formEdicion
+      ...formEdicion,
+      ...(nuevaFoto ? { fotoperfil: nuevaFoto } : {}),
     }));
 
-    setModalAbierto(false);
+    cerrarModal();
+    setGuardando(false);
     handleMostrarToast('¡Perfil actualizado con éxito!');
   };
 
@@ -605,10 +662,56 @@ const MiPerfil = (props) => {
           <div className="profile-modal-card">
             <div className="profile-modal-header">
               <h3>Editar Información de Perfil</h3>
-              <button className="profile-modal-btn-close" onClick={() => setModalAbierto(false)}>×</button>
+              <button className="profile-modal-btn-close" onClick={cerrarModal}>×</button>
             </div>
             
             <form onSubmit={guardarCambios} className="profile-modal-form">
+              <div className="profile-modal-foto-area">
+                <button
+                  type="button"
+                  className="profile-modal-foto-btn"
+                  onClick={() => inputFotoRef.current?.click()}
+                  aria-label="Cambiar foto de perfil"
+                >
+                  <Avatar
+                    src={fotoPreview || perfil?.fotoperfil}
+                    nombre={nombreCompleto || perfil?.email || nombre}
+                    size="96px"
+                    className="profile-avatar-img"
+                    style={{ border: 'none', background: '#333' }}
+                  />
+                  <span className="profile-modal-foto-overlay">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                  </span>
+                </button>
+
+                <div className="profile-modal-foto-info">
+                  <span className="profile-modal-foto-titulo">Foto de perfil</span>
+                  <span className="profile-modal-foto-hint">JPG, PNG o WEBP · máx. 5 MB</span>
+                  <div className="profile-modal-foto-botones">
+                    <button type="button" className="btn-modal-cancelar" onClick={() => inputFotoRef.current?.click()}>
+                      Cambiar foto
+                    </button>
+                    {fotoPreview && (
+                      <button type="button" className="btn-modal-cancelar" onClick={limpiarFoto}>
+                        Descartar
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <input
+                  ref={inputFotoRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleSeleccionFoto}
+                  style={{ display: 'none' }}
+                />
+              </div>
+
               <div className="form-double-col">
                 <div className="form-field-group">
                   <label>Nombre</label>
@@ -715,8 +818,10 @@ const MiPerfil = (props) => {
               </div>
 
               <div className="profile-modal-actions">
-                <button type="button" className="btn-modal-cancelar" onClick={() => setModalAbierto(false)}>Cancelar</button>
-                <button type="submit" className="btn-modal-guardar">Guardar cambios</button>
+                <button type="button" className="btn-modal-cancelar" onClick={cerrarModal}>Cancelar</button>
+                <button type="submit" className="btn-modal-guardar" disabled={guardando}>
+                  {guardando ? 'Guardando...' : 'Guardar cambios'}
+                </button>
               </div>
             </form>
           </div>

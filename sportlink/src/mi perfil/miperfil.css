@@ -750,6 +750,87 @@
   transform: translateY(-1px);
 }
 
+/* ── FOTO DE PERFIL EN EL MODAL ── */
+.profile-modal-foto-area {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-modal-foto-btn {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: var(--surface-3);
+  cursor: pointer;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.profile-modal-foto-btn:hover {
+  border-color: var(--cyan);
+  box-shadow: 0 0 15px rgba(45, 239, 242, 0.2);
+}
+
+.profile-modal-foto-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--cyan);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.profile-modal-foto-btn:hover .profile-modal-foto-overlay,
+.profile-modal-foto-btn:focus-visible .profile-modal-foto-overlay {
+  opacity: 1;
+}
+
+.profile-modal-foto-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-modal-foto-titulo {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.profile-modal-foto-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.profile-modal-foto-botones {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-modal-foto-botones .btn-modal-cancelar {
+  padding: 8px 14px;
+  font-size: 11px;
+}
+
+.btn-modal-guardar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* ── SUCCESS TOAST NOTIFICATION ── */
 .profile-toast-success {
   position: fixed;
@@ -1188,4 +1269,5 @@
   width: 100% !important;
   box-sizing: border-box !important;
 }
+
 
