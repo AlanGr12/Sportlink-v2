@@ -22,7 +22,7 @@
 /* Portada/Banner */
 .perfil-cover-banner {
   height: 160px;
-  background: linear-gradient(135deg, #0d1e21 0%, #000000 100%);
+  background: linear-gradient(135deg, #121212 0%, #000000 100%);
   position: relative;
   border-radius: var(--radius-lg);
   border-bottom: 2px solid var(--cyan-glow);

@@ -2,7 +2,7 @@
 
 /* ── ROOT ── */
 .cal-root {
-  background: #0f0f10;
+  background: #0f0f0f;
   min-height: 100vh;
   padding-top: 80px; /* espacio para header fijo */
   color: #e8e8e8;
@@ -58,13 +58,13 @@
     padding-bottom: 40px;
     box-sizing: border-box;
     scrollbar-width: thin;
-    scrollbar-color: #2a2a2c transparent;
+    scrollbar-color: #2a2a2a transparent;
   }
   .cal-sidebar-right::-webkit-scrollbar {
     width: 6px;
   }
   .cal-sidebar-right::-webkit-scrollbar-thumb {
-    background-color: #2a2a2c;
+    background-color: #2a2a2a;
     border-radius: 3px;
   }
 }
@@ -100,7 +100,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #1a1a1b;
+  background: #1a1a1a;
   border-radius: 6px;
   padding: 9px 12px;
   cursor: pointer;
@@ -108,7 +108,7 @@
 }
 
 .cal-cat-item:hover {
-  background: #222224;
+  background: #222222;
 }
 
 .cal-cat-dot {
@@ -128,7 +128,7 @@
 
 .cal-sidebar-divider {
   height: 1px;
-  background: #2a2a2c;
+  background: #2a2a2a;
   margin: 6px 0;
 }
 
@@ -137,7 +137,7 @@
   align-items: center;
   gap: 8px;
   background: transparent;
-  border: 1px solid #2a2a2c;
+  border: 1px solid #2a2a2a;
   border-radius: 6px;
   padding: 9px 12px;
   color: #23e7f5;

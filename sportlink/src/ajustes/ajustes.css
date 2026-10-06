@@ -9,14 +9,14 @@
   --red: #ff4d4f;
   --red-dim: rgba(255, 77, 79, 0.08);
   --surface-1: #0a0a0a;
-  --surface-2: #111113;
-  --surface-3: #18181b;
-  --surface-4: #222226;
+  --surface-2: #111111;
+  --surface-3: #181818;
+  --surface-4: #222222;
   --border: rgba(255, 255, 255, 0.07);
   --border-active: rgba(45, 239, 242, 0.25);
   --text-primary: #ffffff;
   --text-secondary: #9a9aa0;
-  --text-muted: #4a4a52;
+  --text-muted: #4a4a4a;
   --font-display: 'Space Grotesk', 'Inter', sans-serif;
   --font-body: 'Manrope', 'Inter', sans-serif;
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);

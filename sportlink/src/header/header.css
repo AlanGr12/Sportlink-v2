@@ -255,7 +255,7 @@
   position: absolute;
   top: 55px;
   right: 0;
-  background-color: #121415;
+  background-color: #141414;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 16px;
@@ -282,12 +282,12 @@
   height: 44px;
   border-radius: 50%;
   overflow: hidden;
-  background-color: #1a1d1e;
+  background-color: #1c1c1c;
   border: 1.5px solid rgba(255, 255, 255, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #88888b;
+  color: #888888;
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
   font-size: 16px;
@@ -317,7 +317,7 @@
 }
 
 .header-user-email {
-  color: #777779;
+  color: #777777;
   font-size: 11px;
   font-family: 'Manrope', sans-serif;
   white-space: nowrap;
@@ -328,7 +328,7 @@
 
 .header-user-role-badge {
   display: inline-block;
-  color: #88888b;
+  color: #888888;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -578,7 +578,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid #0A0B0C;
+  border: 1.5px solid #0a0a0a;
   z-index: 2;
 }
 
@@ -617,7 +617,7 @@
 }
 
 .header-notification-item--unread .header-notification-dot {
-  background: #3b82f6;
+  background: #737373;
 }
 
 .header-notification-body {

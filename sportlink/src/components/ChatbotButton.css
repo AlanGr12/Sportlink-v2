@@ -18,7 +18,7 @@
   flex-direction: column;
   border-radius: 16px;
   overflow: hidden;
-  background: #0d1a1e;
+  background: #141414;
   border: 1px solid rgba(45, 239, 242, 0.25);
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(45, 239, 242, 0.08);
   animation: chatWindowIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
@@ -35,7 +35,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  background: linear-gradient(135deg, #0a2226 0%, #071215 100%);
+  background: linear-gradient(135deg, #181818 0%, #0d0d0d 100%);
   border-bottom: 1px solid rgba(45, 239, 242, 0.15);
   flex-shrink: 0;
 }

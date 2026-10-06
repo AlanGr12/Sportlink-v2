@@ -94,7 +94,7 @@
 .mensajes-search-icon {
   position: absolute;
   left: 0.85rem;
-  color: var(--text-muted, #8A9099);
+  color: var(--text-muted, #8E8E8E);
   pointer-events: none;
   display: flex;
   align-items: center;
@@ -114,13 +114,13 @@
 }
 
 .mensajes-search-input::placeholder {
-  color: var(--text-muted, #8A9099);
+  color: var(--text-muted, #8E8E8E);
 }
 
 .mensajes-search-input:focus {
   outline: none;
   border-color: var(--primary, #2DEFF2);
-  background-color: #1a1d1f;
+  background-color: #1c1c1c;
 }
 
 /* ── Filtros de categoría rápida ─── */
@@ -147,7 +147,7 @@
   cursor: pointer;
   border: 1px solid var(--border-light, rgba(255,255,255,0.08));
   background: transparent;
-  color: var(--text-muted, #8A9099);
+  color: var(--text-muted, #8E8E8E);
   font-family: var(--font-family, 'Space Grotesk', sans-serif);
   transition: all 0.15s ease;
   white-space: nowrap;
@@ -382,7 +382,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: linear-gradient(90deg, #1a1d1e 25%, #222528 50%, #1a1d1e 75%);
+  background: linear-gradient(90deg, #1c1c1c 25%, #242424 50%, #1c1c1c 75%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.5s ease-in-out infinite;
   flex-shrink: 0;
@@ -833,13 +833,13 @@
 }
 
 .mensajes-input-field::placeholder {
-  color: var(--text-muted, #8A9099);
+  color: var(--text-muted, #8E8E8E);
 }
 
 .mensajes-input-field:focus {
   outline: none;
   border-color: var(--primary, #2DEFF2);
-  background-color: #1a1d1f;
+  background-color: #1c1c1c;
 }
 
 /* ── Estado de carga del historial ─── */
@@ -854,7 +854,7 @@
 .mensajes-historial-loading-ajeno {
   height: 40px;
   border-radius: 16px;
-  background: linear-gradient(90deg, #161819 25%, #1e2124 50%, #161819 75%);
+  background: linear-gradient(90deg, #161616 25%, #202020 50%, #161616 75%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.5s ease-in-out infinite;
   max-width: 55%;
@@ -981,7 +981,7 @@
   align-items: center;
   gap: 10px;
   padding: 0.6rem 1.5rem;
-  background-color: #16181a;
+  background-color: #161616;
   border-bottom: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
   animation: fadeIn 0.2s ease;
 }

@@ -16,7 +16,7 @@ const TIPOS_NOTIF = {
   PRUEBA: { label: 'Prueba', color: '#2DEFF2' },
   ENTRENAMIENTO: { label: 'Entrenamiento', color: '#34d399' },
   EMPLEO: { label: 'Empleo', color: '#a78bfa' },
-  CHAT: { label: 'Chat', color: '#60a5fa' },
+  CHAT: { label: 'Chat', color: '#a0a0a0' },
   SISTEMA: { label: 'Sistema', color: '#9ca3af' },
 };
 
