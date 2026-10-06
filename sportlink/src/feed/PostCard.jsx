@@ -101,9 +101,10 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
   return (
     <div className="post-card-header">
       {/* Autor info inline */}
-      <div 
+      <div
         className="post-card-autor"
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation()
           if (post.autor?.idusuario) {
             navigate(`/perfil/${post.autor.idusuario}`)
           }
@@ -122,12 +123,16 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
       {/* Menú 3 puntos (solo si es el dueño) */}
       {esMio && (
         <div className="post-menu-wrapper" ref={menuRef}>
-          <button className="post-menu-btn" onClick={() => setMenuAbierto(v => !v)} aria-label="Opciones">
+          <button
+            className="post-menu-btn"
+            onClick={(e) => { e.stopPropagation(); setMenuAbierto(v => !v) }}
+            aria-label="Opciones"
+          >
             <IcoDots />
           </button>
           {menuAbierto && (
             <div className="post-menu-dropdown">
-              <button className="post-menu-item danger" onClick={handleEliminar}>
+              <button className="post-menu-item danger" onClick={(e) => { e.stopPropagation(); handleEliminar() }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
                 </svg>
@@ -184,7 +189,7 @@ export function ReferenciaBloque({ tipo, ref: refData }) {
       {rutas[tipo] && (
         <button
           className="post-referencia-ver-btn"
-          onClick={() => navigate(rutas[tipo])}
+          onClick={(e) => { e.stopPropagation(); navigate(rutas[tipo]) }}
           style={{
             background: 'transparent', border: '1px solid #2DEFF2', color: '#2DEFF2',
             borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 700,
@@ -221,21 +226,41 @@ export function ModalImagen({ src, onClose }) {
 // COMPONENTE: PostCompleto (PostCard + contenido + PostAcciones)
 // Se usa tanto en el feed como en la página pública de detalle.
 // ═══════════════════════════════════════════════════════════
-export function PostCompleto({ post, usuario, onEliminar }) {
+export function PostCompleto({ post, usuario, onEliminar, showThreadLine = false, modoDetalle = false }) {
   const navigate = useNavigate()
   const [imagenModal, setImagenModal] = useState(null)
+  const [tieneComentariosAbiertos, setTieneComentariosAbiertos] = useState(false)
+
+  const handleClickPost = (e) => {
+    // No navegar si se hizo click en un botón, enlace, o zona interactiva
+    if (e.target.closest('button, a, textarea, input, [data-no-nav]')) return
+    if (!modoDetalle) {
+      navigate(`/publicacion/${post.idpublicacion}`)
+    }
+  }
 
   return (
-    <article className="post-card">
+    <article
+      className={`post-card${modoDetalle ? ' post-card--detalle' : ''}`}
+      onClick={handleClickPost}
+      style={{ cursor: modoDetalle ? 'default' : 'pointer' }}
+    >
       {/* Columna avatar */}
       <div className="post-card-avatar-col">
         <Avatar
           src={post.autor?.fotoperfil}
           nombre={post.autor?.nombre || '?'}
           size={44}
-          onClick={() => post.autor?.idusuario && navigate(`/perfil/${post.autor.idusuario}`)}
+          onClick={(e) => {
+            e && e.stopPropagation()
+            post.autor?.idusuario && navigate(`/perfil/${post.autor.idusuario}`)
+          }}
           style={{ cursor: post.autor?.idusuario ? 'pointer' : 'default', flexShrink: 0 }}
         />
+        {/* Thread line: aparece si hay comentarios abiertos debajo */}
+        {(showThreadLine || tieneComentariosAbiertos) && (
+          <div className="post-thread-line" />
+        )}
       </div>
 
       {/* Columna contenido */}
@@ -256,21 +281,25 @@ export function PostCompleto({ post, usuario, onEliminar }) {
         )}
 
         {post.imagen && (
-          <div className="post-card-imagen">
+          <div className="post-card-imagen" onClick={(e) => e.stopPropagation()}>
             {post.imagen.match(/\.(mp4|webm|ogg)$/i) ? (
               <video src={post.imagen} controls className="post-media-video" />
             ) : (
               <img
                 src={post.imagen}
                 alt="Publicación"
-                onClick={() => setImagenModal(post.imagen)}
+                onClick={(e) => { e.stopPropagation(); setImagenModal(post.imagen) }}
                 loading="lazy"
               />
             )}
           </div>
         )}
 
-        <PostAcciones post={post} usuario={usuario} />
+        <PostAcciones
+          post={post}
+          usuario={usuario}
+          onComentariosToggle={setTieneComentariosAbiertos}
+        />
 
         {imagenModal && <ModalImagen src={imagenModal} onClose={() => setImagenModal(null)} />}
       </div>
@@ -281,7 +310,7 @@ export function PostCompleto({ post, usuario, onEliminar }) {
 // ═══════════════════════════════════════════════════════════
 // COMPONENTE: PostAcciones — likes + comentarios
 // ═══════════════════════════════════════════════════════════
-export function PostAcciones({ post: postInicial, usuario, onEliminarComentario }) {
+export function PostAcciones({ post: postInicial, usuario, onEliminarComentario, onComentariosToggle }) {
   const navigate = useNavigate()
   const [post, setPost] = useState(postInicial)
   const [likeAnimando, setLikeAnimando] = useState(false)
@@ -304,7 +333,8 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
   }
 
   // ── Like optimista ─────────────────────────────────────
-  const handleLike = async () => {
+  const handleLike = async (e) => {
+    e && e.stopPropagation()
     if (requiereLogin()) return
 
     const yaLiked = post.usuarioDioLike
@@ -334,9 +364,11 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
   }
 
   // ── Comentarios ───────────────────────────────────────
-  const handleToggleComentarios = async () => {
+  const handleToggleComentarios = async (e) => {
+    e && e.stopPropagation()
     const nuevosAbiertos = !comentariosAbiertos
     setComentariosAbiertos(nuevosAbiertos)
+    onComentariosToggle && onComentariosToggle(nuevosAbiertos)
     if (nuevosAbiertos && comentarios.length === 0) {
       setLoadingComentarios(true)
       try {
@@ -350,7 +382,8 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
     }
   }
 
-  const handleEnviarComentario = async () => {
+  const handleEnviarComentario = async (e) => {
+    e && e.stopPropagation()
     if (requiereLogin()) return
     if (!nuevoComentario.trim() || enviandoComentario) return
     setEnviandoComentario(true)
@@ -391,13 +424,15 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
     }
   }
 
-  const handleRepublicar = () => {
+  const handleRepublicar = (e) => {
+    e && e.stopPropagation()
     if (requiereLogin()) return
     setReposts(r => r + 1)
   }
 
   // Copia el link específico a ESTA publicación, no la URL actual de la pestaña
-  const handleEnviar = () => {
+  const handleEnviar = (e) => {
+    e && e.stopPropagation()
     const url = `${window.location.origin}/publicacion/${post.idpublicacion}`
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url).then(() => alert('Enlace de la publicación copiado al portapapeles'))
@@ -408,7 +443,7 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
 
   return (
     <>
-      <div className="post-acciones-wrapper">
+      <div className="post-acciones-wrapper" onClick={(e) => e.stopPropagation()}>
         <div className="post-acciones-botones">
           <button
             className={`post-accion-btn${post.usuarioDioLike ? ' liked' : ''}`}
@@ -454,7 +489,7 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
       </div>
 
       {comentariosAbiertos && (
-        <div className="post-comentarios-seccion">
+        <div className="post-comentarios-seccion" onClick={(e) => e.stopPropagation()}>
           {usuario ? (
             <div className="post-nuevo-comentario">
               <Avatar src={usuario.fotoperfil} nombre={usuario.nombre || 'Yo'} size={32} />
@@ -478,7 +513,7 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
           ) : (
             <p style={{ color: '#4a5060', fontSize: '13px', margin: '0 0 12px' }}>
               <button
-                onClick={() => navigate('/login')}
+                onClick={(e) => { e.stopPropagation(); navigate('/login') }}
                 style={{ background: 'none', border: 'none', color: '#2DEFF2', cursor: 'pointer', padding: 0, font: 'inherit' }}
               >
                 Iniciá sesión
@@ -493,11 +528,20 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
             </div>
           ) : (
             <div className="post-comentarios-lista">
-              {comentarios.map(c => (
-                <div key={c.idcomentario} className="post-comentario-item">
-                  <Avatar src={c.autor?.fotoperfil} nombre={c.autor?.nombre || '?'} size={32} />
+              {comentarios.map((c, idx) => (
+                <div key={c.idcomentario} className="post-comentario-item post-comentario-item--thread">
+                  {/* Avatar con línea de thread */}
+                  <div className="post-comentario-avatar-col">
+                    <Avatar src={c.autor?.fotoperfil} nombre={c.autor?.nombre || '?'} size={36} />
+                    {/* Línea vertical si hay más comentarios debajo */}
+                    {idx < comentarios.length - 1 && <div className="post-thread-line post-thread-line--comentario" />}
+                  </div>
+
                   <div className="post-comentario-burbuja">
-                    <div className="post-comentario-nombre">{c.autor?.nombre || 'Usuario'}</div>
+                    <div className="post-comentario-nombre-row">
+                      <span className="post-comentario-nombre">{c.autor?.nombre || 'Usuario'}</span>
+                      <span className="post-comentario-tiempo">{tiempoRelativo(c.createdat)}</span>
+                    </div>
 
                     {comentarioEditando?.id === c.idcomentario ? (
                       <>
@@ -517,7 +561,6 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario 
                     )}
 
                     <div className="post-comentario-footer">
-                      <span className="post-comentario-tiempo">{tiempoRelativo(c.createdat)}</span>
                       {Number(c.autor?.idusuario) === Number(miId) && !comentarioEditando && (
                         <div className="post-comentario-acciones">
                           <button
