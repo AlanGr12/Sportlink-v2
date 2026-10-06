@@ -1,74 +1,85 @@
 /* ═══════════════════════════════════════════════════════════
-   FEED VIEW — SportLink (Diseño Minimalista & Tooltips Creativos)
+   FEED VIEW — SportLink · Twitter/X Style
    ═══════════════════════════════════════════════════════════ */
 
+/* ── Base Page ─────────────────────────────────────────── */
 .feed-pagina {
   background-color: var(--bg-dark, #0A0B0C);
   min-height: 100vh;
-  padding-top: calc(80px + 24px);
+  padding-top: calc(80px + 16px);
   padding-bottom: 60px;
   box-sizing: border-box;
   font-family: 'Space Grotesk', 'Inter', 'Manrope', system-ui, -apple-system, sans-serif;
   color: #ffffff;
 }
 
+/* ── Three-column layout ───────────────────────────────── */
 .feed-layout {
-  max-width: 1180px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 16px;
   display: grid;
-  grid-template-columns: 260px 1fr 280px;
-  gap: 20px;
+  grid-template-columns: 280px 600px 1fr;
+  gap: 0;
   align-items: start;
 }
 
 /* ═══════════════════════════════════════════════════════════
-   COLUMNA IZQUIERDA & DERECHA (SIDEBARS)
+   SIDEBARS (izquierda & derecha)
    ═══════════════════════════════════════════════════════════ */
 
 .feed-sidebar-izquierda,
 .feed-sidebar-derecha {
   position: sticky;
-  top: 100px;
+  top: 90px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  padding: 16px 12px;
 }
 
-/* ─── Profile Card ─── */
+/* ── Profile Card ──────────────────────────────────────── */
 .feed-profile-card {
-  background: #181818;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.feed-profile-card:hover {
+  border-color: rgba(45, 239, 242, 0.22);
 }
 
 .feed-profile-banner {
-  height: 68px;
-  background: linear-gradient(135deg, rgba(45, 239, 242, 0.3) 0%, rgba(160, 160, 160, 0.25) 50%, rgba(24, 24, 24, 1) 100%),
-              radial-gradient(circle at 50% 0%, rgba(45, 239, 242, 0.4), transparent 70%);
+  height: 72px;
+  background: linear-gradient(135deg,
+    rgba(45, 239, 242, 0.25) 0%,
+    rgba(90, 90, 100, 0.2) 50%,
+    rgba(17, 17, 17, 1) 100%),
+    radial-gradient(ellipse at 50% 0%, rgba(45, 239, 242, 0.35), transparent 70%);
 }
 
 .feed-profile-avatar-container {
-  margin-top: -36px;
+  margin-top: -32px;
   display: flex;
   justify-content: center;
 }
 
 .feed-profile-avatar-container img,
 .feed-profile-avatar-container .avatar-fallback {
-  border: 3px solid #181818 !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  border: 3px solid #111111 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
 }
 
 .feed-profile-info {
   text-align: center;
-  padding: 12px 16px 14px;
+  padding: 10px 16px 12px;
 }
 
 .feed-profile-name {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #ffffff;
   margin: 0;
@@ -76,70 +87,82 @@
 }
 
 .feed-profile-role {
-  font-size: 12.5px;
-  color: #8e8e8e;
+  font-size: 12px;
+  color: #6e6e6e;
   margin: 4px 0 0;
 }
 
 .feed-profile-stats {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 10px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .feed-profile-stat-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12.5px;
+  font-size: 12px;
+  transition: color 0.2s;
+}
+
+.feed-profile-stat-row:hover .feed-stat-value {
+  color: #2deff2;
 }
 
 .feed-stat-label {
-  color: #8e8e8e;
+  color: #6e6e6e;
 }
 
 .feed-stat-value {
   font-weight: 700;
   color: #ffffff;
+  transition: color 0.2s;
 }
 
-/* ─── General Sidebar Card ─── */
+/* ── General Sidebar Card ──────────────────────────────── */
 .feed-sidebar-card {
-  background: #181818;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
   padding: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
 }
 
 .feed-sidebar-header-title {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #8e8e8e;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0 0 12px;
+  font-size: 19px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
 }
 
 .feed-vacio-box {
   font-size: 12.5px;
-  color: #585858;
+  color: #4a4a4a;
   padding: 4px 0;
 }
 
-/* ─── Seguidos Lista ─── */
+/* ── Seguidos Lista ─────────────────────────────────────── */
 .feed-seguidos-lista {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
 }
 
 .feed-seguido-item {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+
+.feed-seguido-item:last-child {
+  border-bottom: none;
 }
 
 .feed-seguido-info {
@@ -155,31 +178,46 @@
 
 .feed-seguido-sub {
   font-size: 11px;
-  color: #8a94a6;
+  color: #6e6e6e;
 }
 
 .feed-ver-todo-btn {
   background: transparent;
   border: none;
   color: #2deff2;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  padding: 4px 0 0;
+  padding: 10px 0 0;
   text-align: left;
+  display: block;
+  width: 100%;
+  transition: color 0.2s;
 }
 
-/* ─── Recomendados Lista ─── */
+.feed-ver-todo-btn:hover {
+  color: #5df5f7;
+}
+
+/* ── Recomendados Lista ─────────────────────────────────── */
 .feed-recomendados-lista {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 
 .feed-recomendado-item {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.feed-recomendado-item:last-child {
+  border-bottom: none;
 }
 
 .feed-recomendado-info {
@@ -200,7 +238,7 @@
 
 .feed-recomendado-sub {
   font-size: 11px;
-  color: #8a94a6;
+  color: #6e6e6e;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -208,57 +246,72 @@
 
 .feed-btn-conectar {
   background: transparent;
-  border: 1px solid rgba(45, 239, 242, 0.4);
-  color: #2deff2;
-  border-radius: 16px;
-  padding: 4px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 4px 14px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
 }
 
 .feed-btn-conectar:hover {
-  background: rgba(45, 239, 242, 0.12);
-  border-color: #2deff2;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
-/* ─── Noticias Lista ─── */
+/* ── Noticias Lista ─────────────────────────────────────── */
 .feed-noticias-lista {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
+}
+
+.feed-noticia-item {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.feed-noticia-item:last-child {
+  border-bottom: none;
 }
 
 .feed-noticia-item h5 {
   font-size: 13px;
   font-weight: 600;
   color: #ffffff;
-  margin: 0 0 2px;
+  margin: 0 0 3px;
 }
 
 .feed-noticia-item p {
   font-size: 11.5px;
-  color: #8e8e8e;
+  color: #6e6e6e;
   margin: 0;
 }
 
 .feed-mostrar-mas-btn {
   background: transparent;
   border: none;
-  color: #8e8e8e;
-  font-size: 12px;
+  color: #2deff2;
+  font-size: 12.5px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 4px 0 0;
+  padding: 10px 0 0;
   text-align: left;
+  transition: color 0.2s;
 }
 
-/* ─── Footer Links ─── */
+.feed-mostrar-mas-btn:hover {
+  color: #5df5f7;
+}
+
+/* ── Footer Links ───────────────────────────────────────── */
 .feed-footer-links {
   padding: 8px 4px;
-  font-size: 11.5px;
-  color: #585858;
+  font-size: 11px;
+  color: #3a3a3a;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -267,7 +320,7 @@
 
 .feed-footer-row {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
@@ -279,36 +332,50 @@
 }
 
 .feed-footer-row span:hover {
-  color: #8e8e8e;
+  color: #6e6e6e;
 }
 
 .feed-copyright {
   margin: 4px 0 0;
-  color: #424242;
+  color: #2e2e2e;
 }
 
 /* ═══════════════════════════════════════════════════════════
-   COLUMNA CENTRAL (FEED)
+   COLUMNA CENTRAL — Feed Principal (Twitter-style)
    ═══════════════════════════════════════════════════════════ */
 
 .feed-columna-principal {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  min-height: calc(100vh - 120px);
 }
 
-/* ─── Crear Post Card ─── */
+/* Tabs header del feed */
+.feed-columna-principal::before {
+  content: 'Para ti';
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  letter-spacing: -0.01em;
+  position: sticky;
+  top: 80px;
+  background: rgba(10, 11, 12, 0.88);
+  backdrop-filter: blur(14px);
+  z-index: 10;
+}
+
+/* ── Crear Post — Composición estilo Twitter ──────────── */
 .crear-post-card {
-  background: #181818;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 16px;
-  transition: border-color 0.2s;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.crear-post-card:focus-within {
-  border-color: rgba(45, 239, 242, 0.3);
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0;
+  padding: 12px 16px 0;
+  transition: background 0.15s;
 }
 
 .crear-post-fila-superior {
@@ -319,54 +386,54 @@
 
 .crear-post-textarea-wrapper {
   flex: 1;
+  padding-top: 4px;
 }
 
 .crear-post-input-fake {
-  background: #0f0f0f;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  padding: 11px 18px;
-  font-size: 14px;
-  color: #6b7280;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 4px 0;
+  font-size: 19px;
+  color: #3a3a3a;
   width: 100%;
   cursor: text;
   box-sizing: border-box;
-  transition: border-color 0.2s;
 }
 
 .crear-post-input-fake:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-  color: #8e8e8e;
+  color: #5a5a5a;
 }
 
 .crear-post-textarea {
   width: 100%;
-  background: #0f0f0f;
-  border: 1px solid rgba(45, 239, 242, 0.3);
-  border-radius: 12px;
-  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 4px 0;
   outline: none;
   resize: none;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 19px;
   color: #ffffff;
   line-height: 1.5;
-  min-height: 70px;
-  max-height: 200px;
+  min-height: 64px;
+  max-height: 220px;
   overflow-y: auto;
   box-sizing: border-box;
 }
 
 .crear-post-textarea::placeholder {
-  color: #6b7280;
+  color: #3a3a3a;
 }
 
 .crear-post-imagen-preview {
   position: relative;
   margin-top: 12px;
-  border-radius: 10px;
+  border-radius: 14px;
   overflow: hidden;
-  max-height: 260px;
+  max-height: 280px;
+  border: 1px solid rgba(255,255,255,0.07);
 }
 
 .crear-post-imagen-preview img {
@@ -374,16 +441,16 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  max-height: 260px;
+  max-height: 280px;
 }
 
 .crear-post-imagen-remove {
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 26px;
-  height: 26px;
-  background: rgba(0,0,0,0.75);
+  width: 28px;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.8);
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -392,24 +459,29 @@
   justify-content: center;
   color: #fff;
   font-size: 13px;
+  transition: background 0.2s;
+}
+
+.crear-post-imagen-remove:hover {
+  background: rgba(0,0,0,0.95);
 }
 
 .crear-post-fila-acciones {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 8px;
+  padding: 8px 0 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   flex-wrap: wrap;
   gap: 10px;
+  margin-left: 56px; /* alineado con el textarea (avatar 44px + gap 12px) */
 }
 
 .crear-post-media-opciones {
   display: flex;
-  gap: 8px;
+  gap: 2px;
   align-items: center;
-  flex-wrap: wrap;
 }
 
 .crear-post-btn-media {
@@ -417,32 +489,29 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0f0f0f;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  border: none;
   cursor: pointer;
-  color: #8e8e8e;
-  padding: 10px 14px;
-  border-radius: 10px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #2deff2;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
 }
 
 .crear-post-btn-media:hover {
-  color: #2deff2;
-  background: rgba(45, 239, 242, 0.08);
-  border-color: rgba(45, 239, 242, 0.3);
-  transform: translateY(-2px);
+  background: rgba(45, 239, 242, 0.1);
 }
 
 .crear-post-botones-derecha {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-left: auto;
 }
 
 .crear-post-contador {
-  font-size: 12px;
-  color: #525866;
+  font-size: 13px;
+  color: #5a5a5a;
 }
 
 .crear-post-contador.cerca {
@@ -454,8 +523,8 @@
   color: #090a0c;
   border: none;
   border-radius: 20px;
-  padding: 8px 22px;
-  font-size: 13px;
+  padding: 8px 20px;
+  font-size: 14px;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
@@ -463,24 +532,32 @@
 }
 
 .crear-post-btn-publicar:hover:not(:disabled) {
-  opacity: 0.9;
+  opacity: 0.88;
   transform: scale(1.02);
 }
 
 .crear-post-btn-publicar:disabled {
-  opacity: 0.35;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
-/* ─── Post Card ─── */
+/* ── Post Card — Twitter Style ──────────────────────────── */
 .post-card {
-  background: #181818;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  overflow: hidden;
-  transition: border-color 0.2s;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0;
+  overflow: visible;
+  padding: 12px 16px;
   animation: postFadeIn 0.3s ease;
+  transition: background 0.18s;
+  display: flex;
+  gap: 12px;
+}
+
+.post-card:hover {
+  background: rgba(255, 255, 255, 0.016);
+  cursor: pointer;
 }
 
 @keyframes postFadeIn {
@@ -488,23 +565,52 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Thread line bajo el avatar */
+.post-card-avatar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.post-card-avatar-col .post-thread-line {
+  width: 2px;
+  flex: 1;
+  min-height: 12px;
+  background: rgba(255,255,255,0.08);
+  margin-top: 8px;
+  border-radius: 1px;
+}
+
+/* Columna de contenido del post */
+.post-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
 .post-card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 16px 18px 0;
+  padding: 0;
+  margin-bottom: 4px;
 }
 
 .post-card-autor {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .post-card-autor-info {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .post-card-nombre {
@@ -512,23 +618,30 @@
   font-weight: 700;
   color: #ffffff;
   line-height: 1.2;
+  white-space: nowrap;
+}
+
+.post-card-nombre:hover {
+  text-decoration: underline;
 }
 
 .post-card-subtitulo {
-  font-size: 12.5px;
-  color: #8e8e8e;
+  font-size: 13px;
+  color: #6e6e6e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .post-card-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   flex-wrap: wrap;
-  margin-top: 2px;
 }
 
 .post-card-tiempo {
-  font-size: 12px;
+  font-size: 13px;
   color: #6e6e6e;
 }
 
@@ -563,15 +676,16 @@
 /* Menú 3 puntos */
 .post-menu-wrapper {
   position: relative;
+  flex-shrink: 0;
 }
 
 .post-menu-btn {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #6e6e6e;
+  color: #5a5a5a;
   padding: 4px 6px;
-  border-radius: 6px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -579,21 +693,21 @@
 }
 
 .post-menu-btn:hover {
-  color: #ffffff;
-  background: rgba(255,255,255,0.07);
+  color: #2deff2;
+  background: rgba(45,239,242,0.1);
 }
 
 .post-menu-dropdown {
   position: absolute;
-  top: 30px;
+  top: 32px;
   right: 0;
-  background: #1c1c1c;
+  background: #1a1a1a;
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 6px;
   z-index: 100;
-  min-width: 140px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  min-width: 150px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.7);
 }
 
 .post-menu-item {
@@ -608,8 +722,13 @@
   font-size: 13px;
   font-family: inherit;
   padding: 8px 10px;
-  border-radius: 7px;
+  border-radius: 8px;
   text-align: left;
+  transition: background 0.15s;
+}
+
+.post-menu-item:hover {
+  background: rgba(255,255,255,0.06);
 }
 
 .post-menu-item.danger {
@@ -617,29 +736,32 @@
 }
 
 .post-menu-item.danger:hover {
-  background: rgba(248,113,113,0.12);
+  background: rgba(248,113,113,0.1);
 }
 
 /* Contenido del post */
 .post-card-contenido {
-  padding: 12px 18px 0;
-  font-size: 14.5px;
+  font-size: 15px;
   line-height: 1.6;
-  color: #e2e8f0;
+  color: #e7e9ea;
   white-space: pre-wrap;
   word-break: break-word;
+  margin-bottom: 10px;
 }
 
 /* Imagen & Media */
 .post-card-imagen {
-  margin-top: 14px;
+  margin-top: 12px;
   width: 100%;
   max-height: 520px;
   overflow: hidden;
-  background: #090a0c;
+  background: #0a0a0a;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 6px;
 }
 
 .post-card-imagen img {
@@ -648,102 +770,101 @@
   max-height: 520px;
   object-fit: cover;
   cursor: pointer;
-  transition: transform 0.25s ease;
+  border-radius: 14px;
+  transition: opacity 0.2s;
 }
 
 .post-card-imagen img:hover {
-  transform: scale(1.008);
+  opacity: 0.93;
 }
 
 .post-media-video {
   width: 100%;
   max-height: 520px;
   outline: none;
+  border-radius: 14px;
 }
 
 /* Referencia Bloque */
 .post-referencia-bloque {
-  margin: 14px 18px 0;
+  margin-top: 10px;
+  margin-bottom: 8px;
   padding: 12px 14px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.025);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 13px;
   color: #8a94a6;
 }
 
 /* ═══════════════════════════════════════════════════════════
-   BOTONES DE ACCIÓN MINIMALISTAS & TOOLTIPS
+   BOTONES DE ACCIÓN — estilo Twitter (icon + número)
    ═══════════════════════════════════════════════════════════ */
 
 .post-acciones-wrapper {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  margin-top: 12px;
-  padding: 6px 12px;
+  margin-top: 10px;
 }
 
 .post-acciones-botones {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  justify-content: space-between;
+  max-width: 380px;
 }
 
 .post-accion-btn {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
   background: transparent;
   border: none;
-  padding: 10px 4px;
-  border-radius: 10px;
-  color: #8a94a6;
+  padding: 6px 10px 6px 6px;
+  border-radius: 20px;
+  color: #6e6e6e;
   font-family: inherit;
+  font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.18s ease;
+  user-select: none;
 }
 
+/* hover tints por color-accion */
 .post-accion-btn:hover {
-  background: rgba(45, 239, 242, 0.08);
   color: #2deff2;
-  transform: translateY(-1px);
 }
 
+.post-accion-btn:hover svg {
+  stroke: #2deff2;
+}
+
+/* liked = teal */
 .post-accion-btn.liked {
   color: #2deff2;
 }
-
 .post-accion-btn.liked svg {
   stroke: #2deff2;
-  fill: #2deff2;
+  fill: rgba(45, 239, 242, 0.15);
 }
 
 .post-accion-numero {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.06);
-  padding: 2px 7px;
-  border-radius: 10px;
-  transition: background 0.2s, color 0.2s;
+  font-size: 13px;
+  font-weight: 500;
+  color: inherit;
+  transition: color 0.2s;
 }
 
-.post-accion-btn:hover .post-accion-numero {
-  background: rgba(45, 239, 242, 0.2);
-  color: #2deff2;
-}
-
-/* Tooltip elegante al pasar el mouse */
+/* Tooltip elegante */
 .post-accion-tooltip,
 .crear-post-tooltip {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%) translateY(4px) scale(0.92);
-  background: #1c1c1c;
+  background: #222222;
   color: #2deff2;
-  border: 1px solid rgba(45, 239, 242, 0.35);
+  border: 1px solid rgba(45, 239, 242, 0.3);
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 11.5px;
@@ -753,7 +874,7 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
   z-index: 50;
 }
 
@@ -766,7 +887,7 @@
   transform: translateX(-50%);
   border-width: 5px;
   border-style: solid;
-  border-color: #1c1c1c transparent transparent transparent;
+  border-color: #222222 transparent transparent transparent;
 }
 
 .post-accion-btn:hover .post-accion-tooltip,
@@ -777,33 +898,32 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   SECCIÓN DE COMENTARIOS MEJORADA & PULIDA
+   SECCIÓN DE COMENTARIOS
    ═══════════════════════════════════════════════════════════ */
 
 .post-comentarios-seccion {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 16px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 10px;
+  padding: 14px 0 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  background: rgba(12, 12, 12, 0.5);
+  gap: 14px;
 }
 
-/* Campo para agregar nuevo comentario */
 .post-nuevo-comentario {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #161616;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 26px;
   padding: 5px 6px 5px 12px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .post-nuevo-comentario:focus-within {
-  border-color: rgba(45, 239, 242, 0.4);
-  box-shadow: 0 0 14px rgba(45, 239, 242, 0.12);
+  border-color: rgba(45, 239, 242, 0.35);
+  box-shadow: 0 0 14px rgba(45, 239, 242, 0.08);
 }
 
 .post-comentario-input {
@@ -823,7 +943,7 @@
 }
 
 .post-comentario-input::placeholder {
-  color: #737373;
+  color: #4a4a4a;
 }
 
 .post-comentario-enviar {
@@ -838,16 +958,16 @@
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: transform 0.15s, opacity 0.2s, background-color 0.2s;
+  transition: transform 0.15s, opacity 0.2s;
 }
 
 .post-comentario-enviar:hover:not(:disabled) {
-  transform: scale(1.06);
-  background: #3bf3f6;
+  transform: scale(1.08);
+  opacity: 0.9;
 }
 
 .post-comentario-enviar:disabled {
-  opacity: 0.3;
+  opacity: 0.25;
   cursor: not-allowed;
 }
 
@@ -855,7 +975,7 @@
 .post-comentarios-lista {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .post-comentario-item {
@@ -866,11 +986,10 @@
 
 .post-comentario-burbuja {
   flex: 1;
-  background: #181818;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 0 14px 14px 14px;
   padding: 10px 14px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .post-comentario-nombre {
@@ -882,7 +1001,7 @@
 
 .post-comentario-texto {
   font-size: 13.5px;
-  color: #d4d4d4;
+  color: #cccccc;
   line-height: 1.5;
   word-break: break-word;
   white-space: pre-wrap;
@@ -898,7 +1017,7 @@
 
 .post-comentario-tiempo {
   font-size: 11px;
-  color: #737373;
+  color: #5a5a5a;
 }
 
 .post-comentario-acciones {
@@ -913,7 +1032,7 @@
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  color: #8e8e8e;
+  color: #6e6e6e;
   padding: 0;
   transition: color 0.15s;
 }
@@ -928,8 +1047,8 @@
 
 .post-comentario-editar-input {
   width: 100%;
-  background: #0f0f0f;
-  border: 1px solid rgba(45, 239, 242, 0.4);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(45, 239, 242, 0.35);
   border-radius: 8px;
   padding: 8px 10px;
   font-family: inherit;
@@ -958,9 +1077,9 @@
 }
 
 .post-comentario-editar-btn.guardar  { background: #2deff2; color: #0a0a0a; }
-.post-comentario-editar-btn.cancelar { background: rgba(255,255,255,0.08); color: #aaa; }
+.post-comentario-editar-btn.cancelar { background: rgba(255,255,255,0.07); color: #aaa; }
 
-/* Spinners & Modal */
+/* ── Spinners & State ───────────────────────────────────── */
 .feed-spinner-wrapper {
   display: flex;
   justify-content: center;
@@ -968,12 +1087,12 @@
 }
 
 .feed-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(45,239,242,0.15);
+  width: 30px;
+  height: 30px;
+  border: 2.5px solid rgba(45,239,242,0.12);
   border-top-color: #2deff2;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.75s linear infinite;
 }
 
 @keyframes spin {
@@ -983,13 +1102,14 @@
 .feed-vacio {
   text-align: center;
   padding: 60px 20px;
-  color: #585858;
+  color: #4a4a4a;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
 .feed-vacio h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #8e8e8e;
+  font-size: 17px;
+  font-weight: 700;
+  color: #6e6e6e;
   margin: 12px 0 4px;
 }
 
@@ -997,9 +1117,10 @@
   text-align: center;
   padding: 24px;
   font-size: 13px;
-  color: #585858;
+  color: #4a4a4a;
 }
 
+/* ── Modal de imagen ────────────────────────────────────── */
 .feed-modal-imagen {
   position: fixed;
   inset: 0;
@@ -1010,14 +1131,14 @@
   justify-content: center;
   padding: 20px;
   cursor: zoom-out;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
 }
 
 .feed-modal-imagen img {
   max-width: 100%;
   max-height: 90vh;
   object-fit: contain;
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 .feed-modal-imagen-close {
@@ -1032,16 +1153,28 @@
   color: #fff;
   font-size: 16px;
   cursor: pointer;
+  transition: background 0.2s;
+}
+
+.feed-modal-imagen-close:hover {
+  background: rgba(255,255,255,0.2);
 }
 
 /* ═══════════════════════════════════════════════════════════
-   RESPONSIVE DESIGN
+   RESPONSIVE
    ═══════════════════════════════════════════════════════════ */
 
-@media (max-width: 1024px) {
+@media (max-width: 1100px) {
   .feed-layout {
-    grid-template-columns: 240px 1fr;
+    grid-template-columns: 72px 1fr;
+    max-width: 720px;
   }
+  .feed-sidebar-izquierda {
+    padding: 16px 8px;
+  }
+  .feed-sidebar-izquierda .feed-profile-card .feed-profile-info,
+  .feed-sidebar-izquierda .feed-profile-card .feed-profile-stats,
+  .feed-sidebar-izquierda .feed-sidebar-card { display: none; }
   .feed-sidebar-derecha {
     display: none;
   }
@@ -1050,8 +1183,14 @@
 @media (max-width: 768px) {
   .feed-layout {
     grid-template-columns: 1fr;
+    max-width: 100%;
+    padding: 0;
   }
   .feed-sidebar-izquierda {
     display: none;
+  }
+  .feed-columna-principal {
+    border-left: none;
+    border-right: none;
   }
 }

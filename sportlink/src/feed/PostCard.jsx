@@ -100,7 +100,7 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
 
   return (
     <div className="post-card-header">
-      {/* Autor */}
+      {/* Autor info inline */}
       <div 
         className="post-card-autor"
         onClick={() => {
@@ -110,19 +110,12 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
         }}
         style={{ cursor: post.autor?.idusuario ? 'pointer' : 'default' }}
       >
-        <Avatar
-          src={post.autor?.fotoperfil}
-          nombre={post.autor?.nombre || '?'}
-          size={44}
-        />
         <div className="post-card-autor-info">
           <span className="post-card-nombre">{post.autor?.nombre || 'Usuario'}</span>
-          <div className="post-card-meta">
-            {rolTraducido && <span className="post-card-subtitulo">{rolTraducido}</span>}
-            <RolBadge rol={post.autor?.tipousuario} />
-            <TipoChip tipo={post.tipopublicacion} />
-            <span className="post-card-tiempo">• {tiempoRelativo(post.createdat)}</span>
-          </div>
+          {rolTraducido && <span className="post-card-subtitulo">· {rolTraducido}</span>}
+          <RolBadge rol={post.autor?.tipousuario} />
+          <TipoChip tipo={post.tipopublicacion} />
+          <span className="post-card-tiempo">· {tiempoRelativo(post.createdat)}</span>
         </div>
       </div>
 
@@ -229,43 +222,58 @@ export function ModalImagen({ src, onClose }) {
 // Se usa tanto en el feed como en la página pública de detalle.
 // ═══════════════════════════════════════════════════════════
 export function PostCompleto({ post, usuario, onEliminar }) {
+  const navigate = useNavigate()
   const [imagenModal, setImagenModal] = useState(null)
 
   return (
     <article className="post-card">
-      <PostCard
-        post={post}
-        usuario={usuario}
-        onImagenClick={setImagenModal}
-        onEliminar={onEliminar}
-      />
+      {/* Columna avatar */}
+      <div className="post-card-avatar-col">
+        <Avatar
+          src={post.autor?.fotoperfil}
+          nombre={post.autor?.nombre || '?'}
+          size={44}
+          onClick={() => post.autor?.idusuario && navigate(`/perfil/${post.autor.idusuario}`)}
+          style={{ cursor: post.autor?.idusuario ? 'pointer' : 'default', flexShrink: 0 }}
+        />
+      </div>
 
-      {post.contenido && (
-        <div className="post-card-contenido">{post.contenido}</div>
-      )}
+      {/* Columna contenido */}
+      <div className="post-card-body">
+        <PostCard
+          post={post}
+          usuario={usuario}
+          onImagenClick={setImagenModal}
+          onEliminar={onEliminar}
+        />
 
-      {post.tipopublicacion !== 'NORMAL' && post.referencia && (
-        <ReferenciaBloque tipo={post.tipopublicacion} ref={post.referencia} />
-      )}
+        {post.contenido && (
+          <div className="post-card-contenido">{post.contenido}</div>
+        )}
 
-      {post.imagen && (
-        <div className="post-card-imagen">
-          {post.imagen.match(/\.(mp4|webm|ogg)$/i) ? (
-            <video src={post.imagen} controls className="post-media-video" />
-          ) : (
-            <img
-              src={post.imagen}
-              alt="Publicación"
-              onClick={() => setImagenModal(post.imagen)}
-              loading="lazy"
-            />
-          )}
-        </div>
-      )}
+        {post.tipopublicacion !== 'NORMAL' && post.referencia && (
+          <ReferenciaBloque tipo={post.tipopublicacion} ref={post.referencia} />
+        )}
 
-      <PostAcciones post={post} usuario={usuario} />
+        {post.imagen && (
+          <div className="post-card-imagen">
+            {post.imagen.match(/\.(mp4|webm|ogg)$/i) ? (
+              <video src={post.imagen} controls className="post-media-video" />
+            ) : (
+              <img
+                src={post.imagen}
+                alt="Publicación"
+                onClick={() => setImagenModal(post.imagen)}
+                loading="lazy"
+              />
+            )}
+          </div>
+        )}
 
-      {imagenModal && <ModalImagen src={imagenModal} onClose={() => setImagenModal(null)} />}
+        <PostAcciones post={post} usuario={usuario} />
+
+        {imagenModal && <ModalImagen src={imagenModal} onClose={() => setImagenModal(null)} />}
+      </div>
     </article>
   )
 }
