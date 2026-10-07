@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import Avatar from '../components/Avatar.jsx'
 import api from '../axiosConfig.js'
+import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx'
 
 // ─── helpers ───────────────────────────────────────────────
 function tiempoRelativo(fechaStr) {
@@ -70,6 +71,10 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
   const menuRef = useRef(null)
 
   const esMio = usuario && post.autor?.idusuario === (usuario.idusuario || usuario.id)
+  const puedeEliminar = esMio || usuario?.es_admin === true
+  const [confirmando, setConfirmando] = useState(false)
+  const [eliminando, setEliminando] = useState(false)
+  const [errorEliminar, setErrorEliminar] = useState(null)
 
   // Cerrar menu al clickear afuera
   useEffect(() => {
@@ -79,14 +84,22 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
     return () => document.removeEventListener('mousedown', fn)
   }, [menuAbierto])
 
-  const handleEliminar = async () => {
+  const handleEliminar = () => {
     setMenuAbierto(false)
-    if (!window.confirm('¿Eliminar esta publicación?')) return
+    setErrorEliminar(null)
+    setConfirmando(true)
+  }
+
+  const confirmarEliminar = async () => {
+    setEliminando(true)
     try {
       await api.delete(`/api/publicaciones/${post.idpublicacion}`)
+      setConfirmando(false)
       onEliminar(post.idpublicacion)
     } catch {
-      alert('No se pudo eliminar la publicación.')
+      setErrorEliminar('No se pudo eliminar la publicación.')
+    } finally {
+      setEliminando(false)
     }
   }
 
@@ -120,8 +133,8 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
         </div>
       </div>
 
-      {/* Menú 3 puntos (solo si es el dueño) */}
-      {esMio && (
+      {/* Menú 3 puntos (dueño o administrador) */}
+      {puedeEliminar && (
         <div className="post-menu-wrapper" ref={menuRef}>
           <button
             className="post-menu-btn"
@@ -142,6 +155,16 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
           )}
         </div>
       )}
+
+      <ModalConfirmarEliminar
+        abierto={confirmando}
+        titulo="¿Eliminar publicación?"
+        mensaje={esMio ? 'Esta acción no se puede deshacer.' : 'Estás moderando como administrador. Esta acción no se puede deshacer.'}
+        eliminando={eliminando}
+        error={errorEliminar}
+        onConfirmar={confirmarEliminar}
+        onCerrar={() => setConfirmando(false)}
+      />
     </div>
   )
 }

@@ -21,16 +21,17 @@ const deportesDisponibles = [
 ];
 
 // ── Componente ────────────────────────────────────────────────────────────────
-function FormularioEmpleo({ idclub, onGuardado, onCancelar }) {
+function FormularioEmpleo({ idclub, empleo = null, onGuardado, onCancelar }) {
   const idclubResuelto = Number(idclub);
+  const editando = !!empleo;
 
   // ── Campos del formulario ─────────────────────────────────────────────────
-  const [iddeporte,      setIddeporte]      = useState(deportesDisponibles[0].id);
-  const [nombre,         setNombre]         = useState("");
-  const [horasreq,       setHorasreq]       = useState("");
-  const [habilidadesreq, setHabilidadesreq] = useState("");
-  const [acercaempleo,   setAcercaempleo]   = useState("");
-  const [estado,         setEstado]         = useState("true");
+  const [iddeporte,      setIddeporte]      = useState(empleo?.iddeporte ?? deportesDisponibles[0].id);
+  const [nombre,         setNombre]         = useState(empleo?.nombre ?? "");
+  const [horasreq,       setHorasreq]       = useState(empleo?.horasreq != null ? String(empleo.horasreq) : "");
+  const [habilidadesreq, setHabilidadesreq] = useState(empleo?.habilidadesreq ?? "");
+  const [acercaempleo,   setAcercaempleo]   = useState(empleo?.acercaempleo ?? "");
+  const [estado,         setEstado]         = useState(empleo?.estado === false ? "false" : "true");
 
   // ── UI state ──────────────────────────────────────────────────────────────
   const [errores,  setErrores]  = useState({});
@@ -88,7 +89,9 @@ function FormularioEmpleo({ idclub, onGuardado, onCancelar }) {
         estado:        estado === "true",
       };
 
-      const res = await api.post("/api/empleo/crearEmpleo", payload);
+      const res = editando
+        ? await api.put(`/api/empleo/${empleo.idempleo}`, payload)
+        : await api.post("/api/empleo/crearEmpleo", payload);
 
       // Notifica al padre con el empleo recién creado para actualizar la lista
       onGuardado(res.data);
@@ -218,9 +221,9 @@ function FormularioEmpleo({ idclub, onGuardado, onCancelar }) {
           disabled={loading || !idclubResuelto}
         >
           {loading
-            ? "Publicando..."
+            ? (editando ? "Guardando..." : "Publicando...")
             : idclubResuelto
-              ? "Publicar Empleo"
+              ? (editando ? "Guardar cambios" : "Publicar Empleo")
               : "Esperando club..."}
         </button>
       </div>

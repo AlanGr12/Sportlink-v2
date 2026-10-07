@@ -70,6 +70,7 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
 
   // Solo puede editar/borrar el entrenador que creó este entrenamiento
   const creadorId =
+    entrenamiento.identrenador ??
     entrenamiento.entrenadorId ??
     entrenamiento.trainerId ??
     entrenamiento.userId ??
@@ -81,7 +82,9 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
     usuarioActual &&
     usuarioActual.tipousuario === 'entrenador' &&
     creadorId !== null &&
-    String(creadorId) === String(usuarioActual.id);
+    String(creadorId) === String(usuarioActual.identrenador ?? usuarioActual.idEntrenador ?? usuarioActual.id);
+
+  const esAdmin = usuarioActual?.es_admin === true;
 
   return (
     <div className="tarjeta-entrenamiento">
@@ -190,10 +193,10 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
           MÁS INFORMACIÓN
         </button>
 
-        {esPropietario && (
+        {(esPropietario || esAdmin) && (
           <div className="tarjeta-acciones-admin">
 
-            <button
+            {esPropietario && <button
               className="btn-accion-icono edit"
               title="Editar Entrenamiento"
               onClick={(e) => {
@@ -202,14 +205,14 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
               }}
             >
               ✏️
-            </button>
+            </button>}
 
             <button
               className="btn-accion-icono delete"
               title="Eliminar Entrenamiento"
               onClick={(e) => {
                 e.stopPropagation();
-                onBorrar(entrenamiento.id);
+                onBorrar(entrenamiento.id ?? entrenamiento.identrenamientos);
               }}
             >
               🗑️

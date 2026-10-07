@@ -9,6 +9,7 @@ import { PostCompleto } from '../feed/PostCard.jsx';
 import PerfilSidebar from './PerfilSidebar.jsx';
 import PerfilResenas from './PerfilResenas.jsx';
 import PerfilBiografia from './PerfilBiografia.jsx';
+import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
 import '../feed/FeedView.css';
 import './miperfil.css';
 
@@ -92,6 +93,26 @@ const MiPerfil = (props) => {
   // idUsuario a visualizar (si viene paramIdUsuario se usa ese, sino el propio)
   const idUsuario = paramIdUsuario || idSesion;
   const esPerfilPropio = Number(idUsuario) === Number(idSesion);
+
+  // ── Moderación: un administrador puede eliminar cuentas ajenas ──
+  const puedeEliminarCuenta = usuarioEnSesion?.es_admin === true && !esPerfilPropio && perfil?.es_admin !== true;
+  const [confirmandoCuenta, setConfirmandoCuenta] = useState(false);
+  const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
+  const [errorCuenta, setErrorCuenta] = useState(null);
+
+  const eliminarCuenta = async () => {
+    setEliminandoCuenta(true);
+    setErrorCuenta(null);
+    try {
+      await api.delete(`/api/usuarios/${idUsuario}`);
+      setConfirmandoCuenta(false);
+      navigate('/');
+    } catch (err) {
+      setErrorCuenta(err.response?.data?.error || 'No se pudo eliminar la cuenta.');
+    } finally {
+      setEliminandoCuenta(false);
+    }
+  };
 
   const cargarPublicaciones = useCallback(async () => {
     if (!idUsuario) return;
@@ -556,6 +577,25 @@ const MiPerfil = (props) => {
                     MENSAJE
                   </button>
                 )}
+                {puedeEliminarCuenta && (
+                  <button
+                    className="profile-btn-edit"
+                    onClick={() => { setErrorCuenta(null); setConfirmandoCuenta(true); }}
+                    style={{ background: '#ef4444', color: '#fff', border: 'none', fontWeight: 700, marginTop: 8 }}
+                  >
+                    ELIMINAR CUENTA (ADMIN)
+                  </button>
+                )}
+                <ModalConfirmarEliminar
+                  abierto={confirmandoCuenta}
+                  titulo="¿Eliminar cuenta?"
+                  mensaje={<>Se eliminará la cuenta de <strong style={{ color: '#fff' }}>{perfil?.nombre || perfil?.email || 'este usuario'}</strong> junto con sus publicaciones, inscripciones, mensajes y demás datos. Esta acción no se puede deshacer.</>}
+                  textoConfirmar="ELIMINAR CUENTA"
+                  eliminando={eliminandoCuenta}
+                  error={errorCuenta}
+                  onConfirmar={eliminarCuenta}
+                  onCerrar={() => setConfirmandoCuenta(false)}
+                />
               </div>
             </div>
           </div>

@@ -8,6 +8,7 @@ import FormularioPrueba from "./FormularioPrueba";
 import Footer from "../footer/footer";
 import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
 import ModalConfirmacionEliminar from '../calendario/ModalConfirmacionEliminar.jsx';
+import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
 import MapaUbicacionDark from '../components/maps/MapaUbicacionDark.jsx';
 import { formatearUbicacionCorta } from '../utils/mapUtils.js';
 import { parsearFechaLocal, formatearFechaLocal, haPasadoFecha } from '../utils/dateUtils.js';
@@ -82,6 +83,31 @@ function Pruebas({ idJugador, usuario }) {
   const [postulantesLoading, setPostulantesLoading] = useState(false);
   const [postulantesError, setPostulantesError] = useState("");
   const [fotoJugador, setFotoJugador] = useState("");
+
+  // ── Eliminación de pruebas (club dueño o administrador) ──────
+  const esAdmin = usuarioEfectivo?.es_admin === true;
+  const [pruebaPorEliminar, setPruebaPorEliminar] = useState(null);
+  const [eliminandoPrueba, setEliminandoPrueba] = useState(false);
+  const [errorEliminarPrueba, setErrorEliminarPrueba] = useState(null);
+
+  const puedeEliminarPrueba = (prueba) =>
+    esAdmin ||
+    (esClub && idclubResuelto != null && Number(prueba.club?.idclub) === Number(idclubResuelto));
+
+  const confirmarEliminarPrueba = async () => {
+    if (!pruebaPorEliminar) return;
+    setEliminandoPrueba(true);
+    setErrorEliminarPrueba(null);
+    try {
+      await api.delete(`/api/pruebas/${pruebaPorEliminar.idprueba}`);
+      setPruebas((prev) => prev.filter((p) => Number(p.idprueba) !== Number(pruebaPorEliminar.idprueba)));
+      setPruebaPorEliminar(null);
+    } catch (err) {
+      setErrorEliminarPrueba(err.response?.data?.error || 'No se pudo eliminar la prueba.');
+    } finally {
+      setEliminandoPrueba(false);
+    }
+  };
 
   // ── Toast de notificación ──────────────────────────────────
   const [toast, setToast] = useState(null);
@@ -769,6 +795,16 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
         </div>
       )}
 
+      <ModalConfirmarEliminar
+        abierto={!!pruebaPorEliminar}
+        titulo="¿Eliminar prueba?"
+        mensaje="Se eliminarán también las inscripciones, la lista de espera y el chat asociados. Esta acción no se puede deshacer."
+        eliminando={eliminandoPrueba}
+        error={errorEliminarPrueba}
+        onConfirmar={confirmarEliminarPrueba}
+        onCerrar={() => setPruebaPorEliminar(null)}
+      />
+
       <div className="contenedor-pruebas">
         <div className="pruebas-layout">
           <MenuPruebas
@@ -802,6 +838,22 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
                       <div className="sin-imagen">SIN FOTO</div>
                     )}
                     <div className="card-imagen-overlay" aria-hidden="true" />
+                    {puedeEliminarPrueba(prueba) && (
+                      <button
+                        type="button"
+                        title={esAdmin ? "Eliminar prueba (Admin)" : "Eliminar prueba"}
+                        aria-label="Eliminar prueba"
+                        onClick={(e) => { e.stopPropagation(); setErrorEliminarPrueba(null); setPruebaPorEliminar(prueba); }}
+                        style={{
+                          position: 'absolute', top: 10, right: 10, zIndex: 3,
+                          width: 34, height: 34, borderRadius: '50%', cursor: 'pointer',
+                          border: '1px solid rgba(239,68,68,0.5)', background: 'rgba(0,0,0,0.65)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    )}
                     {deporteUsuario && prueba.deporte?.deporte === deporteUsuario && (
                       <span className="tag-flotante">RECOMENDADO</span>
                     )}

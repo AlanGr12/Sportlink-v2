@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../axiosConfig.js";
+import ModalConfirmarEliminar from "../components/ModalConfirmarEliminar.jsx";
 import { IconoUbicacion } from "../iconos/IconoUbicacion.jsx";
 import { IconoEmpleos } from "../iconos/IconoEmpleos.jsx";
 import { IconoFecha } from "../iconos/IconoFecha.jsx";
@@ -64,7 +66,25 @@ const formatearFecha = (fechaStr) => {
   }
 };
 
-function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
+// Ícono de estrella (preselección)
+const IconoEstrella = ({ size = 14, llena = false }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"
+    fill={llena ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+
+const estiloAccionPostulante = (activo = false, peligro = false) => ({
+  display: "inline-flex", alignItems: "center", gap: "5px",
+  padding: "6px 10px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.4px",
+  borderRadius: "6px", cursor: "pointer", whiteSpace: "nowrap",
+  background: activo ? "rgba(250,204,21,0.12)" : "transparent",
+  color: peligro ? "#ef4444" : activo ? "#facc15" : "#d4d4d8",
+  border: `1px solid ${peligro ? "rgba(239,68,68,0.45)" : activo ? "rgba(250,204,21,0.5)" : "rgba(255,255,255,0.12)"}`,
+});
+
+function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa, onEditar, onEliminado }) {
+  const navigate = useNavigate();
   const [modalAbierto, setModalAbierto] = useState(false);
   const [archivoPDF, setArchivoPDF] = useState(null);
   const [arrastrando, setArrastrando] = useState(false);
@@ -77,6 +97,14 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
   const [postulantes, setPostulantes] = useState([]);
   const [postulantesLoading, setPostulantesLoading] = useState(false);
   const [postulantesError, setPostulantesError] = useState("");
+
+  // ── Gestión de postulantes y de la vacante (solo club) ─────
+  const [postulanteADescartar, setPostulanteADescartar] = useState(null);
+  const [descartando, setDescartando] = useState(false);
+  const [errorAccion, setErrorAccion] = useState("");
+  const [confirmandoVacante, setConfirmandoVacante] = useState(false);
+  const [eliminandoVacante, setEliminandoVacante] = useState(false);
+  const [errorVacante, setErrorVacante] = useState("");
 
   const esEntrenador = usuario?.tipousuario === "entrenador";
   const idEntrenadorSesion = usuario?.identrenador || usuario?.idEntrenador;
@@ -118,6 +146,63 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
       montado = false;
     };
   }, [empleo?.idempleo, usuario]);
+
+  const alternarPreseleccion = async (postulado) => {
+    setErrorAccion("");
+    try {
+      const { data } = await api.put(`/api/inscripcionesempleo/${postulado.idinsripcion}/preseleccionar`, {
+        preseleccionado: !postulado.preseleccionado,
+      });
+      setPostulantes((prev) => prev.map((p) =>
+        p.idinsripcion === postulado.idinsripcion ? { ...p, preseleccionado: data.preseleccionado === true } : p
+      ));
+    } catch (err) {
+      setErrorAccion(err.response?.data?.error || "No se pudo actualizar la preselección.");
+    }
+  };
+
+  const contactarPostulante = async (entrenador) => {
+    setErrorAccion("");
+    if (!entrenador?.idusuario) {
+      setErrorAccion("No se pudo identificar al usuario del postulante.");
+      return;
+    }
+    try {
+      const { data } = await api.post("/api/conversaciones/privada", { idusuarioReceptor: entrenador.idusuario });
+      navigate("/mensajes", { state: { conversacionInicial: data } });
+    } catch (err) {
+      setErrorAccion(err.response?.data?.detail || err.response?.data?.error || "No se pudo abrir la conversación.");
+    }
+  };
+
+  const confirmarDescarte = async () => {
+    if (!postulanteADescartar) return;
+    setDescartando(true);
+    try {
+      await api.put(`/api/inscripcionesempleo/${postulanteADescartar.idinsripcion}/estado`, { estado: false });
+      setPostulantes((prev) => prev.filter((p) => p.idinsripcion !== postulanteADescartar.idinsripcion));
+      setPostulanteADescartar(null);
+    } catch (err) {
+      setErrorAccion(err.response?.data?.error || "No se pudo descartar al postulante.");
+      setPostulanteADescartar(null);
+    } finally {
+      setDescartando(false);
+    }
+  };
+
+  const confirmarEliminarVacante = async () => {
+    setEliminandoVacante(true);
+    setErrorVacante("");
+    try {
+      await api.delete(`/api/empleo/${empleo.idempleo}`);
+      setConfirmandoVacante(false);
+      if (onEliminado) onEliminado(empleo.idempleo);
+    } catch (err) {
+      setErrorVacante(err.response?.data?.error || "No se pudo eliminar la vacante.");
+    } finally {
+      setEliminandoVacante(false);
+    }
+  };
 
   const handlePostularseSubmit = async (e) => {
     e.preventDefault();
@@ -297,7 +382,7 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
             <div className="postulantes-vacio text-zinc-400 text-xs italic">Aún no hay entrenadores postulados.</div>
           ) : (
             <div className="postulantes-lista mt-3">
-              {postulantes.map((postulado, index) => {
+              {[...postulantes].sort((a, b) => Number(!!b.preseleccionado) - Number(!!a.preseleccionado)).map((postulado, index) => {
                 const entrenador = postulado.entrenador || postulado.entrenadores || postulado;
                 const nombreCompleto = (entrenador?.nombre && entrenador?.apellido)
                   ? `${entrenador.nombre} ${entrenador.apellido}`
@@ -310,7 +395,7 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
                 const cvUrl = entrenador?.cv || postulado?.cv;
 
                 return (
-                  <div key={entrenador?.identrenador || index} className="postulante-card mb-2" style={{ display: 'flex', alignItems: 'center', gap: '14px', backgroundColor: '#1a1d1e', border: '1px solid var(--border-light)', borderRadius: '6px', padding: '12px' }}>
+                  <div key={postulado.idinsripcion || entrenador?.identrenador || index} className="postulante-card mb-2" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '14px', backgroundColor: '#1a1d1e', border: postulado.preseleccionado ? '1px solid rgba(250,204,21,0.55)' : '1px solid var(--border-light)', borderRadius: '6px', padding: '12px' }}>
                     {entrenador?.fotoperfil ? (
                       <img src={entrenador.fotoperfil} alt={nombreCompleto} className="postulante-foto" style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--primary)', flexShrink: 0 }} />
                     ) : (
@@ -319,7 +404,12 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
                       </div>
                     )}
                     <div className="postulante-info" style={{ flexGrow: 1, minWidth: 0 }}>
-                      <h4 className="postulante-nombre" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-white)', margin: '0 0 6px 0' }}>{nombreCompleto}</h4>
+                      <h4 className="postulante-nombre" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-white)', margin: '0 0 6px 0' }}>
+                        {nombreCompleto}
+                        {postulado.preseleccionado && (
+                          <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: '#facc15', border: '1px solid rgba(250,204,21,0.5)', borderRadius: 4, padding: '1px 6px', verticalAlign: 'middle' }}>PRESELECCIONADO</span>
+                        )}
+                      </h4>
                       <div className="postulante-detalles" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px' }}>
                         <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}><span style={{ fontWeight: 600, color: 'var(--text-white)' }}>🏅 Deportes:</span> {deportes}</p>
                         <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -334,24 +424,77 @@ function DetalleEmpleo({ empleo, usuario, yaPostulado, onPostulacionExitosa }) {
                         </p>
                       </div>
                     </div>
+                    <div className="postulante-acciones" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', width: '100%' }}>
+                      <button type="button" style={estiloAccionPostulante(!!postulado.preseleccionado)} onClick={() => alternarPreseleccion(postulado)}>
+                        <IconoEstrella llena={!!postulado.preseleccionado} /> {postulado.preseleccionado ? "QUITAR PRESELECCIÓN" : "PRESELECCIONAR"}
+                      </button>
+                      <button type="button" style={estiloAccionPostulante()} onClick={() => contactarPostulante(entrenador)}>
+                        ✉ MENSAJE
+                      </button>
+                      <button type="button" style={estiloAccionPostulante()} disabled={!entrenador?.idusuario} onClick={() => navigate(`/perfil/${entrenador.idusuario}`)}>
+                        👤 VER PERFIL
+                      </button>
+                      <button type="button" style={{ ...estiloAccionPostulante(false, true), marginLeft: 'auto' }} onClick={() => setPostulanteADescartar(postulado)}>
+                        ✕ DESCARTAR
+                      </button>
+                    </div>
                   </div>
                 );
               })}
             </div>
           )}
+          {errorAccion && <div className="form-error-banner mt-2">{errorAccion}</div>}
         </div>
       )}
 
+      <ModalConfirmarEliminar
+        abierto={!!postulanteADescartar}
+        titulo="¿Descartar postulante?"
+        mensaje="El postulante dejará de aparecer en esta vacante. Esta acción no se puede deshacer."
+        textoConfirmar="DESCARTAR"
+        eliminando={descartando}
+        onConfirmar={confirmarDescarte}
+        onCerrar={() => setPostulanteADescartar(null)}
+      />
+
+      <ModalConfirmarEliminar
+        abierto={confirmandoVacante}
+        titulo="¿Eliminar vacante?"
+        mensaje={<>Se eliminará <strong style={{ color: '#fff' }}>"{empleo.nombre}"</strong> junto con todas sus postulaciones y el chat grupal asociado. Esta acción no se puede deshacer.</>}
+        eliminando={eliminandoVacante}
+        error={errorVacante}
+        onConfirmar={confirmarEliminarVacante}
+        onCerrar={() => setConfirmandoVacante(false)}
+      />
+
       {/* ── FOOTER CON BOTONES ─────────────────────────────── */}
       <div className="detalle-empleo-footer">
-        <button className="btn-empleo" type="button">
-          <IconoGuardar size={14} />
-          {" "}GUARDAR
-        </button>
-        <button className="btn-empleo" type="button">
-          <IconoOjo size={14} />
-          {" "}VER CLUB
-        </button>
+        {usuario?.tipousuario === "club" ? (
+          <>
+            <button className="btn-empleo" type="button" onClick={() => onEditar && onEditar(empleo)}>
+              ✏️ MODIFICAR VACANTE
+            </button>
+            <button
+              className="btn-empleo"
+              type="button"
+              style={{ color: "#ef4444", borderColor: "rgba(239,68,68,0.45)" }}
+              onClick={() => { setErrorVacante(""); setConfirmandoVacante(true); }}
+            >
+              🗑️ ELIMINAR VACANTE
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="btn-empleo" type="button">
+              <IconoGuardar size={14} />
+              {" "}GUARDAR
+            </button>
+            <button className="btn-empleo" type="button">
+              <IconoOjo size={14} />
+              {" "}VER CLUB
+            </button>
+          </>
+        )}
         {usuario?.tipousuario === "club" ? null : yaPostulado ? (
           <button className="btn-empleo btn-empleo-postularse opacity-50 cursor-not-allowed" type="button" disabled>
             YA POSTULADO

@@ -155,6 +155,16 @@ function App() {
   }
 
 
+  // Sesiones previas al rol admin no traen es_admin: se consulta una vez al perfil y se guarda.
+  useEffect(() => {
+    if (!usuario || usuario.es_admin !== undefined || !usuario.idusuario) return
+    api.get(`/api/login/perfil/${usuario.idusuario}`)
+      .then((res) => actualizarCamposUsuario({ es_admin: res.data?.es_admin === true }))
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario?.idusuario, usuario?.es_admin])
+
+
   // Enriquecer el objeto usuario con idjugador / identrenador si no los tiene
   useEffect(() => {
     const fetchIdJugador = async () => {

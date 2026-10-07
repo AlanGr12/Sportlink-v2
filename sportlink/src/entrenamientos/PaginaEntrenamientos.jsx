@@ -15,6 +15,7 @@ import { IconoBuscador } from '../iconos/IconoBuscador.jsx';
 import Footer from '../footer/footer';
 import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
 import CustomSelect from '../components/CustomSelect.jsx';
+import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
 import { haPasadoFecha, obtenerFechaHoyLocal } from '../utils/dateUtils.js';
 
 const API_BASE = '/api/entrenamientos';
@@ -361,8 +362,11 @@ const PaginaEntrenamientos = ({ usuario }) => {
     }));
   };
 
+  const [idPorBorrar, setIdPorBorrar] = useState(null);
+  const [borrando, setBorrando] = useState(false);
+
   const handleBorrarEntrenamiento = async (id) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar este entrenamiento?')) return;
+    setBorrando(true);
 
     // Bearer token se inyecta automáticamente por el interceptor de axiosConfig
     const headers = {};
@@ -373,11 +377,15 @@ const PaginaEntrenamientos = ({ usuario }) => {
         await fetchConReintento(`${API_BASE}/${id}`, { method: 'DELETE', headers });
       }
       mostrarToast('Entrenamiento eliminado correctamente.', 'info');
-      setEntrenamientos(prev => prev.filter(e => e.id !== id));
+      setEntrenamientos(prev => prev.filter(e => (e.id ?? e.identrenamientos) !== id));
+      setIdPorBorrar(null);
     } catch (err) {
       console.error('Error borrando entrenamiento:', err);
       setError(err.response?.data?.message || err.message || 'Error al eliminar entrenamiento');
       mostrarToast('Error al eliminar entrenamiento. Revisá la consola.', 'error');
+      setIdPorBorrar(null);
+    } finally {
+      setBorrando(false);
     }
   };
 
@@ -581,8 +589,17 @@ const PaginaEntrenamientos = ({ usuario }) => {
               setEntrenamientoSeleccionado(ent);
               setModalAbierto(true);
             }}
-            onBorrar={handleBorrarEntrenamiento}
+            onBorrar={(id) => setIdPorBorrar(id)}
             onReintentar={cargarEntrenamientos}
+          />
+
+          <ModalConfirmarEliminar
+            abierto={idPorBorrar !== null}
+            titulo="¿Eliminar entrenamiento?"
+            mensaje="Se eliminarán también las inscripciones y el chat asociados. Esta acción no se puede deshacer."
+            eliminando={borrando}
+            onConfirmar={() => handleBorrarEntrenamiento(idPorBorrar)}
+            onCerrar={() => setIdPorBorrar(null)}
           />
 
           {/* Paginación */}

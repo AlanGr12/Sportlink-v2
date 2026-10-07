@@ -32,6 +32,20 @@ function Empleos({ cambiarVista, usuario }) {
   const abrirModalCrear = () => setModalCrearAbierto(true);
   const cerrarModalCrear = () => setModalCrearAbierto(false);
 
+  // ── Modal de edición (solo club dueño) ─────────────────────
+  const [empleoEditando, setEmpleoEditando] = useState(null);
+
+  const handleEmpleoActualizado = (actualizado) => {
+    setEmpleos((prev) => prev.map((e) => (e.idempleo === actualizado.idempleo ? actualizado : e)));
+    setEmpleoSeleccionado((sel) => (sel?.idempleo === actualizado.idempleo ? actualizado : sel));
+    setEmpleoEditando(null);
+  };
+
+  const handleEmpleoEliminado = (idempleo) => {
+    setEmpleos((prev) => prev.filter((e) => e.idempleo !== idempleo));
+    setEmpleoSeleccionado(null);
+  };
+
   // Se ejecuta cuando el formulario crea un empleo exitosamente
   const handleEmpleoCreado = (nuevoEmpleo) => {
     // Agrega el nuevo empleo al array local sin recargar toda la página
@@ -259,6 +273,8 @@ function Empleos({ cambiarVista, usuario }) {
               usuario={usuario}
               yaPostulado={postulaciones.some(p => p.idempleo === empleoSeleccionado?.idempleo)}
               onPostulacionExitosa={(nueva) => setPostulaciones([...postulaciones, nueva])}
+              onEditar={setEmpleoEditando}
+              onEliminado={handleEmpleoEliminado}
             />
           </div>
 
@@ -292,6 +308,39 @@ function Empleos({ cambiarVista, usuario }) {
                 idclub={idclubResuelto}
                 onGuardado={handleEmpleoCreado}
                 onCancelar={cerrarModalCrear}
+              />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── MODAL EDITAR EMPLEO ─────────────────────────────────── */}
+      {empleoEditando && createPortal(
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Modificar empleo"
+          onClick={(e) => { if (e.target === e.currentTarget) setEmpleoEditando(null); }}
+        >
+          <div className="modal-contenedor">
+            <div className="modal-header">
+              <h2 className="modal-titulo">Modificar Empleo</h2>
+              <button
+                className="btn-cerrar-modal"
+                onClick={() => setEmpleoEditando(null)}
+                aria-label="Cerrar modal"
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-cuerpo">
+              <FormularioEmpleo
+                idclub={empleoEditando.idclub}
+                empleo={empleoEditando}
+                onGuardado={handleEmpleoActualizado}
+                onCancelar={() => setEmpleoEditando(null)}
               />
             </div>
           </div>
