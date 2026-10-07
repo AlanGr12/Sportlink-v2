@@ -4,6 +4,7 @@ import api from '../axiosConfig.js'
 import Avatar from '../components/Avatar.jsx'
 import { ModalImagen, ReferenciaBloque } from './PostCard.jsx'
 import Footer from '../footer/footer.jsx'
+import BotonSeguir from '../components/BotonSeguir.jsx'
 import './FeedView.css'
 
 // ─── helpers ────────────────────────────────────────────────
@@ -442,6 +443,13 @@ export default function PublicacionDetalle({ usuario }) {
                       </span>
                     </div>
                   </div>
+                  {!esMio && (
+                    <BotonSeguir
+                      idusuario={post.autor?.idusuario}
+                      tipousuario={post.autor?.tipousuario}
+                      usuario={usuario}
+                    />
+                  )}
                   {esMio && (
                     <div className="post-menu-wrapper" ref={menuRef}>
                       <button className="post-menu-btn" onClick={() => setMenuAbierto(v => !v)} aria-label="Opciones">

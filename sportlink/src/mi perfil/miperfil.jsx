@@ -10,6 +10,7 @@ import PerfilSidebar from './PerfilSidebar.jsx';
 import PerfilResenas from './PerfilResenas.jsx';
 import PerfilBiografia from './PerfilBiografia.jsx';
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
+import BotonSeguir from '../components/BotonSeguir.jsx';
 import '../feed/FeedView.css';
 import './miperfil.css';
 
@@ -80,8 +81,9 @@ const MiPerfil = (props) => {
   const inputFotoRef = useRef(null);
 
   // Estados de Red Social
-  const [seguidores, setSeguidores] = useState(1240);
-  const [seguidos, setSeguidos] = useState(384);
+  const [seguidores, setSeguidores] = useState(0);
+  const [seguidos, setSeguidos] = useState(0);
+  const [siguiendo, setSiguiendo] = useState(false);
   const [publicaciones, setPublicaciones] = useState([]);
   const [cargandoPublicaciones, setCargandoPublicaciones] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
@@ -93,6 +95,26 @@ const MiPerfil = (props) => {
   // idUsuario a visualizar (si viene paramIdUsuario se usa ese, sino el propio)
   const idUsuario = paramIdUsuario || idSesion;
   const esPerfilPropio = Number(idUsuario) === Number(idSesion);
+
+  // ── Seguidores / seguidos reales ──
+  useEffect(() => {
+    if (!idUsuario) return;
+    let vivo = true;
+    api.get(`/api/seguidores/${idUsuario}`)
+      .then((res) => {
+        if (!vivo) return;
+        setSeguidores(res.data?.seguidores ?? 0);
+        setSeguidos(res.data?.seguidos ?? 0);
+        setSiguiendo(res.data?.siguiendo === true);
+      })
+      .catch(() => {
+        if (!vivo) return;
+        setSeguidores(0);
+        setSeguidos(0);
+        setSiguiendo(false);
+      });
+    return () => { vivo = false; };
+  }, [idUsuario]);
 
   // ── Moderación: un administrador puede eliminar cuentas ajenas ──
   const puedeEliminarCuenta = usuarioEnSesion?.es_admin === true && !esPerfilPropio && perfil?.es_admin !== true;
@@ -544,7 +566,7 @@ const MiPerfil = (props) => {
                     <span className="stat-number">{totalItems}</span>
                     <span className="stat-label-text">publicaciones</span>
                   </div>
-                  <div className="social-stat-item" onClick={() => setSeguidores(s => s + 1)} style={{ cursor: 'pointer' }}>
+                  <div className="social-stat-item">
                     <span className="stat-number">{seguidores}</span>
                     <span className="stat-label-text">seguidores</span>
                   </div>
@@ -577,11 +599,21 @@ const MiPerfil = (props) => {
                     MENSAJE
                   </button>
                 )}
+                {!esPerfilPropio && (
+                  <BotonSeguir
+                    idusuario={idUsuario}
+                    tipousuario={perfil?.tipousuario}
+                    usuario={usuarioEnSesion}
+                    variante="perfil"
+                    siguiendoInicial={siguiendo}
+                    onCambio={(d) => { setSeguidores(d.seguidores); setSiguiendo(d.siguiendo); }}
+                  />
+                )}
                 {puedeEliminarCuenta && (
                   <button
                     className="profile-btn-edit"
                     onClick={() => { setErrorCuenta(null); setConfirmandoCuenta(true); }}
-                    style={{ background: '#ef4444', color: '#fff', border: 'none', fontWeight: 700, marginTop: 8 }}
+                    style={{ background: '#ef4444', color: '#fff', border: 'none', fontWeight: 700 }}
                   >
                     ELIMINAR CUENTA (ADMIN)
                   </button>

@@ -16,6 +16,7 @@ import Footer from '../footer/footer';
 import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
 import CustomSelect from '../components/CustomSelect.jsx';
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
+import useSeguidos from '../hooks/useSeguidos.js';
 import { haPasadoFecha, obtenerFechaHoyLocal } from '../utils/dateUtils.js';
 
 const API_BASE = '/api/entrenamientos';
@@ -362,6 +363,14 @@ const PaginaEntrenamientos = ({ usuario }) => {
     }));
   };
 
+  // Entrenadores que sigo: sus entrenamientos aparecen primero (sort estable)
+  const seguidosIds = useSeguidos(usuario);
+  const entrenamientosOrdenados = [...entrenamientos].sort((a, b) => {
+    const idA = Number(a.entrenadores?.idusuario ?? a.entrenador?.idusuario);
+    const idB = Number(b.entrenadores?.idusuario ?? b.entrenador?.idusuario);
+    return Number(seguidosIds.has(idB)) - Number(seguidosIds.has(idA));
+  });
+
   const [idPorBorrar, setIdPorBorrar] = useState(null);
   const [borrando, setBorrando] = useState(false);
 
@@ -577,7 +586,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
 
           {/* Lista de Entrenamientos */}
           <ListaEntrenamientos
-            entrenamientos={entrenamientos}
+            entrenamientos={entrenamientosOrdenados}
             loading={loading}
             error={error}
             usuarioActual={usuario}

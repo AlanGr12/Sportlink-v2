@@ -9,6 +9,7 @@ import Footer from "../footer/footer";
 import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
 import ModalConfirmacionEliminar from '../calendario/ModalConfirmacionEliminar.jsx';
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
+import useSeguidos from '../hooks/useSeguidos.js';
 import MapaUbicacionDark from '../components/maps/MapaUbicacionDark.jsx';
 import { formatearUbicacionCorta } from '../utils/mapUtils.js';
 import { parsearFechaLocal, formatearFechaLocal, haPasadoFecha } from '../utils/dateUtils.js';
@@ -83,6 +84,9 @@ function Pruebas({ idJugador, usuario }) {
   const [postulantesLoading, setPostulantesLoading] = useState(false);
   const [postulantesError, setPostulantesError] = useState("");
   const [fotoJugador, setFotoJugador] = useState("");
+
+  // ── Clubes que sigo: sus pruebas aparecen primero ─────────────
+  const seguidosIds = useSeguidos(usuarioEfectivo);
 
   // ── Eliminación de pruebas (club dueño o administrador) ──────
   const esAdmin = usuarioEfectivo?.es_admin === true;
@@ -710,7 +714,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
   };
 
   // ── Filtrado ──────────────────────────────────────────────
-  const pruebasFiltradas = pruebas.filter((prueba) => {
+  const pruebasFiltradasBase = pruebas.filter((prueba) => {
     // No mostrar pruebas viejas cuya fecha ya haya pasado
     if (haPasadoFecha(prueba.fechaprueba, prueba.horafin)) return false;
 
@@ -742,6 +746,11 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
     return coincideBusqueda && coincideDeporte && coincideCategoria && coincideZona && coincideFechaDesde && coincideFechaHasta;
   });
+
+  // Sort estable: las pruebas de clubes seguidos van primero, el resto conserva su orden
+  const pruebasFiltradas = [...pruebasFiltradasBase].sort(
+    (a, b) => Number(seguidosIds.has(Number(b.club?.idusuario))) - Number(seguidosIds.has(Number(a.club?.idusuario)))
+  );
 
   const modalDetalleValido = modalAbierto && pruebaSeleccionada && (
     pruebaSeleccionada?.idprueba != null ||
