@@ -17,6 +17,10 @@ const TIPOS_NOTIF = {
   ENTRENAMIENTO: { label: 'Entrenamiento', color: '#34d399' },
   EMPLEO: { label: 'Empleo', color: '#a78bfa' },
   CHAT: { label: 'Chat', color: '#a0a0a0' },
+  LIKE: { label: 'Me gusta', color: '#f472b6' },
+  COMENTARIO: { label: 'Comentarios', color: '#60a5fa' },
+  SEGUIDOR: { label: 'Seguidores', color: '#2DEFF2' },
+  RECORDATORIO: { label: 'Recordatorio', color: '#fbbf24' },
   SISTEMA: { label: 'Sistema', color: '#9ca3af' },
 };
 
