@@ -242,6 +242,37 @@ export default function PublicacionDetalle({ usuario }) {
   const [respuesta, setRespuesta] = useState('')
   const [enviando, setEnviando] = useState(false)
 
+  // Sidebars
+  const [seguidos, setSeguidos] = useState(usuario?.seguidos || [])
+  const [recomendaciones, setRecomendaciones] = useState([])
+  const [noticias, setNoticias] = useState([])
+
+  useEffect(() => {
+    const cargarRecomendaciones = async () => {
+      try {
+        const miId = usuario?.idusuario || usuario?.id
+        const res = await api.get('/api/jugadores')
+        if (Array.isArray(res.data)) {
+          const filtrados = res.data
+            .filter(j => Number(j.idusuario) !== Number(miId))
+            .slice(0, 3)
+          setRecomendaciones(filtrados)
+        }
+      } catch {
+        setRecomendaciones([])
+      }
+    }
+    cargarRecomendaciones()
+  }, [usuario])
+
+  const rolUsuario = usuario?.tipousuario === 'jugador'
+    ? 'Atleta Profesional'
+    : usuario?.tipousuario === 'entrenador'
+      ? 'Entrenador Elite'
+      : usuario?.tipousuario === 'club'
+        ? 'Club Deportivo'
+        : usuario?.tipousuario || 'Miembro de SportLink'
+
   // Cerrar menú al click afuera
   useEffect(() => {
     if (!menuAbierto) return
@@ -387,230 +418,341 @@ export default function PublicacionDetalle({ usuario }) {
   return (
     <>
       <div className="feed-pagina post-detalle-pagina">
-        <div className="post-detalle-contenedor">
-
-          {/* ── Header: Volver ── */}
-          <div className="post-detalle-header-nav">
-            <button className="post-detalle-volver-btn" onClick={() => navigate(-1)} aria-label="Volver">
-              <IcoArrowLeft />
-            </button>
-            <span className="post-detalle-titulo">Post</span>
-          </div>
-
-          {loading ? (
-            <div className="feed-spinner-wrapper" style={{ paddingTop: 60 }}>
-              <div className="feed-spinner" />
+        <div className="feed-layout">
+          {/* ════ Columna Izquierda: Perfil + Seguidos ════ */}
+          <aside className="feed-sidebar-izquierda">
+            {/* Card Resumen Perfil */}
+            <div className="feed-profile-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/perfil')}>
+              <div className="feed-profile-banner" />
+              <div className="feed-profile-avatar-container">
+                <Avatar src={usuario?.fotoperfil} nombre={usuario?.nombre || 'Usuario'} size={72} />
+              </div>
+              <div className="feed-profile-info">
+                <h3 className="feed-profile-name">{usuario?.nombre || usuario?.email || 'Usuario'}</h3>
+                <p className="feed-profile-role">{rolUsuario}</p>
+              </div>
+              <div className="feed-profile-stats">
+                <div className="feed-profile-stat-row">
+                  <span className="feed-stat-label">Vistas del perfil</span>
+                  <span className="feed-stat-value">{usuario?.vistasPerfil ?? 0}</span>
+                </div>
+                <div className="feed-profile-stat-row">
+                  <span className="feed-stat-label">Conexiones</span>
+                  <span className="feed-stat-value">{usuario?.conexiones ?? 0}</span>
+                </div>
+              </div>
             </div>
-          ) : error ? (
-            <div className="feed-vacio" style={{ paddingTop: 60 }}>
-              <h3>{error}</h3>
-              <button
-                onClick={() => navigate('/')}
-                style={{
-                  marginTop: '16px', background: '#2DEFF2', color: '#000', border: 'none',
-                  borderRadius: '8px', padding: '10px 24px', fontWeight: 700, cursor: 'pointer'
-                }}
-              >
-                Volver al inicio
-              </button>
-            </div>
-          ) : post && (
-            <>
-              {/* ── Post padre (si es una respuesta) ── */}
-              {postPadre && (
-                <PostPadreCard
-                  post={postPadre}
-                  onClick={() => navigate(`/publicacion/${postPadre.idpublicacion}`)}
-                />
-              )}
 
-              {/* ── Post principal expandido ── */}
-              <div className={`post-detalle-principal${postPadre ? ' post-detalle-principal--es-respuesta' : ''}`}>
-                {/* Avatar + Nombre + 3 puntos */}
-                <div className="post-detalle-autor-row">
-                  <div className="post-detalle-autor-info" onClick={() => post.autor?.idusuario && navigate(`/perfil/${post.autor.idusuario}`)}>
-                    <Avatar
-                      src={post.autor?.fotoperfil}
-                      nombre={post.autor?.nombre || '?'}
-                      size={48}
-                      style={{ cursor: 'pointer', flexShrink: 0 }}
-                    />
-                    <div className="post-detalle-autor-texto">
-                      <span className="post-detalle-autor-nombre">{post.autor?.nombre || 'Usuario'}</span>
-                      <span className="post-detalle-autor-sub">
-                        {rolTraducido || post.autor?.tipousuario}
-                        {post.autor?.tipousuario && <RolBadge rol={post.autor.tipousuario} />}
-                      </span>
+            {/* Card SEGUIDOS */}
+            <div className="feed-sidebar-card">
+              <h4 className="feed-sidebar-header-title">SEGUIDOS</h4>
+              {seguidos && seguidos.length > 0 ? (
+                <div className="feed-seguidos-lista">
+                  {seguidos.map((item, idx) => (
+                    <div key={item.id || idx} className="feed-seguido-item">
+                      <Avatar src={item.logo || item.fotoperfil} nombre={item.nombre} size={36} />
+                      <div className="feed-seguido-info">
+                        <span className="feed-seguido-nombre">{item.nombre}</span>
+                        <span className="feed-seguido-sub">{item.categoria || item.tipousuario || 'Club'}</span>
+                      </div>
                     </div>
+                  ))}
+                  <button className="feed-ver-todo-btn">Ver todo →</button>
+                </div>
+              ) : (
+                <div className="feed-vacio-box">Sin seguidos por el momento</div>
+              )}
+            </div>
+          </aside>
+
+          {/* ════ Columna Central: Contenedor del Post ════ */}
+          <main className="post-detalle-contenedor">
+            {/* ── Header: Volver ── */}
+            <div className="post-detalle-header-nav">
+              <button className="post-detalle-volver-btn" onClick={() => navigate(-1)} aria-label="Volver">
+                <IcoArrowLeft />
+              </button>
+              <span className="post-detalle-titulo">Post</span>
+            </div>
+
+            {loading ? (
+              <div className="feed-spinner-wrapper" style={{ paddingTop: 60 }}>
+                <div className="feed-spinner" />
+              </div>
+            ) : error ? (
+              <div className="feed-vacio" style={{ paddingTop: 60 }}>
+                <h3>{error}</h3>
+                <button
+                  onClick={() => navigate('/')}
+                  style={{
+                    marginTop: '16px', background: '#2DEFF2', color: '#000', border: 'none',
+                    borderRadius: '8px', padding: '10px 24px', fontWeight: 700, cursor: 'pointer'
+                  }}
+                >
+                  Volver al inicio
+                </button>
+              </div>
+            ) : post && (
+              <>
+                {/* ── Post padre (si es una respuesta) ── */}
+                {postPadre && (
+                  <PostPadreCard
+                    post={postPadre}
+                    onClick={() => navigate(`/publicacion/${postPadre.idpublicacion}`)}
+                  />
+                )}
+
+                {/* ── Post principal expandido ── */}
+                <div className={`post-detalle-principal${postPadre ? ' post-detalle-principal--es-respuesta' : ''}`}>
+                  {/* Avatar + Nombre + 3 puntos */}
+                  <div className="post-detalle-autor-row">
+                    <div className="post-detalle-autor-info" onClick={() => post.autor?.idusuario && navigate(`/perfil/${post.autor.idusuario}`)}>
+                      <Avatar
+                        src={post.autor?.fotoperfil}
+                        nombre={post.autor?.nombre || '?'}
+                        size={48}
+                        style={{ cursor: 'pointer', flexShrink: 0 }}
+                      />
+                      <div className="post-detalle-autor-texto">
+                        <span className="post-detalle-autor-nombre">{post.autor?.nombre || 'Usuario'}</span>
+                        <span className="post-detalle-autor-sub">
+                          {rolTraducido || post.autor?.tipousuario}
+                          {post.autor?.tipousuario && <RolBadge rol={post.autor.tipousuario} />}
+                        </span>
+                      </div>
+                    </div>
+                    {!esMio && (
+                      <BotonSeguir
+                        idusuario={post.autor?.idusuario}
+                        tipousuario={post.autor?.tipousuario}
+                        usuario={usuario}
+                      />
+                    )}
+                    {esMio && (
+                      <div className="post-menu-wrapper" ref={menuRef}>
+                        <button className="post-menu-btn" onClick={() => setMenuAbierto(v => !v)} aria-label="Opciones">
+                          <IcoDots />
+                        </button>
+                        {menuAbierto && (
+                          <div className="post-menu-dropdown">
+                            <button className="post-menu-item danger" onClick={handleEliminarPost}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
+                              </svg>
+                              Eliminar
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {!esMio && (
-                    <BotonSeguir
-                      idusuario={post.autor?.idusuario}
-                      tipousuario={post.autor?.tipousuario}
-                      usuario={usuario}
-                    />
+
+                  {/* Tipo chip */}
+                  <TipoChip tipo={post.tipopublicacion} />
+
+                  {/* Contenido */}
+                  {post.contenido && (
+                    <p className="post-detalle-contenido">{post.contenido}</p>
                   )}
-                  {esMio && (
-                    <div className="post-menu-wrapper" ref={menuRef}>
-                      <button className="post-menu-btn" onClick={() => setMenuAbierto(v => !v)} aria-label="Opciones">
-                        <IcoDots />
-                      </button>
-                      {menuAbierto && (
-                        <div className="post-menu-dropdown">
-                          <button className="post-menu-item danger" onClick={handleEliminarPost}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
-                            </svg>
-                            Eliminar
-                          </button>
-                        </div>
+
+                  {/* Referencia */}
+                  {post.tipopublicacion !== 'NORMAL' && post.referencia && (
+                    <div style={{ marginTop: '12px' }}>
+                      <ReferenciaBloque tipo={post.tipopublicacion} ref={post.referencia} />
+                    </div>
+                  )}
+
+                  {/* Imagen / Video */}
+                  {post.imagen && (
+                    <div className="post-card-imagen" style={{ marginTop: '16px' }}>
+                      {post.imagen.match(/\.(mp4|webm|ogg)$/i) ? (
+                        <video src={post.imagen} controls className="post-media-video" />
+                      ) : (
+                        <img
+                          src={post.imagen}
+                          alt="Publicación"
+                          onClick={() => setImagenModal(post.imagen)}
+                          style={{ cursor: 'zoom-in' }}
+                        />
                       )}
                     </div>
                   )}
-                </div>
 
-                {/* Tipo chip */}
-                <TipoChip tipo={post.tipopublicacion} />
+                  {/* Fecha completa */}
+                  <div className="post-detalle-fecha">{fechaCompleta(post.createdat)}</div>
 
-                {/* Contenido */}
-                {post.contenido && (
-                  <p className="post-detalle-contenido">{post.contenido}</p>
-                )}
+                  {/* Barra de stats */}
+                  {(likesCount > 0 || (post.totalComentarios || comentarios.length) > 0 || reposts > 0) && (
+                    <div className="post-detalle-stats">
+                      {(post.totalComentarios || comentarios.length) > 0 && (
+                        <span className="post-detalle-stat">
+                          <strong>{post.totalComentarios || comentarios.length}</strong> Respuestas
+                        </span>
+                      )}
+                      {reposts > 0 && (
+                        <span className="post-detalle-stat">
+                          <strong>{reposts}</strong> Reposts
+                        </span>
+                      )}
+                      {likesCount > 0 && (
+                        <span className="post-detalle-stat">
+                          <strong>{likesCount}</strong> Me gusta
+                        </span>
+                      )}
+                    </div>
+                  )}
 
-                {/* Referencia */}
-                {post.tipopublicacion !== 'NORMAL' && post.referencia && (
-                  <div style={{ marginTop: '12px' }}>
-                    <ReferenciaBloque tipo={post.tipopublicacion} ref={post.referencia} />
+                  {/* Separador + Acciones */}
+                  <div className="post-detalle-acciones-barra">
+                    <button
+                      className={`post-detalle-accion-btn${liked ? ' liked' : ''}`}
+                      onClick={handleLike}
+                      aria-label="Me gusta"
+                    >
+                      <span className={likeAnimando ? 'like-anim' : ''} style={{ display: 'inline-flex' }}>
+                        <IcoThumbsUp filled={liked} />
+                      </span>
+                      <span className="post-detalle-accion-label">Me gusta</span>
+                    </button>
+
+                    <button className="post-detalle-accion-btn" aria-label="Responder" onClick={() => document.getElementById('detalle-respuesta-input')?.focus()}>
+                      <IcoComment />
+                      <span className="post-detalle-accion-label">Responder</span>
+                    </button>
+
+                    <button className="post-detalle-accion-btn" aria-label="Republicar" onClick={() => setReposts(r => r + 1)}>
+                      <IcoRepost />
+                      <span className="post-detalle-accion-label">Republicar</span>
+                    </button>
+
+                    <button className="post-detalle-accion-btn" aria-label="Compartir" onClick={handleCompartir}>
+                      <IcoSend />
+                      <span className="post-detalle-accion-label">Compartir</span>
+                    </button>
                   </div>
-                )}
 
-                {/* Imagen / Video */}
-                {post.imagen && (
-                  <div className="post-card-imagen" style={{ marginTop: '16px' }}>
-                    {post.imagen.match(/\.(mp4|webm|ogg)$/i) ? (
-                      <video src={post.imagen} controls className="post-media-video" />
-                    ) : (
-                      <img
-                        src={post.imagen}
-                        alt="Publicación"
-                        onClick={() => setImagenModal(post.imagen)}
-                        style={{ cursor: 'zoom-in' }}
+                  {/* Input para responder */}
+                  <div className="post-detalle-responder-box">
+                    <Avatar src={usuario?.fotoperfil} nombre={usuario?.nombre || '?'} size={40} />
+                    <div className="post-detalle-responder-input-wrapper">
+                      <textarea
+                        id="detalle-respuesta-input"
+                        className="post-detalle-responder-input"
+                        placeholder={usuario ? 'Publicá tu respuesta' : 'Iniciá sesión para responder'}
+                        value={respuesta}
+                        onChange={(e) => setRespuesta(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && usuario) { e.preventDefault(); handleEnviarRespuesta() } }}
+                        disabled={!usuario}
+                        rows={1}
                       />
-                    )}
+                    </div>
+                    <button
+                      className="post-detalle-responder-btn"
+                      onClick={usuario ? handleEnviarRespuesta : () => navigate('/login')}
+                      disabled={usuario && (!respuesta.trim() || enviando)}
+                    >
+                      {usuario ? 'Responder' : 'Iniciar sesión'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── Separador ── */}
+                <div className="post-detalle-separador" />
+
+                {/* ── Lista de respuestas ── */}
+                {loadingComentarios ? (
+                  <div className="feed-spinner-wrapper" style={{ padding: '32px 0' }}>
+                    <div className="feed-spinner" />
+                  </div>
+                ) : comentarios.length === 0 ? (
+                  <div style={{ padding: '40px 16px', textAlign: 'center', color: '#4a5060' }}>
+                    <p style={{ fontSize: '14px' }}>Nadie respondió todavía. ¡Sé el primero!</p>
+                  </div>
+                ) : (
+                  <div className="post-detalle-respuestas-lista">
+                    {comentarios.map((c, idx) => (
+                      <RespuestaCard
+                        key={c.idcomentario}
+                        comentario={c}
+                        usuario={usuario}
+                        autorPost={post.autor}
+                        onEliminar={handleEliminarComentario}
+                        esUltimo={idx === comentarios.length - 1}
+                      />
+                    ))}
                   </div>
                 )}
+              </>
+            )}
+          </main>
 
-                {/* Fecha completa */}
-                <div className="post-detalle-fecha">{fechaCompleta(post.createdat)}</div>
-
-                {/* Barra de stats */}
-                {(likesCount > 0 || (post.totalComentarios || comentarios.length) > 0 || reposts > 0) && (
-                  <div className="post-detalle-stats">
-                    {(post.totalComentarios || comentarios.length) > 0 && (
-                      <span className="post-detalle-stat">
-                        <strong>{post.totalComentarios || comentarios.length}</strong> Respuestas
-                      </span>
-                    )}
-                    {reposts > 0 && (
-                      <span className="post-detalle-stat">
-                        <strong>{reposts}</strong> Reposts
-                      </span>
-                    )}
-                    {likesCount > 0 && (
-                      <span className="post-detalle-stat">
-                        <strong>{likesCount}</strong> Me gusta
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Separador + Acciones */}
-                <div className="post-detalle-acciones-barra">
-                  <button
-                    className={`post-detalle-accion-btn${liked ? ' liked' : ''}`}
-                    onClick={handleLike}
-                    aria-label="Me gusta"
-                  >
-                    <span className={likeAnimando ? 'like-anim' : ''} style={{ display: 'inline-flex' }}>
-                      <IcoThumbsUp filled={liked} />
-                    </span>
-                    <span className="post-detalle-accion-label">Me gusta</span>
-                  </button>
-
-                  <button className="post-detalle-accion-btn" aria-label="Responder" onClick={() => document.getElementById('detalle-respuesta-input')?.focus()}>
-                    <IcoComment />
-                    <span className="post-detalle-accion-label">Responder</span>
-                  </button>
-
-                  <button className="post-detalle-accion-btn" aria-label="Republicar" onClick={() => setReposts(r => r + 1)}>
-                    <IcoRepost />
-                    <span className="post-detalle-accion-label">Republicar</span>
-                  </button>
-
-                  <button className="post-detalle-accion-btn" aria-label="Compartir" onClick={handleCompartir}>
-                    <IcoSend />
-                    <span className="post-detalle-accion-label">Compartir</span>
-                  </button>
-                </div>
-
-                {/* Input para responder */}
-                <div className="post-detalle-responder-box">
-                  <Avatar src={usuario?.fotoperfil} nombre={usuario?.nombre || '?'} size={40} />
-                  <div className="post-detalle-responder-input-wrapper">
-                    <textarea
-                      id="detalle-respuesta-input"
-                      className="post-detalle-responder-input"
-                      placeholder={usuario ? 'Publicá tu respuesta' : 'Iniciá sesión para responder'}
-                      value={respuesta}
-                      onChange={(e) => setRespuesta(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && usuario) { e.preventDefault(); handleEnviarRespuesta() } }}
-                      disabled={!usuario}
-                      rows={1}
-                    />
-                  </div>
-                  <button
-                    className="post-detalle-responder-btn"
-                    onClick={usuario ? handleEnviarRespuesta : () => navigate('/login')}
-                    disabled={usuario && (!respuesta.trim() || enviando)}
-                  >
-                    {usuario ? 'Responder' : 'Iniciar sesión'}
-                  </button>
-                </div>
-              </div>
-
-              {/* ── Separador ── */}
-              <div className="post-detalle-separador" />
-
-              {/* ── Lista de respuestas ── */}
-              {loadingComentarios ? (
-                <div className="feed-spinner-wrapper" style={{ padding: '32px 0' }}>
-                  <div className="feed-spinner" />
-                </div>
-              ) : comentarios.length === 0 ? (
-                <div style={{ padding: '40px 16px', textAlign: 'center', color: '#4a5060' }}>
-                  <p style={{ fontSize: '14px' }}>Nadie respondió todavía. ¡Sé el primero!</p>
-                </div>
-              ) : (
-                <div className="post-detalle-respuestas-lista">
-                  {comentarios.map((c, idx) => (
-                    <RespuestaCard
-                      key={c.idcomentario}
-                      comentario={c}
-                      usuario={usuario}
-                      autorPost={post.autor}
-                      onEliminar={handleEliminarComentario}
-                      esUltimo={idx === comentarios.length - 1}
-                    />
+          {/* ════ Columna Derecha: Recomendados + Noticias ════ */}
+          <aside className="feed-sidebar-derecha">
+            {/* Recomendado para ti */}
+            <div className="feed-sidebar-card">
+              <h4 className="feed-sidebar-header-title">RECOMENDADO PARA TI</h4>
+              {recomendaciones && recomendaciones.length > 0 ? (
+                <div className="feed-recomendados-lista">
+                  {recomendaciones.map((rec) => (
+                    <div
+                      key={rec.idjugador || rec.idusuario}
+                      className="feed-recomendado-item"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => navigate(`/perfil/${rec.idusuario}`)}
+                    >
+                      <Avatar src={rec.fotoperfil} nombre={rec.nombre || 'Usuario'} size={40} />
+                      <div className="feed-recomendado-info">
+                        <span className="feed-recomendado-nombre">{rec.nombre}</span>
+                        <span className="feed-recomendado-sub">{rec.posicion || rec.deporte || 'Deportista'}</span>
+                      </div>
+                      <button className="feed-btn-conectar" onClick={(e) => { e.stopPropagation(); navigate(`/perfil/${rec.idusuario}`) }}>Perfil</button>
+                    </div>
                   ))}
                 </div>
+              ) : (
+                <div className="feed-vacio-box">Sin recomendaciones por el momento</div>
               )}
-            </>
-          )}
+            </div>
+
+            {/* Noticias deportivas */}
+            <div className="feed-sidebar-card">
+              <h4 className="feed-sidebar-header-title">NOTICIAS DEPORTIVAS</h4>
+              {noticias && noticias.length > 0 ? (
+                <div className="feed-noticias-lista">
+                  {noticias.map((item, idx) => (
+                    <div key={idx} className="feed-noticia-item">
+                      <h5>{item.titulo}</h5>
+                      <p>{item.subtitulo}</p>
+                    </div>
+                  ))}
+                  <button className="feed-mostrar-mas-btn">Mostrar más ∨</button>
+                </div>
+              ) : (
+                <div className="feed-vacio-box">Sin noticias por el momento</div>
+              )}
+            </div>
+
+            {/* Footer links */}
+            <footer className="feed-footer-links">
+              <div className="feed-footer-row">
+                <span onClick={() => navigate('/landing')} style={{ cursor: 'pointer' }}>Landing</span>
+                <span>•</span>
+                <span>Acerca de</span>
+                <span>•</span>
+                <span>Accesibilidad</span>
+                <span>•</span>
+                <span>Centro de ayuda</span>
+              </div>
+              <div className="feed-footer-row">
+                <span>Privacidad y Términos</span>
+              </div>
+              <p className="feed-copyright">SportLink © 2026</p>
+            </footer>
+          </aside>
         </div>
       </div>
 
       {imagenModal && <ModalImagen src={imagenModal} onClose={() => setImagenModal(null)} />}
-      <Footer />
     </>
   )
 }

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import Avatar from '../components/Avatar.jsx'
 import api from '../axiosConfig.js'
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx'
+import ModalComentarPost from './ModalComentarPost.jsx'
 
 // ─── helpers ───────────────────────────────────────────────
 function tiempoRelativo(fechaStr) {
@@ -344,6 +345,7 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario,
   const [enviandoComentario, setEnviandoComentario] = useState(false)
   const [comentarioEditando, setComentarioEditando] = useState(null)
   const [reposts, setReposts] = useState(postInicial.republicaciones || 0)
+  const [modalResponderAbierto, setModalResponderAbierto] = useState(false)
 
   // Si un visitante sin cuenta intenta interactuar, lo mandamos a loguearse
   // en vez de dejar que el request falle en silencio con 401.
@@ -482,7 +484,7 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario,
 
           <button
             className="post-accion-btn"
-            onClick={handleToggleComentarios}
+            onClick={(e) => { e.stopPropagation(); setModalResponderAbierto(true) }}
             aria-label="Comentar"
           >
             <IcoComment />
@@ -510,6 +512,18 @@ export function PostAcciones({ post: postInicial, usuario, onEliminarComentario,
           </button>
         </div>
       </div>
+
+      {modalResponderAbierto && (
+        <ModalComentarPost
+          post={post}
+          usuario={usuario}
+          onClose={() => setModalResponderAbierto(false)}
+          onComentarioEnviado={(nuevoComentarioData) => {
+            setComentarios(prev => [nuevoComentarioData, ...prev])
+            setPost(p => ({ ...p, totalComentarios: (p.totalComentarios || 0) + 1 }))
+          }}
+        />
+      )}
 
       {comentariosAbiertos && (
         <div className="post-comentarios-seccion" onClick={(e) => e.stopPropagation()}>
