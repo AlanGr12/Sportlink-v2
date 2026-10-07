@@ -24,7 +24,6 @@ export default function FeedView({ usuario }) {
   // Datos dinámicos para sidebars (según backend)
   const [seguidos, setSeguidos] = useState(usuario?.seguidos || [])
   const [recomendaciones, setRecomendaciones] = useState([])
-  const [noticias, setNoticias] = useState([]) // vacías si no hay API de noticias
 
   const sentinelRef = useRef(null)
 
@@ -52,20 +51,14 @@ export default function FeedView({ usuario }) {
     }
   }, [])
 
-  // Cargar datos dinámicos recomendados desde el backend si existen
+  // Recomendaciones: perfiles al azar que comparten deporte con el usuario
   useEffect(() => {
     cargarPosts(1, true)
 
     const cargarRecomendaciones = async () => {
       try {
-        const miId = usuario?.idusuario || usuario?.id
-        const res = await api.get('/api/jugadores')
-        if (Array.isArray(res.data)) {
-          const filtrados = res.data
-            .filter(j => Number(j.idusuario) !== Number(miId))
-            .slice(0, 3)
-          setRecomendaciones(filtrados)
-        }
+        const res = await api.get('/api/recomendaciones', { params: { limite: 3 } })
+        setRecomendaciones(Array.isArray(res.data) ? res.data : [])
       } catch {
         // En caso de que no devuelva datos o falle
         setRecomendaciones([])
@@ -204,7 +197,7 @@ export default function FeedView({ usuario }) {
           )}
         </main>
 
-        {/* ════ Columna Derecha: Recomendados + Noticias ════ */}
+        {/* ════ Columna Derecha: Recomendados ════ */}
         <aside className="feed-sidebar-derecha">
           {/* Recomendado para ti */}
           <div className="feed-sidebar-card">
@@ -213,7 +206,7 @@ export default function FeedView({ usuario }) {
               <div className="feed-recomendados-lista">
                 {recomendaciones.map((rec) => (
                   <div 
-                    key={rec.idjugador || rec.idusuario} 
+                    key={rec.idusuario}
                     className="feed-recomendado-item"
                     style={{ cursor: 'pointer' }}
                     onClick={() => navigate(`/perfil/${rec.idusuario}`)}
@@ -221,7 +214,9 @@ export default function FeedView({ usuario }) {
                     <Avatar src={rec.fotoperfil} nombre={rec.nombre || 'Usuario'} size={40} />
                     <div className="feed-recomendado-info">
                       <span className="feed-recomendado-nombre">{rec.nombre}</span>
-                      <span className="feed-recomendado-sub">{rec.posicion || rec.deporte || 'Deportista'}</span>
+                      <span className="feed-recomendado-sub">
+                        {rec.tipousuario === 'club' ? 'Club' : 'Entrenador'}{rec.deporte ? ` · ${rec.deporte}` : ''}
+                      </span>
                     </div>
                     <button className="feed-btn-conectar" onClick={(e) => { e.stopPropagation(); navigate(`/perfil/${rec.idusuario}`) }}>Perfil</button>
                   </div>
@@ -229,24 +224,6 @@ export default function FeedView({ usuario }) {
               </div>
             ) : (
               <div className="feed-vacio-box">Sin recomendaciones por el momento</div>
-            )}
-          </div>
-
-          {/* Noticias deportivas */}
-          <div className="feed-sidebar-card">
-            <h4 className="feed-sidebar-header-title">NOTICIAS DEPORTIVAS</h4>
-            {noticias && noticias.length > 0 ? (
-              <div className="feed-noticias-lista">
-                {noticias.map((item, idx) => (
-                  <div key={idx} className="feed-noticia-item">
-                    <h5>{item.titulo}</h5>
-                    <p>{item.subtitulo}</p>
-                  </div>
-                ))}
-                <button className="feed-mostrar-mas-btn">Mostrar más ∨</button>
-              </div>
-            ) : (
-              <div className="feed-vacio-box">Sin noticias por el momento</div>
             )}
           </div>
 
