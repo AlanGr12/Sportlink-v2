@@ -165,7 +165,8 @@ export default function SidebarConversaciones({ usuario, onlineUsers, conversaci
           const hora = formatearFechaRelativa(c.ultimoMensaje?.createdat)
 
           const miIdUsuario = usuario?.idusuario || usuario?.id
-          let preview = c.ultimoMensaje?.contenido || 'No hay mensajes aún'
+          let preview = c.ultimoMensaje?.contenido
+            || (c.ultimoMensaje?.tipomensaje === 'EVENTO' ? '📎 Evento compartido' : 'No hay mensajes aún')
           if (c.ultimoMensaje && Number(c.ultimoMensaje.idusuarioemisor) === Number(miIdUsuario)) {
             preview = 'Tú: ' + preview
           }

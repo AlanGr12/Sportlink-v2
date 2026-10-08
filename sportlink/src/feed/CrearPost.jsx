@@ -1,6 +1,11 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import Avatar from '../components/Avatar.jsx'
 import api from '../axiosConfig.js'
+import { SelectorEventos, TarjetaEvento } from '../components/EventoAdjunto.jsx'
+import { puedeAdjuntarEventos } from '../utils/eventosAdjuntos.js'
+
+// Campo de la publicación que referencia a cada tipo de evento
+const CAMPO_EVENTO = { PRUEBA: 'idprueba', ENTRENAMIENTO: 'identrenamiento', EMPLEO: 'idempleo' }
 
 const IcoPhoto = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2DEFF2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -41,7 +46,11 @@ export default function CrearPost({ usuario, onPostCreado }) {
   const [imagenFile, setImagenFile] = useState(null)
   const [imagenPreview, setImagenPreview] = useState(null)
   const [publicando, setPublicando] = useState(false)
+  const [evento, setEvento] = useState(null)
+  const [selectorAbierto, setSelectorAbierto] = useState(false)
   const fileInputRef = useRef(null)
+  const puedeAdjuntar = puedeAdjuntarEventos(usuario)
+  const puedePublicar = (contenido.trim() || evento) && !publicando
   const MAX_CHARS = 1000
 
   const handleImagenChange = (e) => {
@@ -64,12 +73,13 @@ export default function CrearPost({ usuario, onPostCreado }) {
   }
 
   const handlePublicar = async () => {
-    if (!contenido.trim() || publicando) return
+    if (!puedePublicar) return
     setPublicando(true)
     try {
       const formData = new FormData()
       formData.append('contenido', contenido.trim())
-      formData.append('tipopublicacion', 'NORMAL')
+      formData.append('tipopublicacion', evento ? evento.tipo : 'NORMAL')
+      if (evento) formData.append(CAMPO_EVENTO[evento.tipo], evento.id)
       if (imagenFile) formData.append('imagen', imagenFile)
 
       const { data } = await api.post('/api/publicaciones', formData, {
@@ -77,6 +87,7 @@ export default function CrearPost({ usuario, onPostCreado }) {
       })
 
       setContenido('')
+      setEvento(null)
       quitarImagen()
       setExpandido(false)
       onPostCreado(data)
@@ -87,6 +98,8 @@ export default function CrearPost({ usuario, onPostCreado }) {
       setPublicando(false)
     }
   }
+
+  const cerrarSelector = useCallback(() => setSelectorAbierto(false), [])
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && e.ctrlKey) handlePublicar()
@@ -100,7 +113,7 @@ export default function CrearPost({ usuario, onPostCreado }) {
       <div className="crear-post-fila-superior">
         <Avatar src={usuario?.fotoperfil} nombre={nombre} size={44} />
         <div className="crear-post-textarea-wrapper" onClick={() => setExpandido(true)}>
-          {!expandido && !contenido && !imagenPreview ? (
+          {!expandido && !contenido && !imagenPreview && !evento ? (
             <div className="crear-post-input-fake">
               Comparte tus últimas estadísticas o novedades...
             </div>
@@ -128,6 +141,12 @@ export default function CrearPost({ usuario, onPostCreado }) {
               </button>
             </div>
           )}
+
+          {evento && (
+            <div className="crear-post-evento-preview">
+              <TarjetaEvento evento={evento} onQuitar={() => setEvento(null)} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -153,15 +172,17 @@ export default function CrearPost({ usuario, onPostCreado }) {
             <span className="crear-post-tooltip">Video</span>
           </button>
 
-          <button
-            type="button"
-            className="crear-post-btn-media"
-            onClick={() => setExpandido(true)}
-            aria-label="Evento"
-          >
-            <IcoEvent />
-            <span className="crear-post-tooltip">Evento</span>
-          </button>
+          {puedeAdjuntar && (
+            <button
+              type="button"
+              className="crear-post-btn-media"
+              onClick={() => { setExpandido(true); setSelectorAbierto(true) }}
+              aria-label="Adjuntar evento"
+            >
+              <IcoEvent />
+              <span className="crear-post-tooltip">Evento</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -182,7 +203,7 @@ export default function CrearPost({ usuario, onPostCreado }) {
           onChange={handleImagenChange}
         />
 
-        {(expandido || contenido.length > 0 || imagenPreview) && (
+        {(expandido || contenido.length > 0 || imagenPreview || evento) && (
           <div className="crear-post-botones-derecha">
             {contenido.length > 0 && (
               <span className={`crear-post-contador${cerca ? ' cerca' : ''}`}>
@@ -192,13 +213,19 @@ export default function CrearPost({ usuario, onPostCreado }) {
             <button
               className="crear-post-btn-publicar"
               onClick={handlePublicar}
-              disabled={!contenido.trim() || publicando}
+              disabled={!puedePublicar}
             >
               {publicando ? 'Publicando...' : 'Publicar'}
             </button>
           </div>
         )}
       </div>
+
+      <SelectorEventos
+        abierto={selectorAbierto}
+        onCerrar={cerrarSelector}
+        onElegir={setEvento}
+      />
     </div>
   )
 }

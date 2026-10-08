@@ -3,11 +3,16 @@ import { createClient } from '@supabase/supabase-js'
 import api from '../axiosConfig.js'
 import Avatar from '../components/Avatar.jsx'
 import ChatInput from './ChatInput.jsx'
+import { TarjetaEventoPorId } from '../components/EventoAdjunto.jsx'
+import { eventoDeMensaje, puedeAdjuntarEventos } from '../utils/eventosAdjuntos.js'
 import { IconoMensajes } from '../iconos/IconoMensajes.jsx'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Columna del mensaje que referencia a cada tipo de evento adjunto
+const CAMPO_EVENTO = { PRUEBA: 'idprueba', ENTRENAMIENTO: 'identrenamiento', EMPLEO: 'idempleo' }
 
 // ── Iconos SVG ──────────────────────────────────────────────
 
@@ -322,7 +327,8 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
   }, [idActivo])
 
   // ── Envío optimista ──
-  const handleEnviarMensaje = async (contenido) => {
+  // evento (opcional): { tipo, id } de una prueba, entrenamiento o empleo propio
+  const handleEnviarMensaje = async (contenido, evento = null) => {
     if (!conversacionActiva) return
     setTypingUser(null)
     clearTimeout(typingTimeoutRef.current)
@@ -333,14 +339,17 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
       idconversacion: id,
       idusuarioemisor: usuario.idusuario || usuario.id,
       contenido,
-      tipomensaje: 'TEXTO',
+      tipomensaje: evento ? 'EVENTO' : 'TEXTO',
+      ...(evento && { [CAMPO_EVENTO[evento.tipo]]: evento.id }),
       createdat: new Date().toISOString(),
     }
     setMensajes((prev) => [...prev, mensajeOptimista])
     actualizarUltimoMensaje(id, mensajeOptimista)
 
     try {
-      const { data: mensajeReal } = await api.post(`/api/conversaciones/${id}/mensajes`, { contenido })
+      const { data: mensajeReal } = await api.post(`/api/conversaciones/${id}/mensajes`, evento
+        ? { contenido, tipomensaje: 'EVENTO', evento: { tipo: evento.tipo, id: evento.id } }
+        : { contenido })
       setMensajes((prev) => prev.map((m) => (m.idmensaje === tempId ? mensajeReal : m)))
       actualizarUltimoMensaje(id, mensajeReal)
     } catch (err) {
@@ -624,6 +633,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
           const esPropio = Number(msg.idusuarioemisor) === Number(miIdUsuario)
           const isEliminado = msg.tipomensaje === 'ELIMINADO' || msg.eliminado
           const isEditado = msg.tipomensaje === 'EDITADO' || msg.editado
+          const eventoAdjunto = eventoDeMensaje(msg)
 
           return (
             <div 
@@ -652,12 +662,17 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
                       <button className="btn-cancelar-edicion" title="Cancelar edición" onClick={() => setEditandoMsgId(null)}>✕</button>
                     </div>
                   ) : (
-                    <div className="mensaje-contenido-wrapper">
-                      <span className="mensaje-texto">
-                        {destacarTexto(msg.contenido, mostrarBusqueda ? busquedaTexto : '', msg.idmensaje, matchActivoId)}
-                      </span>
-                      {isEditado && <span className="mensaje-editado-tag"> (editado)</span>}
-                    </div>
+                    <>
+                      {eventoAdjunto && <TarjetaEventoPorId tipo={eventoAdjunto.tipo} id={eventoAdjunto.id} />}
+                      {(msg.contenido || !eventoAdjunto) && (
+                        <div className="mensaje-contenido-wrapper">
+                          <span className="mensaje-texto">
+                            {destacarTexto(msg.contenido, mostrarBusqueda ? busquedaTexto : '', msg.idmensaje, matchActivoId)}
+                          </span>
+                          {isEditado && <span className="mensaje-editado-tag"> (editado)</span>}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -700,7 +715,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
       )}
 
       {/* Input */}
-      <ChatInput onSend={handleEnviarMensaje} onTyping={handleTyping} />
+      <ChatInput onSend={handleEnviarMensaje} onTyping={handleTyping} puedeAdjuntarEvento={puedeAdjuntarEventos(usuario)} />
 
       {/* Modal Confirmar Eliminar */}
       {msgAEliminar && (

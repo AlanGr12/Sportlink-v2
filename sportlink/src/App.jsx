@@ -266,6 +266,7 @@ function App() {
           <Route path="/entrenadores" element={<EntrenadoresView usuario={usuario} />} />
           <Route path="/clubes" element={<ClubesView usuario={usuario} />} />
           <Route path="/empleos" element={<Empleos usuario={usuario} />} />
+          <Route path="/empleos/:id" element={<Empleos usuario={usuario} />} />
 
 
           <Route

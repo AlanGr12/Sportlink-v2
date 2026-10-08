@@ -5,6 +5,7 @@ import Avatar from '../components/Avatar.jsx'
 import api from '../axiosConfig.js'
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx'
 import ModalComentarPost from './ModalComentarPost.jsx'
+import { TarjetaEvento } from '../components/EventoAdjunto.jsx'
 
 // ─── helpers ───────────────────────────────────────────────
 function tiempoRelativo(fechaStr) {
@@ -171,60 +172,10 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// COMPONENTE: ReferenciaBloque — con link a la página real
+// COMPONENTE: ReferenciaBloque — evento adjunto, con link a su página
 // ═══════════════════════════════════════════════════════════
-export function ReferenciaBloque({ tipo, ref: refData }) {
-  const navigate = useNavigate()
-  if (!refData) return null
-
-  const rutas = { PRUEBA: '/pruebas', ENTRENAMIENTO: '/entrenamientos', EMPLEO: '/empleos' }
-  const etiquetaBoton = { PRUEBA: 'Ver prueba', ENTRENAMIENTO: 'Ver entrenamiento', EMPLEO: 'Ver empleo' }
-
-  let contenido = null
-  if (tipo === 'PRUEBA') {
-    contenido = (
-      <>
-        <strong>Prueba deportiva</strong>
-        {refData.categoria && <span> · {refData.categoria}</span>}
-        {refData.zona && <span> · {refData.zona}</span>}
-      </>
-    )
-  } else if (tipo === 'ENTRENAMIENTO') {
-    contenido = (
-      <>
-        <strong>{refData.titulo || 'Entrenamiento'}</strong>
-        {refData.ubicacion && <span> · {refData.ubicacion}</span>}
-        {refData.nivel && <span> · {refData.nivel}</span>}
-      </>
-    )
-  } else if (tipo === 'EMPLEO') {
-    contenido = (
-      <>
-        <strong>{refData.nombre || 'Empleo'}</strong>
-        {refData.horasreq && <span> · {refData.horasreq}h</span>}
-      </>
-    )
-  }
-  if (!contenido) return null
-
-  return (
-    <div className="post-referencia-bloque" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-      <div>{contenido}</div>
-      {rutas[tipo] && (
-        <button
-          className="post-referencia-ver-btn"
-          onClick={(e) => { e.stopPropagation(); navigate(rutas[tipo]) }}
-          style={{
-            background: 'transparent', border: '1px solid #2DEFF2', color: '#2DEFF2',
-            borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 700,
-            textTransform: 'uppercase', letterSpacing: '0.04em', cursor: 'pointer', whiteSpace: 'nowrap'
-          }}
-        >
-          {etiquetaBoton[tipo]}
-        </button>
-      )}
-    </div>
-  )
+export function ReferenciaBloque({ referencia }) {
+  return <TarjetaEvento evento={referencia} />
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -301,7 +252,7 @@ export function PostCompleto({ post, usuario, onEliminar, showThreadLine = false
         )}
 
         {post.tipopublicacion !== 'NORMAL' && post.referencia && (
-          <ReferenciaBloque tipo={post.tipopublicacion} ref={post.referencia} />
+          <ReferenciaBloque referencia={post.referencia} />
         )}
 
         {post.imagen && (

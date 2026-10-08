@@ -1740,3 +1740,19 @@
 .mensaje-modal-actions button.danger:hover {
   background-color: rgba(255, 77, 79, 0.2);
 }
+
+/* ── Eventos adjuntos (prueba / entrenamiento / empleo) ───── */
+.mensajes-evento-pendiente {
+  padding: 0 1rem;
+}
+.mensajes-evento-pendiente .evento-tarjeta {
+  margin: 0 0 8px;
+}
+
+.mensaje-burbuja .evento-tarjeta {
+  margin: 0;
+  max-width: 320px;
+}
+.mensaje-burbuja .evento-tarjeta + .mensaje-contenido-wrapper {
+  margin-top: 8px;
+}

@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { SelectorEventos, TarjetaEvento } from '../components/EventoAdjunto.jsx'
 
 const ClipIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -36,14 +37,28 @@ const VideoIcon = () => (
   </svg>
 )
 
+const EventIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+    <line x1="16" y1="2" x2="16" y2="6"/>
+    <line x1="8" y1="2" x2="8" y2="6"/>
+    <line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>
+)
+
 const EMOJI_LIST = [
   '😊', '😂', '🤣', '😍', '😎', '🥳', '😉', '😜', '🤩', '😇',
   '👍', '👎', '👏', '🙌', '🙏', '💪', '🔥', '❤️', '⭐', '✨',
   '⚽', '🏀', '🏆', '🥇', '🎯', '⚡', '👟', '🏃‍♂️', '💬', '🎉'
 ]
 
-export default function ChatInput({ onSend, onTyping }) {
+// puedeAdjuntarEvento: clubes (pruebas, empleos) y entrenadores (entrenamientos)
+export default function ChatInput({ onSend, onTyping, puedeAdjuntarEvento = false }) {
   const [texto, setTexto] = useState('')
+  const [evento, setEvento] = useState(null)
+  const [selectorAbierto, setSelectorAbierto] = useState(false)
+  const cerrarSelector = useCallback(() => setSelectorAbierto(false), [])
+  const puedeEnviar = Boolean(texto.trim() || evento)
   const [showAdjuntar, setShowAdjuntar] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
 
@@ -71,9 +86,10 @@ export default function ChatInput({ onSend, onTyping }) {
   }, [texto])
 
   const enviar = () => {
-    if (texto.trim()) {
-      onSend(texto.trim())
+    if (puedeEnviar) {
+      onSend(texto.trim(), evento)
       setTexto('')
+      setEvento(null)
       setShowAdjuntar(false)
       setShowEmoji(false)
       if (textareaRef.current) {
@@ -122,6 +138,16 @@ export default function ChatInput({ onSend, onTyping }) {
             <VideoIcon />
             <span>Video</span>
           </button>
+          {puedeAdjuntarEvento && (
+            <button
+              type="button"
+              className="mensajes-adjuntar-opcion"
+              onClick={() => { setShowAdjuntar(false); setSelectorAbierto(true) }}
+            >
+              <EventIcon />
+              <span>Evento</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -143,6 +169,15 @@ export default function ChatInput({ onSend, onTyping }) {
           </div>
         </div>
       )}
+
+      {/* Evento elegido, pendiente de enviar */}
+      {evento && (
+        <div className="mensajes-evento-pendiente">
+          <TarjetaEvento evento={evento} onQuitar={() => setEvento(null)} />
+        </div>
+      )}
+
+      <SelectorEventos abierto={selectorAbierto} onCerrar={cerrarSelector} onElegir={setEvento} />
 
       <form className="mensajes-input-area" onSubmit={(e) => { e.preventDefault(); enviar() }}>
         {/* Botón clip */}
@@ -188,7 +223,7 @@ export default function ChatInput({ onSend, onTyping }) {
           type="submit"
           className="mensajes-input-btn primary"
           title="Enviar mensaje"
-          disabled={!texto.trim()}
+          disabled={!puedeEnviar}
         >
           <SendIcon />
         </button>

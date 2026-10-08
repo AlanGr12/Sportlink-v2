@@ -551,7 +551,7 @@ export default function PublicacionDetalle({ usuario }) {
                   {/* Referencia */}
                   {post.tipopublicacion !== 'NORMAL' && post.referencia && (
                     <div style={{ marginTop: '12px' }}>
-                      <ReferenciaBloque tipo={post.tipopublicacion} ref={post.referencia} />
+                      <ReferenciaBloque referencia={post.referencia} />
                     </div>
                   )}
 

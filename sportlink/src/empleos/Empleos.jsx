@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import api from "../axiosConfig.js";
 
@@ -109,6 +110,23 @@ function Empleos({ cambiarVista, usuario }) {
       montado = false;
     };
   }, [usuario]);
+
+  // ── Deep link /empleos/:id (p. ej. desde un empleo compartido en el feed o el chat) ──
+  const { id: idEmpleoUrl } = useParams();
+  const deepLinkAbierto = useRef(null);
+  useEffect(() => {
+    if (!idEmpleoUrl || deepLinkAbierto.current === idEmpleoUrl || cargando) return;
+    deepLinkAbierto.current = idEmpleoUrl;
+    const encontrado = empleos.find((e) => Number(e.idempleo) === Number(idEmpleoUrl));
+    if (encontrado) {
+      setEmpleoSeleccionado(encontrado);
+      return;
+    }
+    // No está en la lista (p. ej. cerrado): traerlo directo
+    api.get(`/api/empleo/${idEmpleoUrl}`)
+      .then((r) => setEmpleoSeleccionado(r.data))
+      .catch((e) => console.error("[Empleos] No se pudo abrir el empleo del enlace:", e));
+  }, [idEmpleoUrl, empleos, cargando]);
 
   // ── Filtros ────────────────────────────────────────────────
   const [busqueda, setBusqueda] = useState("");
