@@ -20,6 +20,13 @@ import MensajesView from './mensajes/MensajesView.jsx'
 import Ajustes from './ajustes/Ajustes.jsx'
 import FeedView from './feed/FeedView.jsx'
 import PublicacionDetalle from './feed/PublicacionDetalle.jsx'
+import RutaAdmin from './admin/RutaAdmin.jsx'
+import AdminLayout from './admin/AdminLayout.jsx'
+import AdminDashboard from './admin/AdminDashboard.jsx'
+import AdminClubesAprobacion from './admin/AdminClubesAprobacion.jsx'
+import AdminUsuarios from './admin/AdminUsuarios.jsx'
+import AdminEventos from './admin/AdminEventos.jsx'
+import AdminPublicaciones from './admin/AdminPublicaciones.jsx'
 
 // ── Página 404 ───────────────────────────────────────────────────────────────
 function NotFound404() {
@@ -224,11 +231,53 @@ function App() {
     null
 
 
+  const esRutaAdmin = pathname.startsWith('/admin')
+  const esClubPendiente = usuario?.tipousuario === 'club' && usuario?.estado === 'PENDIENTE' && !esRutaAdmin
+
   return (
     <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Header usuario={usuario} onLogout={() => actualizarUsuario(null)} />
-      <main className="content-body" style={{ flex: 1 }}>
+      {!esRutaAdmin && <Header usuario={usuario} onLogout={() => actualizarUsuario(null)} />}
+
+      {esClubPendiente && (
+        <div style={{
+          background: 'rgba(210, 153, 34, 0.15)',
+          borderBottom: '1px solid rgba(210, 153, 34, 0.35)',
+          color: '#d29922',
+          padding: '10px 20px',
+          fontSize: '13px',
+          fontWeight: 600,
+          textAlign: 'center',
+          position: 'sticky',
+          top: '80px',
+          zIndex: 80,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px'
+        }}>
+          <span>⚠️</span>
+          <span>Tu cuenta de club está en proceso de revisión por el equipo de SportLink. Te notificaremos una vez aprobada.</span>
+        </div>
+      )}
+
+      <main className={esRutaAdmin ? 'admin-root' : 'content-body'} style={{ flex: 1 }}>
         <Routes>
+          {/* ── Consola de Administración (Backoffice) ── */}
+          <Route
+            path="/admin"
+            element={
+              <RutaAdmin usuario={usuario}>
+                <AdminLayout usuario={usuario} onLogout={() => actualizarUsuario(null)} />
+              </RutaAdmin>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="clubes" element={<AdminClubesAprobacion />} />
+            <Route path="usuarios" element={<AdminUsuarios />} />
+            <Route path="eventos" element={<AdminEventos />} />
+            <Route path="publicaciones" element={<AdminPublicaciones />} />
+          </Route>
+
           {/* ── Inicio: Landing si no hay sesión, Feed si ya está logueado ── */}
           <Route
             path="/"
@@ -237,7 +286,6 @@ function App() {
             }
           />
           <Route path="/landing" element={<Landing usuario={usuario} />} />
-
 
           <Route
             path="/login"
@@ -248,7 +296,6 @@ function App() {
             }
           />
 
-
           <Route
             path="/registro"
             element={
@@ -257,7 +304,6 @@ function App() {
               </PublicOnlyRoute>
             }
           />
-
 
           <Route path="/pruebas" element={<Pruebas idJugador={idJugador} usuario={usuario} />} />
           <Route path="/pruebas/:id" element={<Pruebas idJugador={idJugador} usuario={usuario} />} />
@@ -268,7 +314,6 @@ function App() {
           <Route path="/empleos" element={<Empleos usuario={usuario} />} />
           <Route path="/empleos/:id" element={<Empleos usuario={usuario} />} />
 
-
           <Route
             path="/feed"
             element={
@@ -276,9 +321,9 @@ function App() {
                 <FeedView usuario={usuario} />
               </ProtectedRoute>
             }
-          />{/* Pública — accesible sin login, para links compartidos */}
-         <Route path="/publicacion/:id" element={<PublicacionDetalle usuario={usuario} />} />
-
+          />
+          {/* Pública — accesible sin login, para links compartidos */}
+          <Route path="/publicacion/:id" element={<PublicacionDetalle usuario={usuario} />} />
 
           {/* ── Protegidas ── */}
           <Route
@@ -306,7 +351,6 @@ function App() {
             }
           />
 
-
           <Route
             path="/mensajes"
             element={
@@ -328,14 +372,13 @@ function App() {
             }
           />
 
-
           {/* ── 404 ── */}
           <Route path="*" element={<NotFound404 />} />
         </Routes>
       </main>
 
-      {/* ── Chatbot flotante: siempre visible en todas las vistas ── */}
-      <ChatbotButton />
+      {/* ── Chatbot flotante: visible excepto en backoffice ── */}
+      {!esRutaAdmin && <ChatbotButton />}
     </div>
   )
 }

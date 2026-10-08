@@ -11,6 +11,7 @@ function Login({ onLogin }) {
   const [contraseña, setContraseña] = useState('')
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
+  const [clubPendienteData, setClubPendienteData] = useState(null)
 
   async function handleLogin() {
     if (!email || !contraseña) {
@@ -24,7 +25,15 @@ function Login({ onLogin }) {
     try {
       // El backend devuelve { token, perfil } — lo pasamos completo a App.jsx
       const response = await api.post('/api/login', { email, contraseña })
-      onLogin(response.data)  // App.actualizarUsuario desempaqueta token y perfil
+      const data = response.data
+
+      // Si es un club con estado PENDIENTE, mostrar pantalla informativa de revisión
+      if (data?.perfil?.tipousuario === 'club' && data?.perfil?.estado === 'PENDIENTE') {
+        setClubPendienteData(data)
+        return
+      }
+
+      onLogin(data)  // App.actualizarUsuario desempaqueta token y perfil
       navigate('/')
 
     } catch (error) {
@@ -42,6 +51,49 @@ function Login({ onLogin }) {
         handleLogin()
       }
     }
+  }
+
+  if (clubPendienteData) {
+    return (
+      <div className="pagina">
+        <img src={logoSportlink} alt="Sportlink" className="logo" />
+        <div className="club-pendiente-card">
+          <div className="club-pendiente-icon-wrapper">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h2 className="club-pendiente-titulo">Cuenta en Proceso de Revisión</h2>
+          <p className="club-pendiente-texto">
+            Tu cuenta de club está en proceso de revisión por el equipo de SportLink. Te notificaremos una vez aprobada.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <button
+              type="button"
+              className="admin-btn admin-btn-primary"
+              style={{ justifyContent: 'center', padding: '12px' }}
+              onClick={() => {
+                onLogin(clubPendienteData)
+                navigate('/')
+              }}
+            >
+              Continuar al feed en modo lectura
+            </button>
+            <button
+              type="button"
+              className="admin-btn admin-btn-outline"
+              style={{ justifyContent: 'center', padding: '10px' }}
+              onClick={() => setClubPendienteData(null)}
+            >
+              Volver al inicio de sesión
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   return (

@@ -455,6 +455,23 @@ const Header = ({ usuario, onLogout }) => {
                       Ajustes
                     </button>
 
+                    {usuario.es_admin && (
+                      <button
+                        className="header-dropdown-link"
+                        onClick={() => ir('/admin')}
+                        type="button"
+                        style={{ color: '#2DEFF2', fontWeight: 600 }}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="dropdown-link-icon">
+                          <rect x="3" y="3" width="7" height="7" />
+                          <rect x="14" y="3" width="7" height="7" />
+                          <rect x="14" y="14" width="7" height="7" />
+                          <rect x="3" y="14" width="7" height="7" />
+                        </svg>
+                        Consola Admin
+                      </button>
+                    )}
+
                     <hr className="header-divider" />
 
                     <button
