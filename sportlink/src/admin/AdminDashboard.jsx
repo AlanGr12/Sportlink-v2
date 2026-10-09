@@ -141,7 +141,7 @@ export default function AdminDashboard() {
         <div className="admin-kpi-card">
           <div className="admin-kpi-top">
             <span className="admin-kpi-label">Pruebas Deportivas</span>
-            <div className="admin-kpi-icon-box" style={{ color: '#facc15' }}>
+            <div className="admin-kpi-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
@@ -160,7 +160,7 @@ export default function AdminDashboard() {
         <div className="admin-kpi-card">
           <div className="admin-kpi-top">
             <span className="admin-kpi-label">Entrenamientos</span>
-            <div className="admin-kpi-icon-box" style={{ color: '#34d399' }}>
+            <div className="admin-kpi-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
                 <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
@@ -185,15 +185,15 @@ export default function AdminDashboard() {
           <div className="admin-card-body">
             {/* Barras de distribución proporcionales */}
             <div style={{ display: 'flex', height: '14px', borderRadius: '7px', overflow: 'hidden', marginBottom: '24px', background: 'var(--adm-surface-alt)' }}>
-              <div style={{ width: `${pctJugadores}%`, background: '#38bdf8' }} title={`Atletas: ${pctJugadores}%`} />
-              <div style={{ width: `${pctEntrenadores}%`, background: '#a855f7' }} title={`Entrenadores: ${pctEntrenadores}%`} />
-              <div style={{ width: `${pctClubes}%`, background: '#eab308' }} title={`Clubes: ${pctClubes}%`} />
+              <div style={{ width: `${pctJugadores}%`, background: '#2DEFF2' }} title={`Atletas: ${pctJugadores}%`} />
+              <div style={{ width: `${pctEntrenadores}%`, background: '#38BDF8' }} title={`Entrenadores: ${pctEntrenadores}%`} />
+              <div style={{ width: `${pctClubes}%`, background: '#34D399' }} title={`Clubes: ${pctClubes}%`} />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#38bdf8' }} />
+                  <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#2DEFF2' }} />
                   <span style={{ fontSize: '13.5px', color: '#fff' }}>Atletas / Jugadores</span>
                 </div>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#a855f7' }} />
+                  <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#38BDF8' }} />
                   <span style={{ fontSize: '13.5px', color: '#fff' }}>Entrenadores Élite</span>
                 </div>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -215,7 +215,7 @@ export default function AdminDashboard() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#eab308' }} />
+                  <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#34D399' }} />
                   <span style={{ fontSize: '13.5px', color: '#fff' }}>Clubes Deportivos</span>
                 </div>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>

@@ -33,7 +33,11 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status
-    if (status === 401 || status === 403) {
+    // El login y los bloqueos de moderación de club (CLUB_PENDIENTE / CLUB_RECHAZADO)
+    // devuelven 403 como respuesta de negocio: no son una sesión vencida.
+    const esLogin = error.config?.url?.includes('/api/login') && error.config?.method === 'post'
+    const esBloqueoClub = String(error.response?.data?.codigo || '').startsWith('CLUB_')
+    if ((status === 401 || status === 403) && !esLogin && !esBloqueoClub) {
       console.warn(`[Sportlink] Sesión inválida o expirada (HTTP ${status}). Redirigiendo a /login...`)
       localStorage.removeItem('token')
       localStorage.removeItem('usuario')

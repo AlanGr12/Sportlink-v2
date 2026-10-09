@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import api from '../axiosConfig.js'
 import Avatar from '../components/Avatar.jsx'
+import MapaUbicacionDark from '../components/maps/MapaUbicacionDark.jsx'
 import { useAdminToast } from './AdminLayout.jsx'
 
 export default function AdminClubesAprobacion() {
@@ -9,6 +10,7 @@ export default function AdminClubesAprobacion() {
   const [cargando, setCargando] = useState(true)
   const [clubSeleccionado, setClubSeleccionado] = useState(null)
   const [accionandoId, setAccionandoId] = useState(null)
+  const [cargandoFicha, setCargandoFicha] = useState(false)
   const [conteoPendientes, setConteoPendientes] = useState(0)
   const { mostrarToast, actualizarPendientes } = useAdminToast()
 
@@ -33,6 +35,21 @@ export default function AdminClubesAprobacion() {
   useEffect(() => {
     cargarClubes(pestaña)
   }, [pestaña])
+
+  // Abre la ficha con los datos de la lista y la completa con el detalle (imágenes, etc.)
+  const abrirFicha = async (club) => {
+    setClubSeleccionado(club)
+    setCargandoFicha(true)
+    try {
+      const res = await api.get(`/api/admin/clubes/${club.idclub}`)
+      setClubSeleccionado(prev => (prev?.idclub === club.idclub ? { ...prev, ...res.data } : prev))
+    } catch (err) {
+      console.error('Error cargando ficha del club:', err)
+      mostrarToast('No se pudo cargar el detalle completo del club', 'error')
+    } finally {
+      setCargandoFicha(false)
+    }
+  }
 
   const handleCambiarEstado = async (idclub, nuevoEstado, nombre) => {
     setAccionandoId(idclub)
@@ -172,7 +189,7 @@ export default function AdminClubesAprobacion() {
                           <button
                             type="button"
                             className="admin-btn admin-btn-outline admin-btn-sm"
-                            onClick={() => setClubSeleccionado(club)}
+                            onClick={() => abrirFicha(club)}
                             title="Inspeccionar perfil y mapa"
                           >
                             👁️ Inspeccionar
@@ -259,40 +276,32 @@ export default function AdminClubesAprobacion() {
             </div>
 
             <div className="admin-modal-body">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                <div>
-                  <span style={{ fontSize: '11.5px', textTransform: 'uppercase', color: 'var(--adm-text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    Email Institucional
-                  </span>
-                  <div style={{ fontSize: '14px', color: '#fff', marginTop: '3px', fontFamily: 'monospace' }}>
-                    {clubSeleccionado.email || 'Sin correo asociado'}
-                  </div>
-                </div>
-
-                <div>
-                  <span style={{ fontSize: '11.5px', textTransform: 'uppercase', color: 'var(--adm-text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    Ubicación y Dirección
-                  </span>
-                  <div style={{ fontSize: '14px', color: '#fff', marginTop: '3px' }}>
-                    {clubSeleccionado.direccion || clubSeleccionado.ubicacion || 'Sin dirección declarada'}
-                  </div>
-                  {clubSeleccionado.latitud && clubSeleccionado.longitud && (
-                    <div style={{ fontSize: '12px', color: 'var(--adm-accent)', marginTop: '4px' }}>
-                      📍 Coordenadas: {clubSeleccionado.latitud}, {clubSeleccionado.longitud}
+              <div className="admin-ficha">
+                <div className="admin-ficha-grid">
+                  <div>
+                    <span className="admin-ficha-label">Email de registro</span>
+                    <div className="admin-ficha-value" style={{ fontFamily: 'monospace' }}>
+                      {clubSeleccionado.email || 'Sin correo asociado'}
                     </div>
-                  )}
+                  </div>
+                  <div>
+                    <span className="admin-ficha-label">Fecha de solicitud</span>
+                    <div className="admin-ficha-value">{formatearFecha(clubSeleccionado.createdat)}</div>
+                  </div>
+                  <div>
+                    <span className="admin-ficha-label">Estado actual</span>
+                    <span className={`admin-badge ${clubSeleccionado.estado?.toLowerCase() || 'pendiente'}`}>
+                      {clubSeleccionado.estado || 'PENDIENTE'}
+                    </span>
+                  </div>
                 </div>
 
                 <div>
-                  <span style={{ fontSize: '11.5px', textTransform: 'uppercase', color: 'var(--adm-text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    Deportes que gestiona
-                  </span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                  <span className="admin-ficha-label">Deportes que ofrece</span>
+                  <div className="admin-ficha-tags">
                     {clubSeleccionado.deportes && clubSeleccionado.deportes.length > 0 ? (
                       clubSeleccionado.deportes.map(dep => (
-                        <span key={dep} className="admin-badge admin-tag">
-                          {dep}
-                        </span>
+                        <span key={dep} className="admin-badge admin-tag">{dep}</span>
                       ))
                     ) : (
                       <span style={{ fontSize: '13px', color: 'var(--adm-text-secondary)' }}>Ninguno especificado</span>
@@ -301,21 +310,54 @@ export default function AdminClubesAprobacion() {
                 </div>
 
                 <div>
-                  <span style={{ fontSize: '11.5px', textTransform: 'uppercase', color: 'var(--adm-text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    Descripción Institucional
-                  </span>
-                  <p style={{ fontSize: '13.5px', color: 'var(--adm-text-secondary)', lineHeight: 1.6, margin: '6px 0 0', background: 'var(--adm-surface-alt)', padding: '12px', borderRadius: '8px' }}>
+                  <span className="admin-ficha-label">Zona y dirección</span>
+                  <div className="admin-ficha-value">
+                    {[clubSeleccionado.ubicacion, clubSeleccionado.direccion].filter(Boolean).join(' · ') || 'Sin dirección declarada'}
+                  </div>
+                  {clubSeleccionado.latitud && clubSeleccionado.longitud ? (
+                    <div className="admin-ficha-mapa">
+                      <MapaUbicacionDark
+                        latitud={clubSeleccionado.latitud}
+                        longitud={clubSeleccionado.longitud}
+                        direccion={clubSeleccionado.direccion || ''}
+                        zona={clubSeleccionado.ubicacion || ''}
+                        nombre={clubSeleccionado.nombre}
+                        tipo="club"
+                        height="220px"
+                        mostrarFooter={false}
+                      />
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '12.5px', color: 'var(--adm-text-muted)', marginTop: '6px' }}>
+                      El club no cargó coordenadas: no se puede validar la sede en el mapa.
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <span className="admin-ficha-label">Descripción institucional</span>
+                  <p className="admin-ficha-desc">
                     {clubSeleccionado.descripcion || 'El club no ha provisto una descripción adicional.'}
                   </p>
                 </div>
 
                 <div>
-                  <span style={{ fontSize: '11.5px', textTransform: 'uppercase', color: 'var(--adm-text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    Fecha de Registro
-                  </span>
-                  <div style={{ fontSize: '13px', color: 'var(--adm-text-secondary)', marginTop: '3px' }}>
-                    {formatearFecha(clubSeleccionado.createdat)}
-                  </div>
+                  <span className="admin-ficha-label">Imágenes de las instalaciones</span>
+                  {cargandoFicha && !clubSeleccionado.imagenes ? (
+                    <div style={{ fontSize: '13px', color: 'var(--adm-text-secondary)', marginTop: '6px' }}>Cargando imágenes...</div>
+                  ) : clubSeleccionado.imagenes && clubSeleccionado.imagenes.length > 0 ? (
+                    <div className="admin-ficha-galeria">
+                      {clubSeleccionado.imagenes.map((url, i) => (
+                        <a key={url + i} href={url} target="_blank" rel="noopener noreferrer">
+                          <img src={url} alt={`Instalación ${i + 1} de ${clubSeleccionado.nombre}`} loading="lazy" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '13px', color: 'var(--adm-text-secondary)', marginTop: '6px' }}>
+                      El club no cargó imágenes de sus instalaciones.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -331,17 +373,17 @@ export default function AdminClubesAprobacion() {
 
               <button
                 type="button"
-                className="admin-btn admin-btn-reject"
-                disabled={accionandoId === clubSeleccionado.idclub}
+                className="admin-btn admin-btn-reject-solid"
+                disabled={accionandoId === clubSeleccionado.idclub || clubSeleccionado.estado === 'RECHAZADO'}
                 onClick={() => handleCambiarEstado(clubSeleccionado.idclub, 'RECHAZADO', clubSeleccionado.nombre)}
               >
-                ✕ Rechazar Solicitud
+                ✕ Rechazar
               </button>
 
               <button
                 type="button"
                 className="admin-btn admin-btn-approve"
-                disabled={accionandoId === clubSeleccionado.idclub}
+                disabled={accionandoId === clubSeleccionado.idclub || clubSeleccionado.estado === 'APROBADO'}
                 onClick={() => handleCambiarEstado(clubSeleccionado.idclub, 'APROBADO', clubSeleccionado.nombre)}
               >
                 ✓ Aprobar Club

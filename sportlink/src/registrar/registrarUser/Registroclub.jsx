@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../../axiosConfig.js'
 import './Registroclub.css'
 import Header from "../../header/header.jsx"
@@ -35,7 +36,8 @@ const deportesDisponibles = [
   { id: 15, nombre: 'Golf' }
 ]
 
-function RegistroClub({ onRegistro }) {
+function RegistroClub() {
+  const navigate = useNavigate()
   const [form, setForm] = useState({
     email: '',
     contrasenia: '',
@@ -96,8 +98,9 @@ function RegistroClub({ onRegistro }) {
         formData.append('fotoperfil', fotoperfil)
       }
 
-      const response = await api.post('/api/clubes/registro', formData)
-      if (onRegistro) onRegistro(response.data)
+      await api.post('/api/clubes/registro', formData)
+      // El club queda PENDIENTE: no hay sesión hasta que el backoffice lo apruebe
+      navigate('/login', { state: { clubRegistrado: true } })
     } catch (error) {
       console.error(error)
       setErrorGlobal(error.response?.data?.error || 'Ocurrió un error al registrar el club. Intentá de nuevo.')

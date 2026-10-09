@@ -70,6 +70,7 @@ const MiPerfil = (props) => {
   const [perfil, setPerfil] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [errorMensaje, setErrorMensaje] = useState(null);
+  const [perfilNoDisponible, setPerfilNoDisponible] = useState(false);
 
   // Estados para Modal de Edición
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -191,6 +192,7 @@ const MiPerfil = (props) => {
       }
 
       setCargando(true);
+      setPerfilNoDisponible(false);
       try {
         const res = await api.get(`/api/login/perfil/${idUsuario}`);
         if (montado) {
@@ -221,7 +223,12 @@ const MiPerfil = (props) => {
         }
       } catch (err) {
         console.error(err);
-        if (montado) setErrorMensaje('No se pudo cargar el perfil.');
+        if (montado) {
+          const status = err.response?.status;
+          // 404/403: perfil inexistente o club aún no aprobado por moderación
+          if (status === 404 || status === 403) setPerfilNoDisponible(true);
+          else setErrorMensaje('No se pudo cargar el perfil.');
+        }
       } finally {
         if (montado) setCargando(false);
       }
@@ -460,6 +467,24 @@ const MiPerfil = (props) => {
             <div className="skeleton-avatar" />
             <div className="skeleton-line media" style={{ marginTop: '20px', width: '250px' }} />
             <div className="skeleton-line" style={{ width: '400px' }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (perfilNoDisponible) {
+    return (
+      <div className="miPerfil-root">
+        <div className="miPerfil-container">
+          <div className="miPerfil-no-disponible">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2DEFF2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <p>Este perfil no está disponible o se encuentra en proceso de validación.</p>
+            <button type="button" onClick={() => navigate('/')}>Volver al inicio</button>
           </div>
         </div>
       </div>
