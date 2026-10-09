@@ -88,6 +88,14 @@ const IcoCheck = () => (
   </svg>
 );
 
+const IcoInfo = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+  </svg>
+);
+
 function renderTipoIcono(tipo) {
   const t = (tipo || '').toUpperCase();
   if (t === 'CURSOS' || t === 'CURSO') return <IcoGraduationCap />;
@@ -309,6 +317,14 @@ const Header = ({ usuario, onLogout }) => {
     return () => clearInterval(intervalo);
   }, [estaLogueado, location.pathname]);
 
+const IcoInfo = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2DEFF2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+  </svg>
+);
+
   // Elementos del dropdown "Explorar" según rol
   const renderDropdownItems = () => {
     const ItemDropdown = ({ ruta, icono, titulo, desc }) => (
@@ -325,9 +341,19 @@ const Header = ({ usuario, onLogout }) => {
       </div>
     );
 
+    const itemSobreNosotros = (
+      <ItemDropdown
+        ruta="/info"
+        icono={<IcoInfo />}
+        titulo="Sobre nosotros"
+        desc="Conocé la plataforma, nuestra visión y el ecosistema deportivo."
+      />
+    );
+
     if (!estaLogueado) {
       return (
         <>
+          {itemSobreNosotros}
           <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Los jugadores pueden acceder a las pruebas publicadas por los clubes asociados." />
           <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Los jugadores pueden acceder a entrenamientos publicados por entrenadores." />
         </>
@@ -338,6 +364,7 @@ const Header = ({ usuario, onLogout }) => {
       case 'jugador':
         return (
           <>
+            {itemSobreNosotros}
             <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Postúlate a las convocatorias activas de los clubes oficiales." />
             <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Encuentra rutinas enfocadas en el alto rendimiento profesional." />
           </>
@@ -345,6 +372,7 @@ const Header = ({ usuario, onLogout }) => {
       case 'entrenador':
         return (
           <>
+            {itemSobreNosotros}
             <ItemDropdown ruta="/empleos" icono={<IconoEmpleos size={22} color="currentColor" />} titulo="Empleos" desc="Postúlate a vacantes técnicas de clubes y academias." />
             <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Gestiona u observa las convocatorias del mercado de pases." />
             <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Diseña y planifica sesiones tácticas avanzadas." />
@@ -353,13 +381,14 @@ const Header = ({ usuario, onLogout }) => {
       case 'club':
         return (
           <>
+            {itemSobreNosotros}
             <ItemDropdown ruta="/empleos" icono={<IconoEmpleos size={22} color="currentColor" />} titulo="Empleos" desc="Publica ofertas para reclutar staff técnico calificado." />
             <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Organiza pruebas para captar jóvenes promesas." />
             <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Supervisa los planes físicos y técnicos de tus planteles." />
           </>
         );
       default:
-        return null;
+        return itemSobreNosotros;
     }
   };
 

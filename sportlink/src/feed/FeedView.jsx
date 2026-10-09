@@ -4,13 +4,25 @@ import api from '../axiosConfig.js'
 import { PostCompleto } from './PostCard.jsx'
 import CrearPost from './CrearPost.jsx'
 import Avatar from '../components/Avatar.jsx'
+import { parsearFechaUTC } from '../utils/dateUtils.js'
 import './FeedView.css'
+
+function obtenerTimePost(p) {
+  const f = parsearFechaUTC(p.createdat || p.created_at || p.createdAt || p.fecha_creacion || p.fechacreacion)
+  return f ? f.getTime() : (Number(p.idpublicacion) || 0)
+}
+
+function ordenarPostsPorFecha(lista) {
+  if (!Array.isArray(lista)) return []
+  return [...lista].sort((a, b) => obtenerTimePost(b) - obtenerTimePost(a))
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VISTA PRINCIPAL: FeedView
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function FeedView({ usuario }) {
   const navigate = useNavigate()
+  const [tabActiva, setTabActiva] = useState('paraTi') // 'paraTi' | 'siguiendo'
   const [posts, setPosts] = useState([])
   const [page, setPage] = useState(1)
   const [totalPaginas, setTotalPaginas] = useState(1)
@@ -28,11 +40,37 @@ export default function FeedView({ usuario }) {
 
   const sentinelRef = useRef(null)
 
+  // Cargar lista de seguidos del usuario en sesión
+  useEffect(() => {
+    if (!usuario) return
+    const myId = usuario.idusuario || usuario.id
+    if (!myId) return
+
+    const fetchMisSeguidos = async () => {
+      try {
+        const { data } = await api.get(`/api/seguidores/${myId}`)
+        if (data && Array.isArray(data.seguidosLista)) {
+          setSeguidos(data.seguidosLista)
+        } else if (data && Array.isArray(data.lista)) {
+          setSeguidos(data.lista)
+        } else if (Array.isArray(data.seguidos)) {
+          setSeguidos(data.seguidos)
+        }
+      } catch {
+        if (Array.isArray(usuario?.seguidos)) {
+          setSeguidos(usuario.seguidos)
+        }
+      }
+    }
+
+    fetchMisSeguidos()
+  }, [usuario])
+
   const cargarPosts = useCallback(async (pagina = 1, reemplazar = false) => {
     if (pagina === 1) setLoading(true)
     else setLoadingMas(true)
     try {
-      const { data } = await api.get('/api/publicaciones', { params: { page: pagina, limit: 10 } })
+      const { data } = await api.get('/api/publicaciones', { params: { page: pagina, limit: 20 } })
       const nuevos = data.publicaciones || []
       setPosts(prev => reemplazar ? nuevos : [...prev, ...nuevos])
       setTotalPaginas(data.totalPaginas || 1)
@@ -52,19 +90,37 @@ export default function FeedView({ usuario }) {
     }
   }, [])
 
-  // Comprobar periódicamente si se subieron publicaciones nuevas
-  const topPostId = posts.length > 0 ? posts[0].idpublicacion : null;
-
+  // Comprobar periódicamente si se subieron publicaciones realmente nuevas
   useEffect(() => {
-    if (!topPostId) return;
+    if (posts.length === 0) return;
+
+    const existingIds = new Set(posts.map(p => Number(p.idpublicacion || p.id)));
+    const maxId = Math.max(...posts.map(p => Number(p.idpublicacion || p.id) || 0));
+    const maxTimestamp = Math.max(
+      0,
+      ...posts.map(p => {
+        const f = parsearFechaUTC(p.createdat || p.created_at || p.createdAt || p.fecha_creacion || p.fechacreacion);
+        return f ? f.getTime() : 0;
+      })
+    );
 
     const checkNuevas = async () => {
       try {
-        const { data } = await api.get('/api/publicaciones', { params: { page: 1, limit: 10 } });
+        const { data } = await api.get('/api/publicaciones', { params: { page: 1, limit: 20 } });
         const lista = data.publicaciones || [];
-        const masRecientes = lista.filter(p => Number(p.idpublicacion) > Number(topPostId));
-        if (masRecientes.length > 0) {
-          setNuevasPublicaciones(masRecientes);
+
+        const realmenteNuevos = lista.filter(p => {
+          const pId = Number(p.idpublicacion || p.id);
+          if (!pId || existingIds.has(pId)) return false;
+
+          const pTime = parsearFechaUTC(p.createdat || p.created_at || p.createdAt || p.fecha_creacion || p.fechacreacion)?.getTime() || 0;
+          return pId > maxId || (pTime > 0 && pTime > maxTimestamp);
+        });
+
+        if (realmenteNuevos.length > 0) {
+          setNuevasPublicaciones(realmenteNuevos);
+        } else {
+          setNuevasPublicaciones([]);
         }
       } catch (err) {
         // consulta silenciosa en segundo plano
@@ -73,13 +129,13 @@ export default function FeedView({ usuario }) {
 
     const timer = setInterval(checkNuevas, 15000);
     return () => clearInterval(timer);
-  }, [topPostId]);
+  }, [posts]);
 
   const handleCargarNuevasPublicaciones = () => {
     if (nuevasPublicaciones.length === 0) return;
     setPosts(prev => {
-      const existingIds = new Set(prev.map(p => p.idpublicacion));
-      const aAgregar = nuevasPublicaciones.filter(p => !existingIds.has(p.idpublicacion));
+      const existingIds = new Set(prev.map(p => Number(p.idpublicacion || p.id)));
+      const aAgregar = nuevasPublicaciones.filter(p => !existingIds.has(Number(p.idpublicacion || p.id)));
       return [...aAgregar, ...prev];
     });
     setNuevasPublicaciones([]);
@@ -139,6 +195,36 @@ export default function FeedView({ usuario }) {
         ? 'Club Deportivo'
         : usuario?.tipousuario || 'Miembro de SportLink'
 
+  // Set de IDs seguidos para filtrado rápido
+  const idsSeguidos = new Set()
+  if (Array.isArray(seguidos)) {
+    seguidos.forEach(s => {
+      if (typeof s === 'number' || typeof s === 'string') {
+        idsSeguidos.add(String(s))
+      } else if (s && typeof s === 'object') {
+        const id = s.idusuario || s.id || s.id_usuario || s.usuario_id || s.id_seguido || s.seguido_id
+        if (id) idsSeguidos.add(String(id))
+      }
+    })
+  }
+
+  const postsOrdenados = ordenarPostsPorFecha(posts)
+
+  const postsAmostrar = tabActiva === 'siguiendo'
+    ? postsOrdenados.filter(p => {
+        const autorId = String(
+          p.autor?.idusuario ||
+          p.autor?.id ||
+          p.autor?.id_usuario ||
+          p.idusuario ||
+          p.id_usuario ||
+          p.usuario_id ||
+          ''
+        )
+        return idsSeguidos.has(autorId)
+      })
+    : postsOrdenados
+
   return (
     <div className="feed-pagina">
       <div className="feed-layout">
@@ -190,6 +276,26 @@ export default function FeedView({ usuario }) {
 
         {/* ════ Columna Central: Publicar + Feed ════ */}
         <main className="feed-columna-principal">
+          {/* Header con Pestañas Para ti / Siguiendo */}
+          <div className="feed-header-tabs">
+            <button
+              type="button"
+              className={`feed-header-tab ${tabActiva === 'paraTi' ? 'active' : ''}`}
+              onClick={() => setTabActiva('paraTi')}
+            >
+              <span>Para ti</span>
+              {tabActiva === 'paraTi' && <div className="feed-tab-indicator" />}
+            </button>
+            <button
+              type="button"
+              className={`feed-header-tab ${tabActiva === 'siguiendo' ? 'active' : ''}`}
+              onClick={() => setTabActiva('siguiendo')}
+            >
+              <span>Siguiendo</span>
+              {tabActiva === 'siguiendo' && <div className="feed-tab-indicator" />}
+            </button>
+          </div>
+
           {usuario && (
             <CrearPost usuario={usuario} onPostCreado={handlePostCreado} />
           )}
@@ -208,17 +314,32 @@ export default function FeedView({ usuario }) {
             <div className="feed-spinner-wrapper">
               <div className="feed-spinner" />
             </div>
-          ) : posts.length === 0 ? (
+          ) : postsAmostrar.length === 0 ? (
             <div className="feed-vacio">
-              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#2DEFF2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-              <h3>El feed está vacío</h3>
-              <p>Sé el primero en publicar algo.</p>
+              {tabActiva === 'siguiendo' ? (
+                <>
+                  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#2DEFF2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  <h3>No hay publicaciones de tu red</h3>
+                  <p>Seguí a entrenadores, clubes y atletas para ver sus publicaciones acá.</p>
+                </>
+              ) : (
+                <>
+                  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#2DEFF2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <h3>El feed está vacío</h3>
+                  <p>Sé el primero en publicar algo.</p>
+                </>
+              )}
             </div>
           ) : (
             <>
-              {posts.map(post => (
+              {postsAmostrar.map(post => (
                 <PostCompleto
                   key={post.idpublicacion}
                   post={post}
@@ -235,7 +356,7 @@ export default function FeedView({ usuario }) {
                 </div>
               )}
 
-              {!hayMas && posts.length > 0 && (
+              {!hayMas && postsAmostrar.length > 0 && (
                 <div className="feed-fin">Ya viste todo</div>
               )}
             </>

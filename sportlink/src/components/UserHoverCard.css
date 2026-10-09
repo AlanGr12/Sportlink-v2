@@ -1,0 +1,107 @@
+/* ═══════════════════════════════════════════════════════════
+   USER HOVER CARD — Twitter / X Style Profile Popover
+   ═══════════════════════════════════════════════════════════ */
+
+.user-hover-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.user-hover-card {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 9999;
+  width: 290px;
+  background: #111214;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: user-hover-fade-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  color: #ffffff;
+  cursor: pointer;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+@keyframes user-hover-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.user-hover-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.user-hover-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.user-hover-name {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.user-hover-role-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.user-hover-subrole {
+  font-size: 12px;
+  color: #8e8e8e;
+  font-weight: 500;
+}
+
+.user-hover-bio {
+  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.78);
+  margin: 0 0 14px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.user-hover-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 13px;
+}
+
+.user-hover-stat strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.user-hover-stat-lbl {
+  color: #71767b;
+}

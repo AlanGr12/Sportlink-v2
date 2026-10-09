@@ -194,13 +194,6 @@ const InfoView = ({ usuario }) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const getBannerText = () => {
-    const map = { athlete: 'JUGADOR', coach: 'ENTRENADOR', club: 'CLUB STAFF' };
-    return expanded
-      ? `Vista detallada · ${map[expanded]}`
-      : 'Seleccioná tu rol para comenzar';
-  };
-
   const getPanelClass = (id) => {
     if (!expanded) return 'info-panel';
     if (id === expanded) return 'info-panel info-panel--expanded';
@@ -245,16 +238,6 @@ const InfoView = ({ usuario }) => {
 
       {/* ── HERO ── */}
       <section className="info-hero" id="roles">
-        {/* Context banner */}
-        <div className="info-hero-banner">
-          <span className="info-hero-banner-text">{getBannerText()}</span>
-          {expanded && (
-            <button className="info-hero-reset-btn" onClick={() => setExpanded(null)}>
-              <XIcon /> Ver los 3 roles
-            </button>
-          )}
-        </div>
-
         {/* Panels */}
         <div className="info-panels">
           {PANELS.map((panel) => (

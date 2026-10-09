@@ -5,27 +5,11 @@ import Avatar from '../components/Avatar.jsx'
 import { ModalImagen, ReferenciaBloque } from './PostCard.jsx'
 import Footer from '../footer/footer.jsx'
 import BotonSeguir from '../components/BotonSeguir.jsx'
+import { tiempoRelativo, fechaCompleta } from '../utils/dateUtils.js'
+import UserHoverCard from '../components/UserHoverCard.jsx'
 import './FeedView.css'
 
 // ─── helpers ────────────────────────────────────────────────
-function tiempoRelativo(fechaStr) {
-  if (!fechaStr) return ''
-  const diff = (Date.now() - new Date(fechaStr).getTime()) / 1000
-  if (diff < 60) return 'ahora'
-  if (diff < 3600) return `hace ${Math.floor(diff / 60)}m`
-  if (diff < 86400) return `hace ${Math.floor(diff / 3600)}h`
-  if (diff < 604800) return `hace ${Math.floor(diff / 86400)}d`
-  return new Date(fechaStr).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
-}
-
-function fechaCompleta(fechaStr) {
-  if (!fechaStr) return ''
-  const d = new Date(fechaStr)
-  const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-  const fecha = d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
-  return `${hora} · ${fecha}`
-}
-
 function RolBadge({ rol }) {
   if (!rol) return null
   return <span className={`post-rol-badge ${rol.toLowerCase()}`}>{rol}</span>
@@ -115,29 +99,33 @@ function RespuestaCard({ comentario, usuario, autorPost, onEliminar, esUltimo })
     <article className="post-card post-detalle-respuesta-card">
       {/* Columna avatar */}
       <div className="post-card-avatar-col">
-        <Avatar
-          src={comentario.autor?.fotoperfil}
-          nombre={comentario.autor?.nombre || '?'}
-          size={44}
-          onClick={() => comentario.autor?.idusuario && navigate(`/perfil/${comentario.autor.idusuario}`)}
-          style={{ cursor: 'pointer', flexShrink: 0 }}
-        />
+        <UserHoverCard autor={comentario.autor} usuario={usuario}>
+          <Avatar
+            src={comentario.autor?.fotoperfil}
+            nombre={comentario.autor?.nombre || '?'}
+            size={44}
+            onClick={() => comentario.autor?.idusuario && navigate(`/perfil/${comentario.autor.idusuario}`)}
+            style={{ cursor: 'pointer', flexShrink: 0 }}
+          />
+        </UserHoverCard>
         {!esUltimo && <div className="post-thread-line" />}
       </div>
 
       {/* Columna contenido */}
       <div className="post-card-body">
         <div className="post-card-header">
-          <div
-            className="post-card-autor"
-            onClick={() => comentario.autor?.idusuario && navigate(`/perfil/${comentario.autor.idusuario}`)}
-            style={{ cursor: 'pointer' }}
-          >
-            <div className="post-card-autor-info">
-              <span className="post-card-nombre">{comentario.autor?.nombre || 'Usuario'}</span>
-              <span className="post-card-tiempo">· {tiempoRelativo(comentario.createdat)}</span>
+          <UserHoverCard autor={comentario.autor} usuario={usuario}>
+            <div
+              className="post-card-autor"
+              onClick={() => comentario.autor?.idusuario && navigate(`/perfil/${comentario.autor.idusuario}`)}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="post-card-autor-info">
+                <span className="post-card-nombre">{comentario.autor?.nombre || 'Usuario'}</span>
+                <span className="post-card-tiempo">· {tiempoRelativo(comentario.createdat || comentario.created_at || comentario.createdAt || comentario.fechacreacion)}</span>
+              </div>
             </div>
-          </div>
+          </UserHoverCard>
 
           {esMio && (
             <div className="post-menu-wrapper" ref={menuRef}>
@@ -499,21 +487,23 @@ export default function PublicacionDetalle({ usuario }) {
                 <div className={`post-detalle-principal${postPadre ? ' post-detalle-principal--es-respuesta' : ''}`}>
                   {/* Avatar + Nombre + 3 puntos */}
                   <div className="post-detalle-autor-row">
-                    <div className="post-detalle-autor-info" onClick={() => post.autor?.idusuario && navigate(`/perfil/${post.autor.idusuario}`)}>
-                      <Avatar
-                        src={post.autor?.fotoperfil}
-                        nombre={post.autor?.nombre || '?'}
-                        size={48}
-                        style={{ cursor: 'pointer', flexShrink: 0 }}
-                      />
-                      <div className="post-detalle-autor-texto">
-                        <span className="post-detalle-autor-nombre">{post.autor?.nombre || 'Usuario'}</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                          {rolTraducido && <span className="post-card-subtitulo">{rolTraducido}</span>}
-                          <RolBadge rol={post.autor?.tipousuario} />
+                    <UserHoverCard autor={post.autor} usuario={usuario}>
+                      <div className="post-detalle-autor-info" onClick={() => post.autor?.idusuario && navigate(`/perfil/${post.autor.idusuario}`)}>
+                        <Avatar
+                          src={post.autor?.fotoperfil}
+                          nombre={post.autor?.nombre || '?'}
+                          size={48}
+                          style={{ cursor: 'pointer', flexShrink: 0 }}
+                        />
+                        <div className="post-detalle-autor-texto">
+                          <span className="post-detalle-autor-nombre">{post.autor?.nombre || 'Usuario'}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                            {rolTraducido && <span className="post-card-subtitulo">{rolTraducido}</span>}
+                            <RolBadge rol={post.autor?.tipousuario} />
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </UserHoverCard>
                     {!esMio && (
                       <BotonSeguir
                         idusuario={post.autor?.idusuario}
@@ -572,7 +562,7 @@ export default function PublicacionDetalle({ usuario }) {
                   )}
 
                   {/* Fecha completa */}
-                  <div className="post-detalle-fecha">{fechaCompleta(post.createdat)}</div>
+                  <div className="post-detalle-fecha">{fechaCompleta(post.createdat || post.created_at || post.createdAt || post.fecha_creacion)}</div>
 
                   {/* Barra de stats */}
                   {(likesCount > 0 || (post.totalComentarios || comentarios.length) > 0 || reposts > 0) && (

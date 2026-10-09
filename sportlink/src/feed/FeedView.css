@@ -310,21 +310,54 @@
   box-sizing: border-box;
 }
 
-/* Tabs header del feed */
-.feed-columna-principal::before {
-  content: 'Para ti';
-  display: block;
-  font-size: 17px;
-  font-weight: 700;
-  color: #ffffff;
-  padding: 16px 16px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  letter-spacing: -0.01em;
+/* Header de Pestañas (Para ti / Siguiendo) */
+.feed-header-tabs {
+  display: flex;
   position: sticky;
   top: 80px;
   background: rgba(10, 11, 12, 0.88);
   backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   z-index: 10;
+  width: 100%;
+}
+
+.feed-header-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6e6e6e;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.feed-header-tab:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+}
+
+.feed-header-tab.active {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.feed-tab-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 4px;
+  width: 56px;
+  background: #2deff2;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(45, 239, 242, 0.5);
 }
 
 /* ── Crear Post — Composición estilo Twitter ──────────── */
@@ -384,10 +417,10 @@
   font-family: inherit;
   font-size: 19px;
   color: #ffffff;
-  line-height: 1.5;
-  min-height: 64px;
+  line-height: 1.4;
+  min-height: 30px;
   max-height: 220px;
-  overflow-y: auto;
+  overflow-y: hidden;
   box-sizing: border-box;
 }
 

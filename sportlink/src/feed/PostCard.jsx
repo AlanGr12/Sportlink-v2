@@ -6,18 +6,10 @@ import api from '../axiosConfig.js'
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx'
 import ModalComentarPost from './ModalComentarPost.jsx'
 import { TarjetaEvento } from '../components/EventoAdjunto.jsx'
+import { tiempoRelativo } from '../utils/dateUtils.js'
+import UserHoverCard from '../components/UserHoverCard.jsx'
 
 // ─── helpers ───────────────────────────────────────────────
-function tiempoRelativo(fechaStr) {
-  if (!fechaStr) return ''
-  const diff = (Date.now() - new Date(fechaStr).getTime()) / 1000
-  if (diff < 60)     return 'ahora'
-  if (diff < 3600)   return `hace ${Math.floor(diff / 60)}m`
-  if (diff < 86400)  return `hace ${Math.floor(diff / 3600)}h`
-  if (diff < 604800) return `hace ${Math.floor(diff / 86400)}d`
-  return new Date(fechaStr).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
-}
-
 function RolBadge({ rol }) {
   if (!rol) return null
   return <span className={`post-rol-badge ${rol.toLowerCase()}`}>{rol}</span>
@@ -115,24 +107,26 @@ export function PostCard({ post, usuario, onImagenClick, onEliminar }) {
 
   return (
     <div className="post-card-header">
-      {/* Autor info inline */}
-      <div
-        className="post-card-autor"
-        onClick={(e) => {
-          e.stopPropagation()
-          if (post.autor?.idusuario) {
-            navigate(`/perfil/${post.autor.idusuario}`)
-          }
-        }}
-        style={{ cursor: post.autor?.idusuario ? 'pointer' : 'default' }}
-      >
-        <div className="post-card-autor-info">
-          <span className="post-card-nombre">{post.autor?.nombre || 'Usuario'}</span>
-          {rolTraducido && <span className="post-card-subtitulo">· {rolTraducido}</span>}
-          <RolBadge rol={post.autor?.tipousuario} />
-          <TipoChip tipo={post.tipopublicacion} />
-          <span className="post-card-tiempo">· {tiempoRelativo(post.createdat)}</span>
-        </div>
+      {/* Autor info inline con HoverCard */}
+      <div className="post-card-autor">
+        <UserHoverCard autor={post.autor} usuario={usuario}>
+          <div
+            className="post-card-autor-info"
+            onClick={(e) => {
+              e.stopPropagation()
+              if (post.autor?.idusuario) {
+                navigate(`/perfil/${post.autor.idusuario}`)
+              }
+            }}
+            style={{ cursor: post.autor?.idusuario ? 'pointer' : 'default' }}
+          >
+            <span className="post-card-nombre">{post.autor?.nombre || 'Usuario'}</span>
+            {rolTraducido && <span className="post-card-subtitulo">· {rolTraducido}</span>}
+            <RolBadge rol={post.autor?.tipousuario} />
+            <TipoChip tipo={post.tipopublicacion} />
+            <span className="post-card-tiempo">· {tiempoRelativo(post.createdat || post.created_at || post.createdAt || post.fecha_creacion)}</span>
+          </div>
+        </UserHoverCard>
       </div>
 
       {/* Menú 3 puntos (dueño o administrador) */}
@@ -222,16 +216,18 @@ export function PostCompleto({ post, usuario, onEliminar, showThreadLine = false
     >
       {/* Columna avatar */}
       <div className="post-card-avatar-col">
-        <Avatar
-          src={post.autor?.fotoperfil}
-          nombre={post.autor?.nombre || '?'}
-          size={44}
-          onClick={(e) => {
-            e && e.stopPropagation()
-            post.autor?.idusuario && navigate(`/perfil/${post.autor.idusuario}`)
-          }}
-          style={{ cursor: post.autor?.idusuario ? 'pointer' : 'default', flexShrink: 0 }}
-        />
+        <UserHoverCard autor={post.autor} usuario={usuario}>
+          <Avatar
+            src={post.autor?.fotoperfil}
+            nombre={post.autor?.nombre || '?'}
+            size={44}
+            onClick={(e) => {
+              e && e.stopPropagation()
+              post.autor?.idusuario && navigate(`/perfil/${post.autor.idusuario}`)
+            }}
+            style={{ cursor: post.autor?.idusuario ? 'pointer' : 'default', flexShrink: 0 }}
+          />
+        </UserHoverCard>
         {/* Thread line: aparece si hay comentarios abiertos debajo */}
         {(showThreadLine || tieneComentariosAbiertos) && (
           <div className="post-thread-line" />

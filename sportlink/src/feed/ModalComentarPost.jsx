@@ -3,16 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import Avatar from '../components/Avatar.jsx'
 import api from '../axiosConfig.js'
-
-function tiempoRelativo(fechaStr) {
-  if (!fechaStr) return ''
-  const diff = (Date.now() - new Date(fechaStr).getTime()) / 1000
-  if (diff < 60) return 'ahora'
-  if (diff < 3600) return `hace ${Math.floor(diff / 60)}m`
-  if (diff < 86400) return `hace ${Math.floor(diff / 3600)}h`
-  if (diff < 604800) return `hace ${Math.floor(diff / 86400)}d`
-  return new Date(fechaStr).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
-}
+import { tiempoRelativo } from '../utils/dateUtils.js'
 
 // ─── Íconos SVG estilo Twitter/X ───────────────────────────
 const IcoClose = () => (
@@ -156,7 +147,7 @@ export default function ModalComentarPost({ post, usuario, onClose, onComentario
                 {post.autor?.tipousuario && (
                   <span className={`post-rol-badge ${post.autor.tipousuario.toLowerCase()}`}>{post.autor.tipousuario}</span>
                 )}
-                <span className="reply-modal-time">· {tiempoRelativo(post.createdat)}</span>
+                <span className="reply-modal-time">· {tiempoRelativo(post.createdat || post.created_at || post.createdAt || post.fecha_creacion)}</span>
               </div>
 
               {post.contenido && (

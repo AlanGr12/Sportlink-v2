@@ -1,7 +1,7 @@
 /**
- * Utilidades para parsear y formatear fechas asegurando la zona horaria local.
- * Esto evita el problema donde strings 'YYYY-MM-DD' o 'YYYY-MM-DDT00:00:00.000Z'
- * se parsean como UTC y al mostrarse en zonas horarias negativas retroceden un día.
+ * Utilidades para parsear y formatear fechas asegurando la zona horaria local y UTC.
+ * Esto evita el problema donde strings 'YYYY-MM-DD' o 'YYYY-MM-DDT00:00:00.000'
+ * se parsean con desfasaje UTC o local erróneo.
  */
 
 /**
@@ -11,11 +11,8 @@
  */
 export function parsearFechaLocal(fechaStr) {
   if (!fechaStr) return null;
-  // Extraemos únicamente la porción YYYY-MM-DD
   const datePart = fechaStr.includes('T') ? fechaStr.split('T')[0] : fechaStr;
   const [year, month, day] = datePart.split('-').map(Number);
-  
-  // new Date(year, monthIndex, day) fuerza la zona horaria local del navegador
   return new Date(year, month - 1, day);
 }
 
@@ -46,9 +43,6 @@ export function obtenerFechaHoyLocal() {
 
 /**
  * Determina si una fecha (y opcionalmente hora de fin) ya pasó respecto al momento actual.
- * @param {string} fechaStr Fecha del evento (YYYY-MM-DD o ISO)
- * @param {string|null} horaFinStr Opcional: hora de finalización (HH:MM o HH:MM:SS)
- * @returns {boolean} True si ya pasó, false si sigue vigente o futura
  */
 export function haPasadoFecha(fechaStr, horaFinStr = null) {
   if (!fechaStr) return false;
@@ -58,7 +52,6 @@ export function haPasadoFecha(fechaStr, horaFinStr = null) {
   if (fechaLimpia < hoyStr) return true;
   if (fechaLimpia > hoyStr) return false;
 
-  // Si la fecha es hoy y tiene hora de fin, verificar si la hora ya terminó
   if (horaFinStr) {
     const d = new Date();
     const horaActual = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -69,4 +62,72 @@ export function haPasadoFecha(fechaStr, horaFinStr = null) {
   }
 
   return false;
+}
+
+/**
+ * Convierte cualquier timestamp de DB/backend (ISO, SQL timestamp sin Z, etc)
+ * asegurando la interpretación UTC correcta.
+ */
+export function parsearFechaUTC(fechaInput) {
+  if (!fechaInput) return null;
+  if (fechaInput instanceof Date) return isNaN(fechaInput.getTime()) ? null : fechaInput;
+  if (typeof fechaInput === 'number') return new Date(fechaInput);
+
+  let str = String(fechaInput).trim();
+  if (!str) return null;
+
+  // Si tiene formato SQL "YYYY-MM-DD HH:MM:SS", reemplazar espacio por T
+  if (/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}/.test(str)) {
+    str = str.replace(' ', 'T');
+  }
+
+  // Si no especifica zona horaria (sin 'Z' y sin offset '+00:00' o '-03:00'), asumimos UTC
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(str) && !str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
+    str += 'Z';
+  }
+
+  const d = new Date(str);
+  if (isNaN(d.getTime())) {
+    const fallback = new Date(fechaInput);
+    return isNaN(fallback.getTime()) ? null : fallback;
+  }
+  return d;
+}
+
+/**
+ * Retorna el tiempo relativo formateado (ej: "ahora", "hace 5m", "hace 2h", "hace 3d").
+ */
+export function tiempoRelativo(fechaInput) {
+  const d = parsearFechaUTC(fechaInput);
+  if (!d) return '';
+
+  const ahora = Date.now();
+  const timestamp = d.getTime();
+  let diff = (ahora - timestamp) / 1000; // diferencia en segundos
+
+  // Si diff es negativo (desfasaje de reloj servidor/cliente o segundos)
+  if (diff < 0) {
+    if (diff > -180) { // Tolerancia de 3 minutos por desfasaje
+      diff = 0;
+    } else {
+      return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+    }
+  }
+
+  if (diff < 60) return 'ahora';
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)}m`;
+  if (diff < 86400) return `hace ${Math.floor(diff / 3600)}h`;
+  if (diff < 604800) return `hace ${Math.floor(diff / 86400)}d`;
+  return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+}
+
+/**
+ * Formatea la fecha y hora completa en español (ej: "14:35 · 9 oct 2026").
+ */
+export function fechaCompleta(fechaInput) {
+  const d = parsearFechaUTC(fechaInput);
+  if (!d) return '';
+  const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  const fecha = d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+  return `${hora} · ${fecha}`;
 }

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Avatar from '../components/Avatar.jsx'
 import api from '../axiosConfig.js'
 import { SelectorEventos, TarjetaEvento } from '../components/EventoAdjunto.jsx'
@@ -53,6 +53,19 @@ export default function CrearPost({ usuario, onPostCreado }) {
   const puedePublicar = (contenido.trim() || evento) && !publicando
   const MAX_CHARS = 1000
 
+  const textareaRef = useRef(null)
+
+  const ajustarAltura = useCallback(() => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 220)}px`
+  }, [])
+
+  useEffect(() => {
+    ajustarAltura()
+  }, [contenido, expandido, ajustarAltura])
+
   const handleImagenChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -90,6 +103,7 @@ export default function CrearPost({ usuario, onPostCreado }) {
       setEvento(null)
       quitarImagen()
       setExpandido(false)
+      if (textareaRef.current) textareaRef.current.style.height = 'auto'
       onPostCreado(data)
     } catch (err) {
       console.error('Error al publicar:', err)
@@ -112,22 +126,20 @@ export default function CrearPost({ usuario, onPostCreado }) {
     <div className="crear-post-card">
       <div className="crear-post-fila-superior">
         <Avatar src={usuario?.fotoperfil} nombre={nombre} size={44} />
-        <div className="crear-post-textarea-wrapper" onClick={() => setExpandido(true)}>
-          {!expandido && !contenido && !imagenPreview && !evento ? (
-            <div className="crear-post-input-fake">
-              Comparte tus últimas estadísticas o novedades...
-            </div>
-          ) : (
-            <textarea
-              className="crear-post-textarea"
-              placeholder="Comparte tus últimas estadísticas o novedades..."
-              value={contenido}
-              onChange={(e) => setContenido(e.target.value.slice(0, MAX_CHARS))}
-              onKeyDown={handleKeyDown}
-              rows={expandido ? 3 : 2}
-              autoFocus={expandido}
-            />
-          )}
+        <div className="crear-post-textarea-wrapper">
+          <textarea
+            ref={textareaRef}
+            className="crear-post-textarea"
+            placeholder="Comparte tus últimas estadísticas o novedades..."
+            value={contenido}
+            onChange={(e) => {
+              setContenido(e.target.value.slice(0, MAX_CHARS))
+              ajustarAltura()
+            }}
+            onFocus={() => setExpandido(true)}
+            onKeyDown={handleKeyDown}
+            rows={1}
+          />
 
           {imagenPreview && (
             <div className="crear-post-imagen-preview">
