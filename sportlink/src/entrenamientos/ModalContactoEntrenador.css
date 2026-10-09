@@ -1,0 +1,164 @@
+.contacto-ent-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+}
+
+.contacto-ent-card {
+  position: relative;
+  background: #1a1d1e;
+  border: 1px solid #2d3032;
+  border-radius: 12px;
+  padding: 32px;
+  width: 90%;
+  max-width: 460px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-family: inherit;
+}
+
+.contacto-ent-cerrar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: #8b949e;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.contacto-ent-cabecera {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.contacto-ent-cabecera h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin: 10px 0 6px;
+  letter-spacing: 0;
+}
+
+.contacto-ent-cabecera p {
+  font-size: 13px;
+  color: #8b949e;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.contacto-ent-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 14px 16px;
+  resize: vertical;
+  min-height: 110px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.contacto-ent-textarea::placeholder {
+  color: #8b949e;
+}
+
+.contacto-ent-textarea:focus {
+  border-color: #2deff2;
+  box-shadow: 0 0 0 3px rgba(45, 239, 242, 0.12);
+}
+
+.contacto-ent-contador {
+  text-align: right;
+  font-size: 11px;
+  color: #8b949e;
+  margin: 4px 2px 16px;
+}
+
+.contacto-ent-error {
+  color: #ef4444;
+  font-size: 12.5px;
+  margin-bottom: 12px;
+}
+
+.contacto-ent-acciones {
+  display: flex;
+  gap: 10px;
+}
+
+.contacto-ent-btn-cancelar,
+.contacto-ent-btn-enviar {
+  padding: 11px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.contacto-ent-btn-cancelar {
+  flex: 1;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #8b949e;
+  font-weight: 600;
+}
+
+.contacto-ent-btn-enviar {
+  flex: 2;
+  background: #2deff2;
+  border: none;
+  color: #000;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.contacto-ent-btn-cancelar:disabled,
+.contacto-ent-btn-enviar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Botón "Enviar mensaje" dentro del detalle del entrenamiento */
+.btn-mensaje-entrenador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 9px 16px;
+  background: transparent;
+  border: 1px solid #2deff2;
+  border-radius: 8px;
+  color: #2deff2;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-mensaje-entrenador:hover {
+  background: rgba(45, 239, 242, 0.1);
+}
