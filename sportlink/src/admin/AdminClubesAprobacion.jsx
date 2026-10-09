@@ -192,7 +192,7 @@ export default function AdminClubesAprobacion() {
                             onClick={() => abrirFicha(club)}
                             title="Inspeccionar perfil y mapa"
                           >
-                            👁️ Inspeccionar
+                            Ver datos
                           </button>
 
                           {pestaña === 'PENDIENTE' && (
