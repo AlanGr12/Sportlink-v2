@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../axiosConfig.js";
 import CustomSelect from "../components/CustomSelect.jsx";
 import InputDireccionOSM from "../components/maps/InputDireccionOSM.jsx";
@@ -31,7 +31,10 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
   const idclubResuelto = Number(idclub);
 
   // ── Campos del formulario ─────────────────────────────────────────────────
-  const [iddeporte,    setIddeporte]    = useState(deportesDisponibles[0].id);
+  const [iddeporte,    setIddeporte]    = useState("");
+  // Solo se pueden crear pruebas de los deportes que el club seleccionó en su perfil
+  const [deportesClub, setDeportesClub] = useState([]);
+  const [deportesCargados, setDeportesCargados] = useState(false);
   const [cupo,         setCupo]         = useState("");
   const [horainicio,   setHorainicio]   = useState("");
   const [horafin,      setHorafin]      = useState("");
@@ -52,9 +55,29 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
   const [loading,  setLoading]  = useState(false);
   const [errorApi, setErrorApi] = useState("");
 
+  useEffect(() => {
+    if (!idclubResuelto) return;
+    let cancelado = false;
+    api.get(`/api/clubes/${idclubResuelto}`)
+      .then((res) => {
+        if (cancelado) return;
+        const ids = (res.data?.deportes || []).map((d) => Number(d.iddeporte));
+        const propios = deportesDisponibles.filter((d) => ids.includes(d.id));
+        setDeportesClub(propios);
+        if (propios.length > 0) setIddeporte(propios[0].id);
+        setDeportesCargados(true);
+      })
+      .catch((err) => console.error("FormularioPrueba: no se pudieron cargar los deportes del club:", err));
+    return () => { cancelado = true; };
+  }, [idclubResuelto]);
+
   // ── Validación ────────────────────────────────────────────────────────────
   const validar = () => {
     const e = {};
+
+    if (deportesCargados && deportesClub.length === 0) {
+      e.iddeporte = "Tu club no tiene deportes seleccionados. Agregalos en tu perfil para crear pruebas.";
+    }
 
     // ── Validar que el id del club sea un entero positivo ─────────────────
     if (!idclubResuelto || idclubResuelto <= 0) {
@@ -151,7 +174,7 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
       onGuardado(); // Notifica al padre para cerrar modal y recargar lista
     } catch (err) {
       console.error("FormularioPrueba: error al crear prueba:", err);
-      setErrorApi(err.message || "Ocurrió un error al crear la prueba.");
+      setErrorApi(err.response?.data?.error || err.message || "Ocurrió un error al crear la prueba.");
     } finally {
       setLoading(false);
     }
@@ -180,7 +203,7 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
           <CustomSelect
             value={iddeporte}
             onChange={(e) => setIddeporte(Number(e.target.value))}
-            options={deportesDisponibles.map((d) => ({ value: d.id, label: d.nombre }))}
+            options={deportesClub.map((d) => ({ value: d.id, label: d.nombre }))}
           />
         </div>
 
