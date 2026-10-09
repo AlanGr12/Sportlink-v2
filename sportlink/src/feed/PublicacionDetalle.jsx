@@ -508,10 +508,10 @@ export default function PublicacionDetalle({ usuario }) {
                       />
                       <div className="post-detalle-autor-texto">
                         <span className="post-detalle-autor-nombre">{post.autor?.nombre || 'Usuario'}</span>
-                        <span className="post-detalle-autor-sub">
-                          {rolTraducido || post.autor?.tipousuario}
-                          {post.autor?.tipousuario && <RolBadge rol={post.autor.tipousuario} />}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                          {rolTraducido && <span className="post-card-subtitulo">{rolTraducido}</span>}
+                          <RolBadge rol={post.autor?.tipousuario} />
+                        </div>
                       </div>
                     </div>
                     {!esMio && (

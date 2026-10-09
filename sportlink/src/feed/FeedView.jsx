@@ -17,6 +17,7 @@ export default function FeedView({ usuario }) {
   const [loading, setLoading] = useState(true)
   const [loadingMas, setLoadingMas] = useState(false)
   const [hayMas, setHayMas] = useState(true)
+  const [nuevasPublicaciones, setNuevasPublicaciones] = useState([])
 
   // Stats
   const [stats, setStats] = useState({ totalPosts: 0, totalLikes: 0, totalComentarios: 0 })
@@ -50,6 +51,39 @@ export default function FeedView({ usuario }) {
       setLoadingMas(false)
     }
   }, [])
+
+  // Comprobar periódicamente si se subieron publicaciones nuevas
+  const topPostId = posts.length > 0 ? posts[0].idpublicacion : null;
+
+  useEffect(() => {
+    if (!topPostId) return;
+
+    const checkNuevas = async () => {
+      try {
+        const { data } = await api.get('/api/publicaciones', { params: { page: 1, limit: 10 } });
+        const lista = data.publicaciones || [];
+        const masRecientes = lista.filter(p => Number(p.idpublicacion) > Number(topPostId));
+        if (masRecientes.length > 0) {
+          setNuevasPublicaciones(masRecientes);
+        }
+      } catch (err) {
+        // consulta silenciosa en segundo plano
+      }
+    };
+
+    const timer = setInterval(checkNuevas, 15000);
+    return () => clearInterval(timer);
+  }, [topPostId]);
+
+  const handleCargarNuevasPublicaciones = () => {
+    if (nuevasPublicaciones.length === 0) return;
+    setPosts(prev => {
+      const existingIds = new Set(prev.map(p => p.idpublicacion));
+      const aAgregar = nuevasPublicaciones.filter(p => !existingIds.has(p.idpublicacion));
+      return [...aAgregar, ...prev];
+    });
+    setNuevasPublicaciones([]);
+  };
 
   // Recomendaciones: perfiles al azar que comparten deporte con el usuario
   useEffect(() => {
@@ -88,6 +122,7 @@ export default function FeedView({ usuario }) {
   const handlePostCreado = (nuevoPost) => {
     setPosts(prev => [nuevoPost, ...prev])
     setStats(prev => ({ ...prev, totalPosts: prev.totalPosts + 1 }))
+    setNuevasPublicaciones(prev => prev.filter(p => p.idpublicacion !== nuevoPost.idpublicacion))
   }
 
   const handleEliminarPost = (idpublicacion) => {
@@ -157,6 +192,16 @@ export default function FeedView({ usuario }) {
         <main className="feed-columna-principal">
           {usuario && (
             <CrearPost usuario={usuario} onPostCreado={handlePostCreado} />
+          )}
+
+          {nuevasPublicaciones.length > 0 && (
+            <button
+              type="button"
+              className="feed-nuevas-banner"
+              onClick={handleCargarNuevasPublicaciones}
+            >
+              Mostrar {nuevasPublicaciones.length} {nuevasPublicaciones.length === 1 ? 'nueva' : 'nuevas'}.
+            </button>
           )}
 
           {loading ? (

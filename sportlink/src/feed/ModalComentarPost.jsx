@@ -154,7 +154,7 @@ export default function ModalComentarPost({ post, usuario, onClose, onComentario
               <div className="reply-modal-author-header">
                 <span className="reply-modal-author-name">{autorNombre}</span>
                 {post.autor?.tipousuario && (
-                  <span className="reply-modal-author-role">· {post.autor.tipousuario}</span>
+                  <span className={`post-rol-badge ${post.autor.tipousuario.toLowerCase()}`}>{post.autor.tipousuario}</span>
                 )}
                 <span className="reply-modal-time">· {tiempoRelativo(post.createdat)}</span>
               </div>

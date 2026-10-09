@@ -6,7 +6,8 @@ import ChatbotButton from './components/ChatbotButton.jsx'
 
 import Login from './log in/Login.jsx'
 import RegistroFlow from './RegistroFlow.jsx'
-import Landing from './landing/landing.jsx'
+import LandingOld from './landing/landingOld.jsx'
+import InfoView from './info/InfoView.jsx'
 import MiPerfil from './mi perfil/miperfil.jsx'
 import EntrenadoresView from './mostrarEntrenadores/entrenadores.jsx'
 import JugadoresView from './mostrarJugadores/jugadores.jsx'
@@ -278,14 +279,15 @@ function App() {
             <Route path="publicaciones" element={<AdminPublicaciones />} />
           </Route>
 
-          {/* ── Inicio: Landing si no hay sesión, Feed si ya está logueado ── */}
+          {/* ── Inicio: InfoView si no hay sesión, Feed si ya está logueado ── */}
           <Route
             path="/"
             element={
-              usuario ? <FeedView usuario={usuario} /> : <Landing usuario={usuario} />
+              usuario ? <FeedView usuario={usuario} /> : <InfoView usuario={usuario} />
             }
           />
-          <Route path="/landing" element={<Landing usuario={usuario} />} />
+          <Route path="/info" element={<InfoView usuario={usuario} />} />
+          <Route path="/landing-old" element={<LandingOld usuario={usuario} />} />
 
           <Route
             path="/login"
