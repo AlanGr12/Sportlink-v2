@@ -14,8 +14,6 @@ import './TarjetaEntrenamiento.css';
 
 const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar, usuarioActual }) => {
 
-  console.log("Imagen entrenamiento:", entrenamiento.imagen);
-
   // URL base del bucket de entrenamientos en Supabase Storage
   const SUPABASE_STORAGE_BASE =
     'https://cczzvdaraenyqyujbsup.supabase.co/storage/v1/object/public/fotoEntrenamientos';
@@ -86,6 +84,12 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
 
   const esAdmin = usuarioActual?.es_admin === true;
 
+  const deporteNombre = entrenamiento.deportes?.deporte || entrenamiento.tipo || '';
+  const nombreCreador = [entrenamiento.entrenadores?.nombre, entrenamiento.entrenadores?.apellido]
+    .filter(Boolean)
+    .join(' ')
+    .toUpperCase();
+
   return (
     <div className="tarjeta-entrenamiento">
 
@@ -102,18 +106,19 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
 
         <div className="card-imagen-overlay" aria-hidden="true" />
 
-        <h3 className="tarjeta-nombre-entrenador">
-          {entrenamiento.entrenadores?.nombre}
-        </h3>
       </div>
 
       {/* Información */}
       <div className="card-prueba-info">
         <h2>
-          {entrenamiento.tipo
-            ? entrenamiento.tipo.toUpperCase()
+          {deporteNombre
+            ? `ENTRENAMIENTO DE ${deporteNombre.toUpperCase()}`
             : 'ENTRENAMIENTO'}
         </h2>
+
+        {nombreCreador && (
+          <p className="tarjeta-creado-por">CREADO POR {nombreCreador}</p>
+        )}
 
         <div className="card-prueba-detalles-lista">
 

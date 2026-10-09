@@ -240,3 +240,13 @@
   background: rgba(255, 77, 79, 0.12);
   color: #ff4d4f;
 }
+
+/* "CREADO POR ..." bajo el título de la tarjeta */
+.tarjeta-entrenamiento .tarjeta-creado-por {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #fff;
+  text-transform: uppercase;
+}

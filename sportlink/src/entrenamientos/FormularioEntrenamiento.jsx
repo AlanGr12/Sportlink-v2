@@ -3,6 +3,7 @@ import './FormularioEntrenamiento.css';
 import CustomSelect from '../components/CustomSelect.jsx';
 import InputDireccionOSM from '../components/maps/InputDireccionOSM.jsx';
 import { obtenerFechaHoyLocal } from '../utils/dateUtils.js';
+import api from '../axiosConfig.js';
 
 const deportesDisponibles = [
   { id: 1, nombre: 'Fútbol' },
@@ -37,7 +38,9 @@ const FormularioEntrenamiento = ({
   const [direccion, setDireccion] = useState('');
   const [latitud, setLatitud] = useState(null);
   const [longitud, setLongitud] = useState(null);
-  const [iddeporte, setIddeporte] = useState(deportesDisponibles[0].id);
+  const [iddeporte, setIddeporte] = useState('');
+  // Solo se pueden crear entrenamientos de los deportes que el entrenador seleccionó en su perfil
+  const [idsDeportesEntrenador, setIdsDeportesEntrenador] = useState(null);
   const [precio, setPrecio] = useState(0);
   const [cantidad, setCantidad] = useState(1);
   const [genero, setGenero] = useState('Mixto');
@@ -53,6 +56,22 @@ const FormularioEntrenamiento = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const idEntrenador = usuarioActual?.identrenador;
+    if (!idEntrenador) return;
+    let cancelado = false;
+    api.get(`/api/entrenadores/${idEntrenador}`)
+      .then((res) => {
+        if (cancelado) return;
+        const ids = (res.data?.deportes || []).map((d) => Number(d.iddeporte));
+        setIdsDeportesEntrenador(ids);
+        // Si el deporte seleccionado por defecto no es suyo, arrancar con el primero propio
+        setIddeporte((actual) => (!entrenamiento && ids.length && !ids.includes(Number(actual)) ? ids[0] : actual));
+      })
+      .catch((err) => console.error('No se pudieron cargar los deportes del entrenador:', err));
+    return () => { cancelado = true; };
+  }, [usuarioActual?.identrenador]);
+
+  useEffect(() => {
     if (entrenamiento) {
       setTitulo(entrenamiento.titulo || '');
       setDescripcion(entrenamiento.descripcion || '');
@@ -63,7 +82,7 @@ const FormularioEntrenamiento = ({
       setDireccion(entrenamiento.direccion || '');
       setLatitud(entrenamiento.latitud ?? null);
       setLongitud(entrenamiento.longitud ?? null);
-      setIddeporte(entrenamiento.iddeporte || entrenamiento.deporte?.iddeporte || deportesDisponibles[0].id);
+      setIddeporte(entrenamiento.iddeporte || entrenamiento.deporte?.iddeporte || '');
       setPrecio(entrenamiento.precio ?? 0);
       setCantidad(entrenamiento.cantidad ?? 1);
       setGenero(entrenamiento.genero || 'Mixto');
@@ -84,7 +103,7 @@ const FormularioEntrenamiento = ({
       setDireccion('');
       setLatitud(null);
       setLongitud(null);
-      setIddeporte(deportesDisponibles[0].id);
+      setIddeporte('');
       setPrecio(0);
       setCantidad(1);
       setGenero('Mixto');
@@ -129,6 +148,9 @@ const FormularioEntrenamiento = ({
     }
     if (!genero) {
       nuevosErrores.genero = 'El género es obligatorio';
+    }
+    if (!iddeporte) {
+      nuevosErrores.iddeporte = 'Seleccioná uno de los deportes de tu perfil. Si no tenés ninguno, agregalos en tu perfil.';
     }
     if (!nivel) {
       nuevosErrores.nivel = 'El nivel es obligatorio';
@@ -335,8 +357,12 @@ const FormularioEntrenamiento = ({
           <CustomSelect
             value={iddeporte}
             onChange={(e) => setIddeporte(Number(e.target.value))}
-            options={deportesDisponibles.map(d => ({ value: d.id, label: d.nombre }))}
+            options={deportesDisponibles
+              .filter(d => (idsDeportesEntrenador || []).includes(d.id)
+                || d.id === Number(entrenamiento?.iddeporte))
+              .map(d => ({ value: d.id, label: d.nombre }))}
           />
+          {errores.iddeporte && <span className="error-feedback">{errores.iddeporte}</span>}
         </div>
 
         <div className="form-grupo">

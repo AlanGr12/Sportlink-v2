@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import ModalContactoEntrenador from './ModalContactoEntrenador.jsx';
 import api from '../axiosConfig.js';
 import fallbackFutbol from '../assets/entrenador1.png';
 import fallbackBasket from '../assets/entrenador2.png';
@@ -14,8 +15,11 @@ import { formatearFechaLocal } from '../utils/dateUtils.js';
 import { formatearUbicacionCorta } from '../utils/mapUtils.js';
 
 import './DetalleEntrenamiento.css';
+import { useNavigate } from 'react-router-dom';
 
 const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar, onInscripcionExitosa, onDesuscripcionExitosa, onOptimisticChange }) => {
+  const navigate = useNavigate();
+  const [mostrarContacto, setMostrarContacto] = useState(false);
   const [postulantes, setPostulantes] = useState([]);
   const [postulantesLoading, setPostulantesLoading] = useState(false);
   const [postulantesError, setPostulantesError] = useState("");
@@ -259,6 +263,12 @@ console.log(entrenamiento)
     7: 'Domingo'
   };
 
+  // El entrenador dueño del entrenamiento no se contacta a sí mismo
+  const idUsuarioEntrenador = entrenamiento?.entrenadores?.idusuario;
+  const idUsuarioSesion = usuario?.idusuario || usuario?.idUsuario || usuario?.id;
+  const puedeContactar = Boolean(idUsuarioEntrenador) &&
+    !(idUsuarioSesion && Number(idUsuarioSesion) === Number(idUsuarioEntrenador));
+
   const deportesDisponibles = [
   { id: 1, nombre: 'Fútbol' },
   { id: 2, nombre: 'Basket' },
@@ -292,7 +302,21 @@ console.log(entrenamiento)
       <div className="detalle-info-header">
         <span className="detalle-tipo">{entrenamiento.deportes?.deporte || 'ENTRENAMIENTO'}</span>
         <h2 className="detalle-titulo">{entrenamiento.titulo}</h2>
-        <p className="detalle-autor">Entrenador/a: {entrenamiento.entrenadores?.nombre || 'Entrenador Asociado'}</p>
+        <p className="detalle-autor">
+          Entrenador/a: {[entrenamiento.entrenadores?.nombre, entrenamiento.entrenadores?.apellido].filter(Boolean).join(' ') || 'Entrenador Asociado'}
+        </p>
+        {puedeContactar && (
+          <button
+            type="button"
+            className="btn-mensaje-entrenador"
+            onClick={() => (usuario ? setMostrarContacto(true) : navigate('/login'))}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            Enviar mensaje
+          </button>
+        )}
       </div>
 
       <div className="detalle-seccion">
@@ -631,6 +655,15 @@ console.log(entrenamiento)
         </div>
       </div>,
       document.body
+    )}
+
+    {mostrarContacto && (
+      <ModalContactoEntrenador
+        entrenador={entrenamiento.entrenadores}
+        entrenamiento={entrenamiento}
+        onCerrar={() => setMostrarContacto(false)}
+        onEnviado={onCerrar}
+      />
     )}
     </>
   );

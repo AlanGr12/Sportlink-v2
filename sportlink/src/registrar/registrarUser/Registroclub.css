@@ -376,4 +376,19 @@
 .registro-deporte-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
+}
+
+/* Foto de perfil: preview circular (así se verá el avatar) */
+.registro-upload-area.con-foto {
+  border-style: solid;
+  background: transparent;
+}
+
+.registro-upload-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--sl-cyan);
+  flex-shrink: 0;
+}

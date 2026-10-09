@@ -1,22 +1,12 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../axiosConfig.js'
+import InputDireccionOSM from '../../components/maps/InputDireccionOSM.jsx'
+import MapaUbicacionDark from '../../components/maps/MapaUbicacionDark.jsx'
 import './Registroclub.css'
 import Header from "../../header/header.jsx"
 import Footer from "../../footer/footer.jsx"
 import logoSportlink from "../../assets/logoSportlink.png"
-
-const barriosArgentina = [
-  "Agronomía", "Almagro", "Balvanera", "Barracas", "Belgrano", "Boedo",
-  "Caballito", "Chacarita", "Coghlan", "Colegiales", "Constitución",
-  "Flores", "Floresta", "La Boca", "La Paternal", "Liniers",
-  "Mataderos", "Monte Castro", "Monserrat", "Nueva Pompeya", "Núñez",
-  "Palermo", "Parque Avellaneda", "Parque Chacabuco", "Parque Chas",
-  "Parque Patricios", "Puerto Madero", "Recoleta", "Retiro",
-  "Saavedra", "San Cristóbal", "San Telmo", "Vélez Sarsfield",
-  "Versalles", "Villa Crespo", "Villa del Parque", "Villa Devoto",
-  "Villa Luro", "Villa Urquiza", "Zonas Norte GBA", "Zona Sur GBA", "Zona Oeste GBA"
-]
 
 const deportesDisponibles = [
   { id: 1, nombre: 'Fútbol' },
@@ -36,17 +26,21 @@ const deportesDisponibles = [
   { id: 15, nombre: 'Golf' }
 ]
 
-function RegistroClub() {
+// email y contraseña vienen de datosBase (Paso 1), no se piden acá
+function RegistroClub({ datosBase = {} }) {
   const navigate = useNavigate()
   const [form, setForm] = useState({
-    email: '',
-    contrasenia: '',
     nombre: '',
     ubicacion: '',
+    direccion: '',
+    latitud: null,
+    longitud: null,
     deportes: [],
     descripcion: ''
   })
   const [fotoperfil, setFotoperfil] = useState(null)
+  // URL del preview circular (se revoca al cambiar la foto para no filtrar memoria)
+  const fotoPreviewUrl = useMemo(() => (fotoperfil ? URL.createObjectURL(fotoperfil) : null), [fotoperfil])
   const [errors, setErrors] = useState({})
   const [cargando, setCargando] = useState(false)
   const [errorGlobal, setErrorGlobal] = useState('')
@@ -71,10 +65,14 @@ function RegistroClub() {
     if (cargando) return
 
     const newErrors = {}
-    if (!form.email) newErrors.email = 'Este campo es obligatorio'
-    if (!form.contrasenia) newErrors.contrasenia = 'Este campo es obligatorio'
+    if (!datosBase.email || !datosBase.contraseña) {
+      setErrorGlobal('Faltan el email y la contraseña del primer paso. Volvé a empezar el registro.')
+      return
+    }
     if (!form.nombre) newErrors.nombre = 'Este campo es obligatorio'
-    if (!form.ubicacion) newErrors.ubicacion = 'Este campo es obligatorio'
+    if (form.latitud == null || form.longitud == null) {
+      newErrors.ubicacion = 'Buscá y seleccioná la dirección exacta de la sede de la lista'
+    }
     if (form.deportes.length === 0) newErrors.deportes = 'Seleccioná al menos un deporte'
 
     setErrors(newErrors)
@@ -88,10 +86,13 @@ function RegistroClub() {
 
     try {
       const formData = new FormData()
-      formData.append('email', form.email)
-      formData.append('contrasenia', form.contrasenia)
+      formData.append('email', datosBase.email)
+      formData.append('contrasenia', datosBase.contraseña)
       formData.append('nombre', form.nombre)
       formData.append('ubicacion', form.ubicacion)
+      formData.append('direccion', form.direccion)
+      formData.append('latitud', form.latitud)
+      formData.append('longitud', form.longitud)
       formData.append('deportes', JSON.stringify(form.deportes))
       formData.append('descripcion', form.descripcion)
       if (fotoperfil) {
@@ -177,35 +178,49 @@ function RegistroClub() {
           )}
 
           <label className="registro-label">
-            UBICACIÓN (BARRIO / ZONA)
+            UBICACIÓN EXACTA DE LA SEDE
           </label>
 
-          <div className="registro-select-wrapper">
-            <select
-              className="registro-select"
-              name="ubicacion"
-              value={form.ubicacion}
-              onChange={cambiarForm}
-              disabled={cargando}
-            >
-              <option value="" disabled hidden>
-                Seleccioná tu barrio
-              </option>
-
-              {barriosArgentina.map((barrio, index) => (
-                <option key={index} value={barrio}>
-                  {barrio}
-                </option>
-              ))}
-            </select>
-
-            <span className="registro-select-arrow">▼</span>
-          </div>
+          <InputDireccionOSM
+            value={form.direccion}
+            onChangeText={(txt) => setForm((prev) => (
+              // Si edita el texto a mano, la ubicación seleccionada deja de ser válida
+              txt === prev.direccion ? prev : { ...prev, direccion: txt, latitud: null, longitud: null }
+            ))}
+            onSelectUbicacion={(loc) => {
+              setErrors((prev) => ({ ...prev, ubicacion: '' }))
+              setForm((prev) => ({
+              ...prev,
+              direccion: loc.direccion,
+              // La zona (barrio/ciudad) se deriva de la dirección elegida
+              ubicacion: loc.zona || loc.direccion,
+              latitud: loc.latitud,
+              longitud: loc.longitud,
+              }))
+            }}
+            placeholder="Buscá la dirección o el nombre del club"
+            disabled={cargando}
+          />
 
           {errors.ubicacion && (
             <span className="registro-error">
               {errors.ubicacion}
             </span>
+          )}
+
+          {form.latitud != null && form.longitud != null && (
+            <div style={{ marginTop: '10px' }}>
+              <MapaUbicacionDark
+                latitud={form.latitud}
+                longitud={form.longitud}
+                direccion={form.direccion}
+                zona={form.ubicacion}
+                nombre={form.nombre}
+                tipo="club"
+                height="160px"
+                mostrarFooter={false}
+              />
+            </div>
           )}
 
           <label className="registro-label">
@@ -266,57 +281,17 @@ function RegistroClub() {
           <div className="registro-divider"></div>
 
           <label className="registro-label">
-            EMAIL
-          </label>
-
-          <input
-            className="registro-input"
-            name="email"
-            type="email"
-            placeholder="club@email.com"
-            value={form.email}
-            onChange={cambiarForm}
-            disabled={cargando}
-          />
-
-          {errors.email && (
-            <span className="registro-error">
-              {errors.email}
-            </span>
-          )}
-
-          <label className="registro-label">
-            CONTRASEÑA
-          </label>
-
-          <input
-            className="registro-input"
-            name="contrasenia"
-            type="password"
-            placeholder="••••••••"
-            value={form.contrasenia}
-            onChange={cambiarForm}
-            disabled={cargando}
-          />
-
-          {errors.contrasenia && (
-            <span className="registro-error">
-              {errors.contrasenia}
-            </span>
-          )}
-
-          <label className="registro-label">
             FOTO DE PERFIL
           </label>
 
           <label
-            className="registro-upload-area"
+            className={`registro-upload-area${fotoperfil ? ' con-foto' : ''}`}
             htmlFor="rc-file-upload"
             style={{ pointerEvents: cargando ? 'none' : 'auto' }}
           >
             {fotoperfil ? (
               <img
-                src={URL.createObjectURL(fotoperfil)}
+                src={fotoPreviewUrl}
                 alt="Preview"
                 className="registro-upload-preview"
               />
