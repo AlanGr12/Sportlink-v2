@@ -85,8 +85,8 @@ const PerfilHeader = ({ perfil }) => {
               )}
             </div>
             
-            {perfil?.descripcion && (
-              <p className="perfil-header-bio">{perfil.descripcion}</p>
+            {(perfil?.biografia || perfil?.descripcion) && (
+              <p className="perfil-header-bio">{perfil.biografia || perfil.descripcion}</p>
             )}
           </div>
         </div>

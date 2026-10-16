@@ -389,13 +389,9 @@ const MiPerfil = (props) => {
       apellido: perfil?.apellido || '',
       ubicacion: perfil?.ubicacion || '',
       telefono: perfil?.telefono || '',
-      instagram: perfil?.instagram || '',
-      descripcion: perfil?.descripcion || '',
-      biografia: perfil?.biografia || '',
+      // Biografía y descripción son lo mismo: se edita un único texto
+      biografia: perfil?.biografia || perfil?.descripcion || '',
       // Atributos de ficha técnica
-      edad: perfil?.edad || '',
-      altura: perfil?.altura || '',
-      posicion: perfil?.posicion || '',
       experiencia: perfil?.experiencia || '',
       categoria: perfil?.categoria || '',
     });
@@ -424,15 +420,20 @@ const MiPerfil = (props) => {
       }
     }
 
-    // 2. Si se modificó la biografía desde el modal general, guardarla en el backend
-    if (formEdicion.biografia !== undefined && formEdicion.biografia !== perfil?.biografia) {
-      try {
-        await api.put('/api/login/perfil/biografia', {
-          biografia: formEdicion.biografia
-        });
-      } catch (err) {
-        console.error('Error al actualizar biografía desde modal:', err);
-      }
+    // 2. Guardar datos básicos y biografía en el backend
+    const datos = {
+      nombre: formEdicion.nombre,
+      ubicacion: formEdicion.ubicacion,
+      biografia: formEdicion.biografia,
+      ...(esClub ? {} : { apellido: formEdicion.apellido, telefono: formEdicion.telefono }),
+    };
+    try {
+      await api.put(`/api/login/perfil/${idSesion}`, datos);
+    } catch (err) {
+      console.error('Error al guardar el perfil:', err);
+      handleMostrarToast(err.response?.data?.error || 'No se pudieron guardar los cambios. Intentá de nuevo.');
+      setGuardando(false);
+      return; // no cerramos el modal para que no pierda los cambios
     }
 
     // 3. Actualizar estado local
@@ -576,13 +577,13 @@ const MiPerfil = (props) => {
                   )}
                 </div>
 
-                {perfil?.descripcion ? (
-                  <p className="profile-bio-text">"{perfil.descripcion}"</p>
+                {(perfil?.biografia || perfil?.descripcion) ? (
+                  <p className="profile-bio-text">"{perfil.biografia || perfil.descripcion}"</p>
                 ) : (
                   <p className="profile-bio-text empty">
                     {esPerfilPropio 
-                      ? 'Sin descripción en tu perfil. Hacé clic en "Editar perfil" para agregar una descripción y destacar en SportLink.'
-                      : 'Este usuario aún no ha agregado una descripción.'}
+                      ? 'Sin biografía en tu perfil. Hacé clic en "Editar perfil" para agregar una y destacar en SportLink.'
+                      : 'Este usuario aún no ha agregado una biografía.'}
                   </p>
                 )}
 
@@ -820,9 +821,9 @@ const MiPerfil = (props) => {
                 />
               </div>
 
-              <div className="form-double-col">
+              <div className={esClub ? 'form-field-group' : 'form-double-col'}>
                 <div className="form-field-group">
-                  <label>Nombre</label>
+                  <label>{esClub ? 'Nombre del club' : 'Nombre'}</label>
                   <input 
                     type="text" 
                     value={formEdicion.nombre} 
@@ -830,14 +831,16 @@ const MiPerfil = (props) => {
                     required 
                   />
                 </div>
-                <div className="form-field-group">
-                  <label>Apellido</label>
-                  <input 
-                    type="text" 
-                    value={formEdicion.apellido} 
-                    onChange={e => setFormEdicion(p => ({ ...p, apellido: e.target.value }))}
-                  />
-                </div>
+                {!esClub && (
+                  <div className="form-field-group">
+                    <label>Apellido</label>
+                    <input 
+                      type="text" 
+                      value={formEdicion.apellido} 
+                      onChange={e => setFormEdicion(p => ({ ...p, apellido: e.target.value }))}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="form-double-col">
@@ -850,67 +853,17 @@ const MiPerfil = (props) => {
                     placeholder="Ej. Caballito, CABA"
                   />
                 </div>
-                <div className="form-field-group">
-                  <label>Instagram</label>
-                  <input 
-                    type="text" 
-                    value={formEdicion.instagram} 
-                    onChange={e => setFormEdicion(p => ({ ...p, instagram: e.target.value }))}
-                    placeholder="@usuario"
-                  />
-                </div>
-              </div>
-
-              <div className="form-double-col">
-                <div className="form-field-group">
-                  <label>Número Telefónico</label>
-                  <input 
-                    type="text" 
-                    value={formEdicion.telefono} 
-                    onChange={e => setFormEdicion(p => ({ ...p, telefono: e.target.value }))}
-                    placeholder="+54 11 2345 6789"
-                  />
-                </div>
-                <div className="form-field-group">
-                  <label>Edad</label>
-                  <input 
-                    type="number" 
-                    value={formEdicion.edad} 
-                    onChange={e => setFormEdicion(p => ({ ...p, edad: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              <div className="form-double-col">
-                <div className="form-field-group">
-                  <label>Altura</label>
-                  <input 
-                    type="text" 
-                    value={formEdicion.altura} 
-                    onChange={e => setFormEdicion(p => ({ ...p, altura: e.target.value }))}
-                    placeholder="Ej. 1.82 m"
-                  />
-                </div>
-                <div className="form-field-group">
-                  <label>Posición</label>
-                  <input 
-                    type="text" 
-                    value={formEdicion.posicion} 
-                    onChange={e => setFormEdicion(p => ({ ...p, posicion: e.target.value }))}
-                    placeholder="Ej. Mediocampista"
-                  />
-                </div>
-              </div>
-
-              <div className="form-field-group">
-                <label>Descripción / Frase</label>
-                <textarea 
-                  value={formEdicion.descripcion} 
-                  onChange={e => setFormEdicion(p => ({ ...p, descripcion: e.target.value }))}
-                  placeholder="Frase o lema destacado..."
-                  maxLength={400}
-                />
-                <span className="char-count-modal">{formEdicion.descripcion?.length || 0} / 400</span>
+                {!esClub && (
+                  <div className="form-field-group">
+                    <label>Número Telefónico</label>
+                    <input 
+                      type="text" 
+                      value={formEdicion.telefono} 
+                      onChange={e => setFormEdicion(p => ({ ...p, telefono: e.target.value }))}
+                      placeholder="+54 11 2345 6789"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="form-field-group">

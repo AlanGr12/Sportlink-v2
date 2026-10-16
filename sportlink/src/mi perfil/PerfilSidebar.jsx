@@ -15,6 +15,17 @@ import './PerfilSidebar.css';
   - Para Clubes o Entrenadores con latitud y longitud, renderiza MapaUbicacionDark.
   - Si es perfil propio, permite editar la ubicación en el mapa.
 */
+const calcularEdad = (fecha) => {
+  if (!fecha) return null;
+  const nac = new Date(String(fecha).slice(0, 10) + 'T00:00:00');
+  if (isNaN(nac)) return null;
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - nac.getFullYear();
+  const m = hoy.getMonth() - nac.getMonth();
+  if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
+  return edad >= 0 ? edad : null;
+};
+
 const PerfilSidebar = ({
   perfil,
   ratingPromedio,
@@ -43,7 +54,8 @@ const PerfilSidebar = ({
     (Number(lat) !== 0 || Number(lon) !== 0);
 
   const rol = perfil?.tipousuario?.toLowerCase();
-  const esClubOEntrenador = rol === 'entrenador' || rol === 'club';
+  const esClub = rol === 'club';
+  const esClubOEntrenador = rol === 'entrenador' || esClub;
 
   const abrirModalUbicacion = () => {
     setNuevaUbicacion(null);
@@ -140,21 +152,6 @@ const PerfilSidebar = ({
             <line x1="16" y1="2" x2="16" y2="6" />
             <line x1="8" y1="2" x2="8" y2="6" />
             <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-        );
-      case 'altura':
-        return (
-          <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <polyline points="19 12 12 19 5 12" />
-            <polyline points="5 12 12 5 19 12" />
-          </svg>
-        );
-      case 'posicion':
-        return (
-          <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M2 12h20M12 2v20" />
-            <circle cx="12" cy="12" r="4" />
           </svg>
         );
       case 'experiencia':
@@ -265,20 +262,14 @@ const PerfilSidebar = ({
     items.push({ key: 'experiencia', label: 'Experiencia', value: perfil.experiencia });
   }
 
-  if (perfil.posicion) {
-    items.push({ key: 'posicion', label: 'Posición', value: perfil.posicion });
-  }
-
   if (perfil.categoria) {
     items.push({ key: 'categoria', label: 'Categoría', value: perfil.categoria });
   }
 
-  if (perfil.edad) {
-    items.push({ key: 'edad', label: 'Edad', value: `${perfil.edad} años` });
-  }
-
-  if (perfil.altura) {
-    items.push({ key: 'altura', label: 'Altura', value: perfil.altura });
+  // La edad se calcula desde la fecha de nacimiento (solo jugadores y entrenadores)
+  if (!esClub) {
+    const edad = calcularEdad(perfil.fechanacimiento);
+    if (edad !== null) items.push({ key: 'edad', label: 'Edad', value: `${edad} años` });
   }
 
   if (perfil.genero) {
