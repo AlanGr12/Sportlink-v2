@@ -11,6 +11,8 @@ import PerfilResenas from './PerfilResenas.jsx';
 import PerfilBiografia from './PerfilBiografia.jsx';
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
 import BotonSeguir from '../components/BotonSeguir.jsx';
+import BotonVinculacionClub from '../components/BotonVinculacionClub.jsx';
+import PerfilEntrenadoresClub from './PerfilEntrenadoresClub.jsx';
 import '../feed/FeedView.css';
 import './miperfil.css';
 
@@ -635,6 +637,9 @@ const MiPerfil = (props) => {
                     onCambio={(d) => { setSeguidores(d.seguidores); setSiguiendo(d.siguiendo); }}
                   />
                 )}
+                {!esPerfilPropio && esClub && perfil?.idclub && (
+                  <BotonVinculacionClub idclub={perfil.idclub} usuario={usuarioEnSesion} />
+                )}
                 {puedeEliminarCuenta && (
                   <button
                     className="profile-btn-edit"
@@ -671,6 +676,9 @@ const MiPerfil = (props) => {
                 onActualizar={handleBiografiaActualizada}
                 onToast={handleMostrarToast}
               />
+
+              {/* Gestión de entrenadores vinculados (solo el club dueño del perfil) */}
+              {esClub && esPerfilPropio && <PerfilEntrenadoresClub />}
 
               {/* 2. Feed de Publicaciones con Scrollbar Dedicado */}
               <div className="perfil-feed-section">

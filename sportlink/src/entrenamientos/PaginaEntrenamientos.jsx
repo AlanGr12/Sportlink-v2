@@ -557,8 +557,8 @@ const PaginaEntrenamientos = ({ usuario }) => {
             </p>
           </div>
 
-          {/* Botón Crear Entrenamiento (solo para entrenadores) — arriba del buscador */}
-          {usuario?.tipousuario === 'entrenador' && (
+          {/* Botón Crear Entrenamiento (entrenadores y clubes) — arriba del buscador */}
+          {(usuario?.tipousuario === 'entrenador' || usuario?.tipousuario === 'club') && (
             <div className="acciones-entrenador-container">
               <button 
                 className="btn-crear-entrenamiento"

@@ -28,6 +28,7 @@ import AdminClubesAprobacion from './admin/AdminClubesAprobacion.jsx'
 import AdminUsuarios from './admin/AdminUsuarios.jsx'
 import AdminEventos from './admin/AdminEventos.jsx'
 import AdminPublicaciones from './admin/AdminPublicaciones.jsx'
+import BackofficeClub from './backoffice/BackofficeClub.jsx'
 
 // ── Página 404 ───────────────────────────────────────────────────────────────
 function NotFound404() {
@@ -361,6 +362,15 @@ function App() {
                 <div style={{ paddingTop: '80px', height: '100vh', overflow: 'hidden', boxSizing: 'border-box' }}>
                   <MensajesView usuario={usuario} conversacionInicial={null} />
                 </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/club/backoffice"
+            element={
+              <ProtectedRoute usuario={usuario}>
+                <BackofficeClub usuario={usuario} />
               </ProtectedRoute>
             }
           />

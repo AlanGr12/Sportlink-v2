@@ -1,0 +1,326 @@
+/* ── Vinculación club ↔ entrenador ─────────────────────────────────────────── */
+
+/* Botón / estado en el perfil del club (vista del entrenador) */
+.vinc-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.vinc-btn {
+  width: 100%;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(45, 239, 242, 0.5);
+  background: rgba(45, 239, 242, 0.08);
+  color: #2DEFF2;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vinc-btn:hover:not(:disabled) {
+  background: rgba(45, 239, 242, 0.16);
+  box-shadow: 0 0 15px rgba(45, 239, 242, 0.15);
+}
+
+.vinc-btn:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.vinc-btn--primary {
+  background: #2DEFF2;
+  color: #090a0c;
+  border-color: #2DEFF2;
+}
+
+.vinc-btn--primary:hover:not(:disabled) {
+  background: #5ff4f6;
+}
+
+.vinc-btn--danger {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+}
+
+.vinc-btn--danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.16);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+}
+
+.vinc-btn--ghost {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: none;
+  color: #fff;
+}
+
+.vinc-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  background: rgba(45, 239, 242, 0.1);
+  border: 1px solid rgba(45, 239, 242, 0.35);
+  color: #2DEFF2;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.vinc-nota {
+  margin: 0;
+  font-size: 12px;
+  color: #aaaaab;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.vinc-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #aaaaab;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: center;
+}
+
+.vinc-link:hover {
+  color: #fff;
+}
+
+.vinc-error {
+  margin: 0;
+  font-size: 12px;
+  color: #f87171;
+  text-align: center;
+}
+
+.vinc-fila-botones {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Panel "Mis entrenadores" (club) ─────────────────────────────────────── */
+.vinc-panel {
+  background-color: #161819;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 22px 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vinc-panel-titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.vinc-panel-titulo::before {
+  content: '';
+  width: 3px;
+  height: 16px;
+  background-color: #2DEFF2;
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(45, 239, 242, 0.5);
+}
+
+.vinc-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vinc-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 8px 14px;
+  color: #aaaaab;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.vinc-tab:hover {
+  color: #fff;
+}
+
+.vinc-tab--activa {
+  color: #2DEFF2;
+  border-bottom-color: #2DEFF2;
+}
+
+.vinc-contador {
+  display: inline-block;
+  min-width: 18px;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 9px;
+  background: #2DEFF2;
+  color: #090a0c;
+  font-size: 11px;
+  text-align: center;
+}
+
+.vinc-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.vinc-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vinc-tarjeta-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.vinc-tarjeta-cabecera a,
+.vinc-tarjeta-nombre {
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vinc-tarjeta-sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #aaaaab;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vinc-vacio {
+  margin: 0;
+  padding: 18px 0;
+  color: #aaaaab;
+  font-size: 13px;
+  text-align: center;
+}
+
+.vinc-subtitulo {
+  margin: 22px 0 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #aaaaab;
+  text-transform: uppercase;
+}
+
+.vinc-invitar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.vinc-invitar select {
+  flex: 1 1 200px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #0f1011;
+  color: #fff;
+  font-size: 13px;
+}
+
+.vinc-invitar .vinc-btn {
+  width: auto;
+}
+
+.vinc-feedback {
+  margin: 0 0 14px;
+  font-size: 13px;
+}
+
+.vinc-feedback--ok { color: #2DEFF2; }
+.vinc-feedback--error { color: #f87171; }
+
+/* Aviso en el formulario de entrenamiento */
+.vinc-aviso {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(45, 239, 242, 0.08);
+  border: 1px solid rgba(45, 239, 242, 0.3);
+  color: #d6fbfc;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Distintivo del club en la tarjeta de entrenamiento */
+.tarjeta-club-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin-top: 8px;
+  padding: 3px 10px 3px 4px;
+  border-radius: 999px;
+  background: rgba(45, 239, 242, 0.1);
+  border: 1px solid rgba(45, 239, 242, 0.35);
+  color: #2DEFF2;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.tarjeta-club-badge span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

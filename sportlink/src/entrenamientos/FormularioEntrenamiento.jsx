@@ -4,6 +4,7 @@ import CustomSelect from '../components/CustomSelect.jsx';
 import InputDireccionOSM from '../components/maps/InputDireccionOSM.jsx';
 import { obtenerFechaHoyLocal } from '../utils/dateUtils.js';
 import api from '../axiosConfig.js';
+import '../components/vinculacion.css';
 
 const deportesDisponibles = [
   { id: 1, nombre: 'Fútbol' },
@@ -47,6 +48,14 @@ const FormularioEntrenamiento = ({
   const [nivel, setNivel] = useState('Principiante');
   const [estado, setEstado] = useState(true);
 
+  // Vinculación con clubes:
+  //  - un club elige qué entrenador vinculado da el entrenamiento
+  //  - un entrenador vinculado publica respaldado por su club
+  const esClub = String(usuarioActual?.tipousuario || '').toLowerCase() === 'club';
+  const [entrenadoresClub, setEntrenadoresClub] = useState([]);
+  const [idEntrenadorElegido, setIdEntrenadorElegido] = useState('');
+  const [clubDelEntrenador, setClubDelEntrenador] = useState(null);
+
   // Adjunto (imagen requerida por el backend)
   const [archivo, setArchivo] = useState(null);
   const [imagenUrlExistente, setImagenUrlExistente] = useState('');
@@ -56,8 +65,32 @@ const FormularioEntrenamiento = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (entrenamiento) return; // el respaldo del club solo se define al crear
+    let cancelado = false;
+    if (esClub) {
+      api.get('/api/vinculaciones/mis-entrenadores')
+        .then((res) => { if (!cancelado) setEntrenadoresClub(Array.isArray(res.data) ? res.data : []); })
+        .catch((err) => console.error('No se pudieron cargar los entrenadores del club:', err));
+    } else if (String(usuarioActual?.tipousuario || '').toLowerCase() === 'entrenador') {
+      api.get('/api/vinculaciones/mi-club')
+        .then((res) => { if (!cancelado) setClubDelEntrenador(res.data || null); })
+        .catch(() => {});
+    }
+    return () => { cancelado = true; };
+  }, [esClub, usuarioActual?.tipousuario, entrenamiento]);
+
+  // Para un club, los deportes disponibles son los del entrenador elegido
+  useEffect(() => {
+    if (!esClub) return;
+    const elegido = entrenadoresClub.find((e) => String(e.identrenador) === String(idEntrenadorElegido));
+    const ids = (elegido?.deportes || []).map((d) => Number(d.iddeporte));
+    setIdsDeportesEntrenador(ids);
+    setIddeporte((actual) => (ids.includes(Number(actual)) ? actual : (ids[0] ?? '')));
+  }, [esClub, idEntrenadorElegido, entrenadoresClub]);
+
+  useEffect(() => {
     const idEntrenador = usuarioActual?.identrenador;
-    if (!idEntrenador) return;
+    if (esClub || !idEntrenador) return;
     let cancelado = false;
     api.get(`/api/entrenadores/${idEntrenador}`)
       .then((res) => {
@@ -69,7 +102,7 @@ const FormularioEntrenamiento = ({
       })
       .catch((err) => console.error('No se pudieron cargar los deportes del entrenador:', err));
     return () => { cancelado = true; };
-  }, [usuarioActual?.identrenador]);
+  }, [usuarioActual?.identrenador, esClub]);
 
   useEffect(() => {
     if (entrenamiento) {
@@ -149,8 +182,13 @@ const FormularioEntrenamiento = ({
     if (!genero) {
       nuevosErrores.genero = 'El género es obligatorio';
     }
+    if (esClub && !entrenamiento && !idEntrenadorElegido) {
+      nuevosErrores.identrenador = 'Elegí el entrenador de tu club que dará el entrenamiento';
+    }
     if (!iddeporte) {
-      nuevosErrores.iddeporte = 'Seleccioná uno de los deportes de tu perfil. Si no tenés ninguno, agregalos en tu perfil.';
+      nuevosErrores.iddeporte = esClub
+        ? 'El entrenador elegido no tiene deportes cargados en su perfil.'
+        : 'Seleccioná uno de los deportes de tu perfil. Si no tenés ninguno, agregalos en tu perfil.';
     }
     if (!nivel) {
       nuevosErrores.nivel = 'El nivel es obligatorio';
@@ -200,7 +238,9 @@ const FormularioEntrenamiento = ({
 
     // identrenador: si el usuario logueado ya trae su id de entrenador, se manda.
     // Si no, el backend lo resuelve solo a partir del token (ver nota en la respuesta).
-    if (usuarioActual?.identrenador) {
+    if (esClub) {
+      formData.append('identrenador', idEntrenadorElegido);
+    } else if (usuarioActual?.identrenador) {
       formData.append('identrenador', usuarioActual.identrenador);
     }
 
@@ -228,6 +268,36 @@ const FormularioEntrenamiento = ({
     <form className="formulario-entrenamiento" onSubmit={handleSubmit}>
       {errores.general && (
         <div className="form-error-banner">{errores.general}</div>
+      )}
+
+      {!esClub && clubDelEntrenador && (
+        <div className="vinc-aviso">
+          Este entrenamiento se publicará respaldado por <strong>&nbsp;{clubDelEntrenador.nombre}&nbsp;</strong>, el club al que pertenecés.
+        </div>
+      )}
+
+      {esClub && !entrenamiento && (
+        <div className="form-grupo">
+          <label className="form-label">Entrenador de la institución<span>*</span></label>
+          {entrenadoresClub.length === 0 ? (
+            <span className="error-feedback">
+              Todavía no tenés entrenadores vinculados. Invitá o aceptá entrenadores desde tu perfil para poder publicar.
+            </span>
+          ) : (
+            <CustomSelect
+              value={idEntrenadorElegido}
+              onChange={(e) => setIdEntrenadorElegido(e.target.value)}
+              options={[
+                { value: '', label: 'Seleccioná un entrenador' },
+                ...entrenadoresClub.map((e) => ({
+                  value: e.identrenador,
+                  label: [e.nombre, e.apellido].filter(Boolean).join(' '),
+                })),
+              ]}
+            />
+          )}
+          {errores.identrenador && <span className="error-feedback">{errores.identrenador}</span>}
+        </div>
       )}
 
       {/* Título */}

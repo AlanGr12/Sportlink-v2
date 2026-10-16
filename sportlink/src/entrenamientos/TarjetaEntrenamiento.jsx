@@ -10,6 +10,8 @@ import fallbackBasket from '../assets/entrenador2.png';
 import fallbackDefault from '../assets/entrenador3.png';
 import { formatearFechaLocal } from '../utils/dateUtils.js';
 import { formatearUbicacionCorta } from '../utils/mapUtils.js';
+import Avatar from '../components/Avatar.jsx';
+import '../components/vinculacion.css';
 import './TarjetaEntrenamiento.css';
 
 const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar, usuarioActual }) => {
@@ -118,6 +120,13 @@ const TarjetaEntrenamiento = ({ entrenamiento, onVerDetalle, onEditar, onBorrar,
 
         {nombreCreador && (
           <p className="tarjeta-creado-por">CREADO POR {nombreCreador}</p>
+        )}
+
+        {entrenamiento.clubes?.nombre && (
+          <div className="tarjeta-club-badge" title={`Respaldado por ${entrenamiento.clubes.nombre}`}>
+            <Avatar src={entrenamiento.clubes.fotoperfil} nombre={entrenamiento.clubes.nombre} size={20} />
+            <span>{entrenamiento.clubes.nombre}</span>
+          </div>
         )}
 
         <div className="card-prueba-detalles-lista">
