@@ -402,6 +402,58 @@
   color: var(--bo-muted);
 }
 
+/* ── Participantes inline (pruebas/entrenamientos) ─────── */
+.bo-panel-participantes {
+  padding: 16px;
+  background: var(--bo-surface-2);
+  border-radius: 10px;
+}
+
+.bo-participante {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--bo-border);
+}
+
+.bo-participante:last-child { border-bottom: none; }
+
+.bo-participante-info { display: flex; align-items: center; gap: 10px; }
+
+.bo-participante-deporte { font-size: 12px; color: var(--bo-muted); }
+
+.bo-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--bo-accent);
+  cursor: pointer;
+}
+
+/* ── Barra de selección masiva (pruebas) ───────────────── */
+.bo-seleccion-card { padding: 16px 20px; }
+
+.bo-seleccion-barra { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.bo-seleccion-acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--bo-border);
+}
+
+.bo-btn[aria-pressed='true'],
+.bo-btn[aria-expanded='true'] {
+  border-color: var(--bo-accent);
+  color: var(--bo-accent);
+  background: var(--bo-accent-soft);
+}
+
 @media (max-width: 640px) {
   .bo-root { padding-inline: 14px; }
   .bo-titulo { font-size: 22px; }

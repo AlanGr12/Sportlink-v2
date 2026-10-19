@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import api from '../axiosConfig.js'
 import Avatar from '../components/Avatar.jsx'
+import ModalContactoEntrenador from '../entrenamientos/ModalContactoEntrenador.jsx'
+import ModalInvitarEvento from './ModalInvitarEvento.jsx'
 import './backoffice.css'
 
 const RANGOS = [
@@ -78,9 +80,68 @@ const Persona = ({ p, size = 32 }) => (
   </div>
 )
 
+// Lista de participantes de una prueba o entrenamiento, mostrada en línea debajo
+// de su fila en la tabla (sin navegar a otra vista). `tipo` es 'prueba' | 'entrenamiento'.
+// Si se pasa `seleccionando`, se muestra una casilla a la izquierda de cada jugador
+// (en vez de sus acciones individuales) para armar una selección múltiple.
+function PanelParticipantes({ tipo, id, onInvitar, onMensaje, seleccionando = false, seleccionados, onToggleSeleccion }) {
+  const [participantes, setParticipantes] = useState(null) // null = cargando
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let vigente = true
+    setParticipantes(null)
+    setError('')
+    const url = tipo === 'prueba' ? '/api/inscripcionesprueba' : '/api/inscripcionesentrenamientos'
+    const params = tipo === 'prueba' ? { idprueba: id } : { identrenamiento: id }
+    api.get(url, { params })
+      .then((res) => { if (vigente) setParticipantes(res.data || []) })
+      .catch(() => { if (vigente) setError('No se pudieron cargar los participantes.') })
+    return () => { vigente = false }
+  }, [tipo, id])
+
+  if (error) return <div className="bo-panel-participantes"><p className="bo-vacio">{error}</p></div>
+  if (participantes === null) return <div className="bo-panel-participantes"><p className="bo-vacio">Cargando participantes…</p></div>
+  if (participantes.length === 0) return <div className="bo-panel-participantes"><p className="bo-vacio">Todavía no hay nadie anotado.</p></div>
+
+  return (
+    <div className="bo-panel-participantes">
+      {participantes.map((i) => {
+        const j = i.jugador || {}
+        return (
+          <div key={i.idinscripcionesprueba || i.idinscripcionesentr} className="bo-participante">
+            <div className="bo-participante-info">
+              {seleccionando && (
+                <input
+                  type="checkbox"
+                  className="bo-checkbox"
+                  checked={!!seleccionados?.has(j.idusuario)}
+                  onChange={() => onToggleSeleccion(j)}
+                  aria-label={`Seleccionar a ${nombreCompleto(j)}`}
+                />
+              )}
+              <Persona p={j} size={32} />
+            </div>
+            <span className="bo-participante-deporte">{j.deportes?.deporte || ''}</span>
+            {!seleccionando && (
+              <div className="bo-acciones">
+                <button type="button" className="bo-btn" onClick={() => onInvitar([j])}>Invitar a evento</button>
+                <button type="button" className="bo-btn" onClick={() => onMensaje([j])}>Mensaje</button>
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Secciones ───────────────────────────────────────────────────────────────
 function SeccionEntrenamientos({ datos }) {
   const lista = datos.entrenamientos
+  const [expandido, setExpandido] = useState(null)
+  const [mensajeA, setMensajeA] = useState(null)
+  const [invitarA, setInvitarA] = useState(null)
   if (lista.length === 0) {
     return <div className="bo-card"><p className="bo-vacio">No hay entrenamientos publicados por el club en este período.</p></div>
   }
@@ -127,31 +188,58 @@ function SeccionEntrenamientos({ datos }) {
             <thead>
               <tr>
                 <th>Título</th><th>Entrenador asignado</th><th>Fecha</th>
-                <th className="num">Cupos</th><th className="num">Lista de espera</th><th>Ocupación</th><th>Estado</th>
+                <th className="num">Cupos</th><th className="num">Lista de espera</th><th>Ocupación</th><th>Estado</th><th />
               </tr>
             </thead>
             <tbody>
               {lista.map((e) => (
-                <tr key={e.identrenamientos}>
-                  <td><Link to={`/entrenamientos/${e.identrenamientos}`} style={{ color: 'inherit', fontWeight: 600 }}>{e.titulo}</Link></td>
-                  <td>{e.entrenador ? <Persona p={e.entrenador} size={26} /> : '—'}</td>
-                  <td>{formatoFecha(e.fechaentr)}</td>
-                  <td className="num">{e.cupo > 0 ? `${e.inscriptos} / ${e.cupo}` : e.inscriptos}</td>
-                  <td className="num">{e.listaEspera}</td>
-                  <td><MiniBarra pct={e.ocupacion} /></td>
-                  <td><BadgeEstado estado={e.estado} /></td>
-                </tr>
+                <Fragment key={e.identrenamientos}>
+                  <tr>
+                    <td><Link to={`/entrenamientos/${e.identrenamientos}`} style={{ color: 'inherit', fontWeight: 600 }}>{e.titulo}</Link></td>
+                    <td>{e.entrenador ? <Persona p={e.entrenador} size={26} /> : '—'}</td>
+                    <td>{formatoFecha(e.fechaentr)}</td>
+                    <td className="num">{e.cupo > 0 ? `${e.inscriptos} / ${e.cupo}` : e.inscriptos}</td>
+                    <td className="num">{e.listaEspera}</td>
+                    <td><MiniBarra pct={e.ocupacion} /></td>
+                    <td><BadgeEstado estado={e.estado} /></td>
+                    <td>
+                      <button type="button" className="bo-btn" onClick={() => setExpandido(expandido === e.identrenamientos ? null : e.identrenamientos)}>
+                        {expandido === e.identrenamientos ? 'Ocultar' : 'Ver participantes'}
+                      </button>
+                    </td>
+                  </tr>
+                  {expandido === e.identrenamientos && (
+                    <tr>
+                      <td colSpan={8} style={{ padding: 0, border: 'none' }}>
+                        <PanelParticipantes tipo="entrenamiento" id={e.identrenamientos} onInvitar={setInvitarA} onMensaje={setMensajeA} />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {mensajeA && (
+        <ModalContactoEntrenador entrenadores={mensajeA} onCerrar={() => setMensajeA(null)} />
+      )}
+      {invitarA && (
+        <ModalInvitarEvento jugadores={invitarA} datos={datos} onCerrar={() => setInvitarA(null)} />
+      )}
     </>
   )
 }
 
 function SeccionPruebas({ datos }) {
   const [agrupar, setAgrupar] = useState('porCategoria')
+  const [expandido, setExpandido] = useState(null)
+  const [mensajeA, setMensajeA] = useState(null)
+  const [invitarA, setInvitarA] = useState(null)
+  const [seleccionando, setSeleccionando] = useState(false)
+  const [seleccionados, setSeleccionados] = useState(new Map())
+  const [mostrarAcciones, setMostrarAcciones] = useState(false)
   const lista = datos.pruebas
   const r = datos.resumen.pruebas
   if (lista.length === 0) {
@@ -161,6 +249,21 @@ function SeccionPruebas({ datos }) {
   const cerradas = r.total - r.activas
   const desglose = datos.desglosePruebas[agrupar] || []
   const maxInscriptos = Math.max(1, ...desglose.map((d) => d.inscriptos))
+
+  const toggleSeleccionar = () => {
+    setSeleccionando((v) => !v)
+    setSeleccionados(new Map())
+    setMostrarAcciones(false)
+  }
+
+  const toggleSeleccion = (j) => {
+    setSeleccionados((prev) => {
+      const next = new Map(prev)
+      if (next.has(j.idusuario)) next.delete(j.idusuario)
+      else next.set(j.idusuario, j)
+      return next
+    })
+  }
 
   return (
     <>
@@ -208,6 +311,33 @@ function SeccionPruebas({ datos }) {
         </div>
       </div>
 
+      <div className="bo-card bo-seleccion-card">
+        <div className="bo-seleccion-barra">
+          <button type="button" className="bo-btn" aria-pressed={seleccionando} onClick={toggleSeleccionar}>
+            Seleccionar
+          </button>
+          <button type="button" className="bo-btn" aria-expanded={mostrarAcciones} onClick={() => setMostrarAcciones((v) => !v)}>
+            Acciones{seleccionados.size > 0 ? ` (${seleccionados.size})` : ''}
+          </button>
+        </div>
+        {mostrarAcciones && (
+          <div className="bo-seleccion-acciones">
+            {seleccionados.size === 0 ? (
+              <p className="bo-nota" style={{ margin: 0 }}>Activá "Seleccionar" y marcá jugadores en los participantes de abajo para habilitar estas acciones.</p>
+            ) : (
+              <>
+                <button type="button" className="bo-btn" onClick={() => setInvitarA(Array.from(seleccionados.values()))}>
+                  Invitar a evento
+                </button>
+                <button type="button" className="bo-btn" onClick={() => setMensajeA(Array.from(seleccionados.values()))}>
+                  Mensaje
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="bo-card">
         <h3 className="bo-card-titulo">Detalle de pruebas</h3>
         <div className="bo-tabla-wrap">
@@ -220,28 +350,65 @@ function SeccionPruebas({ datos }) {
             </thead>
             <tbody>
               {lista.map((p) => (
-                <tr key={p.idprueba}>
-                  <td>{p.deporte || '—'}</td>
-                  <td>{p.categoria || '—'}</td>
-                  <td>{p.genero || '—'}</td>
-                  <td>{formatoFecha(p.fechaprueba)}</td>
-                  <td className="num">{p.cupo > 0 ? `${p.inscriptos} / ${p.cupo}` : p.inscriptos}</td>
-                  <td className="num">{p.listaEspera}</td>
-                  <td><MiniBarra pct={p.ocupacion} /></td>
-                  <td>
-                    {p.finalizada
-                      ? <span className="bo-badge bo-badge--off">Finalizada</span>
-                      : p.abierta
-                        ? <span className="bo-badge bo-badge--ok">Abierta</span>
-                        : <span className="bo-badge bo-badge--warn">Cerrada</span>}
-                  </td>
-                  <td><Link className="bo-btn" to={`/pruebas/${p.idprueba}`}>Gestionar inscriptos</Link></td>
-                </tr>
+                <Fragment key={p.idprueba}>
+                  <tr>
+                    <td>{p.deporte || '—'}</td>
+                    <td>{p.categoria || '—'}</td>
+                    <td>{p.genero || '—'}</td>
+                    <td>{formatoFecha(p.fechaprueba)}</td>
+                    <td className="num">{p.cupo > 0 ? `${p.inscriptos} / ${p.cupo}` : p.inscriptos}</td>
+                    <td className="num">{p.listaEspera}</td>
+                    <td><MiniBarra pct={p.ocupacion} /></td>
+                    <td>
+                      {p.finalizada
+                        ? <span className="bo-badge bo-badge--off">Finalizada</span>
+                        : p.abierta
+                          ? <span className="bo-badge bo-badge--ok">Abierta</span>
+                          : <span className="bo-badge bo-badge--warn">Cerrada</span>}
+                    </td>
+                    <td>
+                      <button type="button" className="bo-btn" onClick={() => setExpandido(expandido === p.idprueba ? null : p.idprueba)}>
+                        {expandido === p.idprueba ? 'Ocultar' : 'Ver participantes'}
+                      </button>
+                    </td>
+                  </tr>
+                  {expandido === p.idprueba && (
+                    <tr>
+                      <td colSpan={9} style={{ padding: 0, border: 'none' }}>
+                        <PanelParticipantes
+                          tipo="prueba"
+                          id={p.idprueba}
+                          onInvitar={setInvitarA}
+                          onMensaje={setMensajeA}
+                          seleccionando={seleccionando}
+                          seleccionados={seleccionados}
+                          onToggleSeleccion={toggleSeleccion}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {mensajeA && (
+        <ModalContactoEntrenador
+          entrenadores={mensajeA}
+          onCerrar={() => setMensajeA(null)}
+          onEnviado={() => { setSeleccionados(new Map()); setSeleccionando(false); setMostrarAcciones(false) }}
+        />
+      )}
+      {invitarA && (
+        <ModalInvitarEvento
+          jugadores={invitarA}
+          datos={datos}
+          onCerrar={() => setInvitarA(null)}
+          onEnviado={() => { setSeleccionados(new Map()); setSeleccionando(false); setMostrarAcciones(false) }}
+        />
+      )}
     </>
   )
 }
