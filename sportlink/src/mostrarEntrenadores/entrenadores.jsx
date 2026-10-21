@@ -1,107 +1,154 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import api from '../axiosConfig.js'
-import '../entrenamientos/entrenamientos.css'
-import './entrenadores.css'
 import Footer from '../footer/footer.jsx'
-import Avatar from '../components/Avatar.jsx'
-import CustomSelect from '../components/CustomSelect.jsx'
-import { IconoUbicacion } from '../iconos/IconoUbicacion.jsx'
-import { IconoFutbol } from '../iconos/IconoFutbol.jsx'
-import { IconoBuscador } from '../iconos/IconoBuscador.jsx'
-import { IconoMedalla } from '../iconos/IconoMedalla.jsx'
-import { IconoModalidad } from '../iconos/IconoModalidad.jsx'
+import CarruselChips from '../components/CarruselChips.jsx'
+import useSeguidos from '../hooks/useSeguidos.js'
+import { iniciales, fechaLarga, precio } from '../utils/formato.js'
+import { formatearUbicacionCorta } from '../utils/mapUtils.js'
+import { haPasadoFecha } from '../utils/dateUtils.js'
+import '../pruebas/PruebasView.css'
+import '../mostrarClubes/ClubesView.css'
 
 
 // Lista de deportes para el filtro (misma que PaginaEntrenamientos)
-const deportesDisponibles = [
-  { id: 1, nombre: 'Fútbol' },
-  { id: 2, nombre: 'Basket' },
-  { id: 3, nombre: 'Tenis' },
-  { id: 4, nombre: 'Voley' },
-  { id: 5, nombre: 'Pádel' },
-  { id: 6, nombre: 'Rugby' },
-  { id: 7, nombre: 'Hockey' },
-  { id: 8, nombre: 'Natación' },
-  { id: 9, nombre: 'Atletismo' },
-  { id: 10, nombre: 'Ciclismo' },
-  { id: 11, nombre: 'Boxeo' },
-  { id: 12, nombre: 'Artes Marciales' },
-  { id: 13, nombre: 'Handball' },
-  { id: 14, nombre: 'Béisbol' },
-  { id: 15, nombre: 'Golf' },
-]
+const DEPORTES = ['Fútbol', 'Basket', 'Tenis', 'Voley', 'Pádel', 'Rugby', 'Hockey', 'Natación', 'Atletismo', 'Ciclismo', 'Boxeo', 'Artes Marciales', 'Handball', 'Béisbol', 'Golf']
 
-function EntrenadoresView(props) {
+const Flecha = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="square" />
+  </svg>
+)
+
+const nombreCompleto = (e) => [e.nombre, e.apellido].filter(Boolean).join(' ')
+const notaTexto = (n) => Number(n).toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+
+function EntrenadoresView({ usuario }) {
   const navigate = useNavigate()
-  const [Entrenadores, setEntrenadores] = useState([])
+  const [entrenadores, setEntrenadores] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  // ── Estado del popup de contacto ──
-  const [popupContacto, setPopupContacto] = useState(null) // { entrenador } | null
-  const [mensajeContacto, setMensajeContacto] = useState('')
-  const [enviandoContacto, setEnviandoContacto] = useState(false)
-  const [toastContacto, setToastContacto] = useState(null) // { nombre, conversacion } | null
+
+  // Datos reales extra: entrenamientos publicados y reseñas por entrenador
+  const [entrenamientosPorCoach, setEntrenamientosPorCoach] = useState({})
+  const [resenias, setResenias] = useState({}) // identrenador → { promedio, total }
 
   // Filtros
   const [busqueda, setBusqueda] = useState('')
   const [filtroDeporte, setFiltroDeporte] = useState('')
   const [filtroUbicacion, setFiltroUbicacion] = useState('')
 
-  // Sidebar accordion
-  const [sidebarExpandido, setSidebarExpandido] = useState({
-    deporte: true,
-    ubicacion: true,
-  })
+  // Seguir
+  const seguidosIniciales = useSeguidos(usuario)
+  const [cambiosSeguir, setCambiosSeguir] = useState({}) // idusuario → true/false tras seguir/dejar
+  const [siguiendoCargando, setSiguiendoCargando] = useState(null)
+  const seguidos = useMemo(() => {
+    const set = new Set(seguidosIniciales)
+    Object.entries(cambiosSeguir).forEach(([id, sigue]) => (sigue ? set.add(Number(id)) : set.delete(Number(id))))
+    return set
+  }, [seguidosIniciales, cambiosSeguir])
 
-  const toggleSidebarSeccion = (seccion) => {
-    setSidebarExpandido(prev => ({
-      ...prev,
-      [seccion]: !prev[seccion]
-    }))
-  }
+  // Detalle y contacto
+  const [seleccionado, setSeleccionado] = useState(null)
+  const [popupContacto, setPopupContacto] = useState(null)
+  const [mensajeContacto, setMensajeContacto] = useState('')
+  const [enviandoContacto, setEnviandoContacto] = useState(false)
+  const [errorContacto, setErrorContacto] = useState('')
+  const [toastContacto, setToastContacto] = useState(null)
+
 
   useEffect(() => {
     async function obtenerEntrenadores() {
       try {
-        const response = await api.get('/api/Entrenadores')
-        setEntrenadores(response.data)
+        const response = await api.get('/api/entrenadores')
+        const lista = Array.isArray(response.data) ? response.data : []
+        setEntrenadores(lista)
+
+        // Reseñas en segundo plano (si falla alguna, esa tarjeta no muestra nota)
+        Promise.allSettled(lista.map((e) => api.get(`/api/resenias/entrenador/${e.identrenador}`)))
+          .then((resultados) => {
+            const mapa = {}
+            resultados.forEach((r, i) => {
+              const d = r.status === 'fulfilled' ? r.value.data : null
+              if (d && Number(d.totalResenias) > 0) {
+                mapa[lista[i].identrenador] = { promedio: Number(d.promedio), total: Number(d.totalResenias) }
+              }
+            })
+            setResenias(mapa)
+          })
       } catch (err) {
         console.error(err)
-        setError('Error al obtener Entrenadores')
+        setError('No pudimos cargar los entrenadores. Probá de nuevo en un rato.')
       } finally {
         setLoading(false)
       }
     }
     obtenerEntrenadores()
+
+    api.get('/api/entrenamientos', { params: { limit: 200 } })
+      .then((res) => {
+        const items = Array.isArray(res.data) ? res.data : (res.data?.items || [])
+        const mapa = {}
+        items
+          .filter((e) => !haPasadoFecha(e.fechaentr, e.horafin))
+          .forEach((e) => {
+            const id = Number(e.identrenador)
+            if (!id) return
+            ;(mapa[id] ||= []).push(e)
+          })
+        setEntrenamientosPorCoach(mapa)
+      })
+      .catch(() => {})
   }, [])
 
-  // Filtrado local (misma lógica de siempre, sólo se filtra la presentación)
-  const entrenadoresFiltrados = Entrenadores
-    .filter(e => e.deportes && e.deportes.length > 0)
-    .filter(e => {
-      const coincideBusqueda =
-        !busqueda ||
-        `${e.nombre} ${e.apellido}`.toLowerCase().includes(busqueda.toLowerCase()) ||
-        e.ubicacion?.toLowerCase().includes(busqueda.toLowerCase()) ||
-        e.deportes?.some(d => d.deporte?.toLowerCase().includes(busqueda.toLowerCase()))
+  // Bloquea el scroll de fondo y cierra con Escape mientras hay un modal abierto
+  useEffect(() => {
+    if (!seleccionado && !popupContacto) return
+    const overflowOriginal = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const alPresionar = (e) => {
+      if (e.key !== 'Escape') return
+      if (popupContacto) setPopupContacto(null)
+      else setSeleccionado(null)
+    }
+    window.addEventListener('keydown', alPresionar)
+    return () => {
+      document.body.style.overflow = overflowOriginal
+      window.removeEventListener('keydown', alPresionar)
+    }
+  }, [seleccionado, popupContacto])
 
-      const coincideDeporte =
-        !filtroDeporte ||
-        e.deportes?.some(d => d.deporte === filtroDeporte)
 
-      const coincideUbicacion =
-        !filtroUbicacion ||
-        e.ubicacion?.toLowerCase().includes(filtroUbicacion.toLowerCase())
+  const conDeportes = entrenadores.filter((e) => e.deportes && e.deportes.length > 0)
 
+  const deportesPresentes = useMemo(() => {
+    const set = new Set()
+    entrenadores.forEach((e) => (e.deportes || []).forEach((d) => d?.deporte && set.add(d.deporte)))
+    return [...set].sort()
+  }, [entrenadores])
+
+  const texto = busqueda.trim().toLowerCase()
+  const entrenadoresFiltrados = conDeportes
+    .filter((e) => {
+      const coincideBusqueda = !texto ||
+        nombreCompleto(e).toLowerCase().includes(texto) ||
+        e.titulo?.toLowerCase().includes(texto) ||
+        e.ubicacion?.toLowerCase().includes(texto) ||
+        e.deportes?.some((d) => d.deporte?.toLowerCase().includes(texto))
+      const coincideDeporte = !filtroDeporte || e.deportes?.some((d) => d.deporte === filtroDeporte)
+      const coincideUbicacion = !filtroUbicacion || e.ubicacion?.toLowerCase().includes(filtroUbicacion.trim().toLowerCase())
       return coincideBusqueda && coincideDeporte && coincideUbicacion
     })
+    // Seguidos primero, después los que tienen entrenamientos publicados, después por nota
+    .sort((a, b) =>
+      (Number(seguidos.has(Number(b.idusuario))) - Number(seguidos.has(Number(a.idusuario)))) ||
+      ((entrenamientosPorCoach[b.identrenador]?.length || 0) - (entrenamientosPorCoach[a.identrenador]?.length || 0)) ||
+      ((resenias[b.identrenador]?.promedio || 0) - (resenias[a.identrenador]?.promedio || 0))
+    )
 
-  const aplicarFiltros = () => {
-    // Los filtros ya se aplican reactivamente, pero podemos forzar un re-render
-    // Este botón está aquí para ser consistente con la UI de entrenamientos/pruebas
-  }
+  const hayFiltros = !!(busqueda || filtroDeporte || filtroUbicacion)
 
   const restablecerFiltros = () => {
     setBusqueda('')
@@ -109,21 +156,42 @@ function EntrenadoresView(props) {
     setFiltroUbicacion('')
   }
 
+  const puedeSeguir = (e) => !!usuario?.idusuario && Number(e.idusuario) !== Number(usuario.idusuario)
+
+  const alternarSeguir = async (e) => {
+    if (!usuario) { navigate('/login'); return }
+    const id = Number(e.idusuario)
+    const sigue = seguidos.has(id)
+    setSiguiendoCargando(id)
+    try {
+      const { data } = sigue
+        ? await api.delete(`/api/seguidores/${id}`)
+        : await api.post(`/api/seguidores/${id}`)
+      const ahora = typeof data?.siguiendo === 'boolean' ? data.siguiendo : !sigue
+      setCambiosSeguir((prev) => ({ ...prev, [id]: ahora }))
+    } catch (err) {
+      console.error('No se pudo actualizar el seguimiento:', err)
+    } finally {
+      setSiguiendoCargando(null)
+    }
+  }
+
   // Botón Contactar: abre el popup para escribir el mensaje inicial
   const handleContactar = (entrenador) => {
-    if (!props.usuario) {
+    if (!usuario) {
       navigate('/login')
       return
     }
     setMensajeContacto('')
+    setErrorContacto('')
     setToastContacto(null)
     setPopupContacto({ entrenador })
   }
 
-  // Enviar el mensaje inicial desde el popup
   const handleEnviarContacto = async () => {
     if (!mensajeContacto.trim() || !popupContacto) return
     setEnviandoContacto(true)
+    setErrorContacto('')
     try {
       // 1. Crear o recuperar la conversación privada
       const { data: conversacion } = await api.post('/api/conversaciones/privada', {
@@ -133,417 +201,338 @@ function EntrenadoresView(props) {
       await api.post(`/api/conversaciones/${conversacion.idconversacion}/mensajes`, {
         contenido: mensajeContacto.trim()
       })
-      // 3. Cerrar popup y mostrar el cuadro verde debajo
-      const nombre = `${popupContacto.entrenador.nombre} ${popupContacto.entrenador.apellido}`
+      const nombre = nombreCompleto(popupContacto.entrenador)
       setPopupContacto(null)
       setMensajeContacto('')
       setToastContacto({ nombre, conversacion })
     } catch (err) {
       console.error('Error al enviar mensaje:', err)
-      alert('No se pudo enviar el mensaje. Intentá de nuevo.')
+      setErrorContacto('No se pudo enviar el mensaje. Probá de nuevo.')
     } finally {
       setEnviandoContacto(false)
     }
   }
 
-  // Bloquear scroll del body mientras el popup está abierto
-  useEffect(() => {
-    if (popupContacto) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => { document.body.style.overflow = '' }
-  }, [popupContacto])
+  const renderAvatar = (e, grande = false) => (
+    <span className={`pr-avatar${grande ? ' pr-avatar--lg' : ''}`} aria-hidden="true">
+      {e.fotoperfil ? <img src={e.fotoperfil} alt="" /> : iniciales(nombreCompleto(e))}
+    </span>
+  )
 
-  if (loading) {
+  const renderBotonSeguir = (e) => {
+    if (!puedeSeguir(e)) return null
+    const sigue = seguidos.has(Number(e.idusuario))
     return (
-      <div className="pagina-entrenamientos">
-        <div className="entrenadores-loading-box">
-          <div className="entrenadores-spinner"></div>
-          <span>Cargando entrenadores...</span>
-        </div>
-      </div>
+      <button
+        className={`pr-btn pr-btn--ghost cl-follow${sigue ? ' is-on' : ''}`}
+        onClick={() => alternarSeguir(e)}
+        disabled={siguiendoCargando === Number(e.idusuario)}
+        aria-pressed={sigue}
+      >
+        {sigue ? 'Siguiendo' : 'Seguir'}
+      </button>
     )
   }
 
-  if (error) {
-    return (
-      <div className="pagina-entrenamientos">
-        <div className="entrenadores-error-box">
-          <span style={{ fontSize: '48px' }}>⚠️</span>
-          <p>{error}</p>
-        </div>
-      </div>
-    )
-  }
+  const subtitulo = (e) =>
+    e.titulo || formatearUbicacionCorta(e.ubicacion) || 'Entrenador'
+
+  const entrenamientosDelSeleccionado = seleccionado ? (entrenamientosPorCoach[seleccionado.identrenador] || []) : []
+  const reseniaSeleccionado = seleccionado ? resenias[seleccionado.identrenador] : null
+
 
   return (
-    <>
-      {/* ═══ POPUP DE CONTACTO — Portal sobre document.body ═══ */}
-      {popupContacto && createPortal(
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            backdropFilter: 'blur(4px)',
-          }}
-          onClick={(e) => { if (e.target === e.currentTarget) setPopupContacto(null) }}
-        >
-          <div
-            style={{
-              position: 'relative',
-              backgroundColor: '#1a1d1e',
-              border: '1px solid #2d3032',
-              borderRadius: '12px',
-              padding: '32px',
-              width: '90%',
-              maxWidth: '460px',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-              color: '#fff',
-              fontFamily: 'inherit',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Botón cerrar */}
-            <button
-              aria-label="Cerrar"
-              onClick={() => setPopupContacto(null)}
-              style={{
-                position: 'absolute',
-                top: '12px',
-                right: '12px',
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                border: '1px solid rgba(255,255,255,0.12)',
-                background: 'transparent',
-                color: '#8b949e',
-                fontSize: '15px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                lineHeight: 1,
-              }}
-            >✕</button>
+    <div className="pr">
+      {/* ── Encabezado ── */}
+      <section className="pr-head">
+        <div className="pr-wrap pr-head-grid">
+          <div>
+            <h1 className="pr-display pr-title">Entrenadores</h1>
+            <p className="pr-lead">
+              Profesionales de cada disciplina, con sus entrenamientos publicados y las reseñas
+              de sus alumnos. Seguilos o escribiles directo.
+            </p>
+          </div>
+          <div className="pr-head-side">
+            <label className="pr-search">
+              <span className="pr-sr">Buscar entrenadores</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" strokeLinecap="square" />
+              </svg>
+              <input
+                type="search"
+                placeholder="Buscar por nombre, especialidad o zona"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+              />
+            </label>
+          </div>
+        </div>
+      </section>
 
-            {/* Cabecera */}
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{ marginBottom: '10px' }}>
-                <svg viewBox="0 0 24 24" width="34" height="34" stroke="#2DEFF2" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                  <polyline points="22,6 12,13 2,6"></polyline>
-                </svg>
+      {/* ── Filtros ── */}
+      <section className="pr-filters" aria-label="Filtros">
+        <div className="pr-wrap">
+          <CarruselChips ariaLabel="Deporte" deps={[entrenadores.length]}>
+            <button className={`pr-chip${filtroDeporte === '' ? ' is-on' : ''}`} aria-pressed={filtroDeporte === ''} onClick={() => setFiltroDeporte('')}>
+              Todos
+            </button>
+            {(deportesPresentes.length ? deportesPresentes : DEPORTES).map((d) => (
+              <button key={d} className={`pr-chip${filtroDeporte === d ? ' is-on' : ''}`} aria-pressed={filtroDeporte === d} onClick={() => setFiltroDeporte(d)}>
+                {d}
+              </button>
+            ))}
+          </CarruselChips>
+
+          <div className="pr-fields">
+            <label className="pr-field">
+              <span>Ubicación</span>
+              <input type="text" placeholder="Ej. Palermo" value={filtroUbicacion} onChange={(e) => setFiltroUbicacion(e.target.value)} />
+            </label>
+            {hayFiltros && (
+              <button className="pr-link pr-clear" onClick={restablecerFiltros}>Limpiar filtros</button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Resultados ── */}
+      <section className="pr-results">
+        <div className="pr-wrap">
+          {!loading && !error && entrenadoresFiltrados.length > 0 && (
+            <p className="pr-count">
+              {entrenadoresFiltrados.length} {entrenadoresFiltrados.length === 1 ? 'entrenador' : 'entrenadores'}
+              {seguidos.size > 0 ? ' · los que seguís aparecen primero' : ''}
+            </p>
+          )}
+
+          {loading ? (
+            <div className="pr-grid" aria-busy="true" aria-label="Cargando entrenadores">
+              {[0, 1, 2].map((i) => <div key={i} className="pr-card pr-card--skeleton cl-skeleton" />)}
+            </div>
+          ) : error ? (
+            <div className="pr-empty">
+              <h2 className="pr-display pr-empty-title">No pudimos cargar los entrenadores</h2>
+              <p>{error}</p>
+              <button className="pr-btn pr-btn--ink" onClick={() => window.location.reload()}>Reintentar</button>
+            </div>
+          ) : entrenadoresFiltrados.length === 0 ? (
+            <div className="pr-empty">
+              <h2 className="pr-display pr-empty-title">No hay entrenadores con estos filtros</h2>
+              <p>Probá con otro deporte o una zona más amplia.</p>
+              <button className="pr-btn pr-btn--ink" onClick={restablecerFiltros}>Limpiar filtros</button>
+            </div>
+          ) : (
+            <ul className="pr-grid">
+              {entrenadoresFiltrados.map((e) => {
+                const deportes = (e.deportes || []).map((d) => d.deporte).filter(Boolean)
+                const nEntr = entrenamientosPorCoach[e.identrenador]?.length || 0
+                const r = resenias[e.identrenador]
+                const sigue = seguidos.has(Number(e.idusuario))
+                return (
+                  <li key={e.identrenador} className="pr-card">
+                    <div className="pr-card-head cl-card-head">
+                      {renderAvatar(e)}
+                      <div className="pr-card-id">
+                        <h3>{nombreCompleto(e)}</h3>
+                        <p>{subtitulo(e)}</p>
+                      </div>
+                    </div>
+
+                    {(r || nEntr > 0 || sigue || e.tieneclub) && (
+                      <div className="pr-tags">
+                        {r && <span className="cl-tag-rate">★ {notaTexto(r.promedio)} · {r.total} {r.total === 1 ? 'reseña' : 'reseñas'}</span>}
+                        {nEntr > 0 && <span className="cl-tag-live">{nEntr} {nEntr === 1 ? 'entrenamiento' : 'entrenamientos'}</span>}
+                        {e.tieneclub && <span>Trabaja con un club</span>}
+                        {sigue && <span>Lo seguís</span>}
+                      </div>
+                    )}
+
+                    {deportes.length > 0 && (
+                      <div className="cl-sports" aria-label="Deportes">
+                        {deportes.slice(0, 4).map((d) => <span key={d}>{d}</span>)}
+                        {deportes.length > 4 && <span>+{deportes.length - 4}</span>}
+                      </div>
+                    )}
+
+                    {(e.ubicacion || e.experiencia) && (
+                      <dl className="pr-facts">
+                        {e.ubicacion && (
+                          <div><dt>Zona</dt><dd>{formatearUbicacionCorta(e.ubicacion) || e.ubicacion}</dd></div>
+                        )}
+                        {e.experiencia && (
+                          <div><dt>Experiencia</dt><dd>{e.experiencia}</dd></div>
+                        )}
+                      </dl>
+                    )}
+
+                    <div className="pr-card-foot cl-card-foot">
+                      <button className="pr-btn pr-btn--ink" onClick={() => setSeleccionado(e)}>
+                        Ver entrenador
+                      </button>
+                      {renderBotonSeguir(e)}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      <Footer />
+
+      {/* ── Detalle del entrenador ── */}
+      {seleccionado && createPortal(
+        <div className="pr-overlay" onClick={() => setSeleccionado(null)}>
+          <div className="pr-modal" role="dialog" aria-modal="true" aria-labelledby="en-detalle-titulo" onClick={(ev) => ev.stopPropagation()}>
+            <header className="pr-modal-head cl-modal-head">
+              {renderAvatar(seleccionado, true)}
+              <div className="pr-card-id">
+                <h2 id="en-detalle-titulo" className="pr-modal-title">{nombreCompleto(seleccionado)}</h2>
+                <p>{subtitulo(seleccionado)}</p>
               </div>
-              <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: '0 0 6px',letterSpacing:0 }}>
-                Contactar a {popupContacto.entrenador.nombre} {popupContacto.entrenador.apellido}
-              </h2>
-              <p style={{ fontSize: '13px', color: '#8b949e', margin: 0, lineHeight: 1.5 }}>
-                Escribí tu mensaje inicial y lo recibirá directamente en su bandeja.
-              </p>
+              <button className="pr-close" onClick={() => setSeleccionado(null)} aria-label="Cerrar">×</button>
+            </header>
+
+            <div className="pr-modal-body">
+              <dl className="pr-facts">
+                <div>
+                  <dt>Deportes</dt>
+                  <dd>{(seleccionado.deportes || []).map((d) => d.deporte).filter(Boolean).join(', ') || 'A confirmar'}</dd>
+                </div>
+                <div><dt>Zona</dt><dd>{formatearUbicacionCorta(seleccionado.ubicacion) || seleccionado.ubicacion || 'A confirmar'}</dd></div>
+                {seleccionado.experiencia && <div><dt>Experiencia</dt><dd>{seleccionado.experiencia}</dd></div>}
+                <div>
+                  <dt>Reseñas</dt>
+                  <dd>
+                    {reseniaSeleccionado
+                      ? `★ ${notaTexto(reseniaSeleccionado.promedio)} · ${reseniaSeleccionado.total} ${reseniaSeleccionado.total === 1 ? 'reseña' : 'reseñas'}`
+                      : 'Todavía sin reseñas'}
+                  </dd>
+                </div>
+              </dl>
+
+              {seleccionado.descripcion && (
+                <div className="pr-block">
+                  <h3>Sobre {seleccionado.nombre}</h3>
+                  <p className="pr-desc">{seleccionado.descripcion}</p>
+                </div>
+              )}
+
+              <div className="pr-block">
+                <h3>Entrenamientos publicados</h3>
+                {entrenamientosDelSeleccionado.length === 0 ? (
+                  <p className="pr-muted">No tiene entrenamientos publicados en este momento.</p>
+                ) : (
+                  <ul className="cl-pruebas">
+                    {entrenamientosDelSeleccionado.map((ent) => {
+                      const id = ent.identrenamientos ?? ent.id
+                      return (
+                        <li key={id}>
+                          <button onClick={() => { setSeleccionado(null); navigate(`/entrenamientos/${id}`) }}>
+                            <span>
+                              <strong>{ent.titulo || `Entrenamiento de ${(ent.deportes?.deporte || '').toLowerCase()}`}</strong>
+                              <span>
+                                {fechaLarga(ent.fechaentr, ent.horainicio, ent.horafin)}
+                                {precio(ent.precio) ? ` · ${precio(ent.precio)}` : ''}
+                              </span>
+                            </span>
+                            <Flecha />
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              {seleccionado.cv && (
+                <a className="pr-link" href={seleccionado.cv} target="_blank" rel="noopener noreferrer">
+                  Ver CV <Flecha />
+                </a>
+              )}
             </div>
 
-            {/* Textarea */}
-            <textarea
-              className="contacto-modal-textarea"
-              placeholder={`Hola ${popupContacto.entrenador.nombre}, me interesa...`}
-              value={mensajeContacto}
-              onChange={(e) => setMensajeContacto(e.target.value)}
-              rows={4}
-              autoFocus
-              maxLength={500}
-              onKeyDown={(e) => { if (e.key === 'Enter' && e.ctrlKey) handleEnviarContacto() }}
-            />
-            <div style={{ textAlign: 'right', fontSize: '11px', color: '#8b949e', margin: '4px 2px 16px' }}>
-              {mensajeContacto.length}/500
-            </div>
-
-            {/* Acciones */}
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <footer className="pr-modal-foot">
               <button
-                onClick={() => setPopupContacto(null)}
-                disabled={enviandoContacto}
-                style={{
-                  flex: 1,
-                  padding: '11px',
-                  background: 'transparent',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
-                  color: '#8b949e',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  opacity: enviandoContacto ? 0.45 : 1,
+                className="pr-btn pr-btn--ghost"
+                onClick={() => {
+                  const id = seleccionado.idusuario
+                  setSeleccionado(null)
+                  navigate(`/perfil/${id}`)
                 }}
               >
-                Cancelar
+                Ver perfil
               </button>
-              <button
-                onClick={handleEnviarContacto}
-                disabled={!mensajeContacto.trim() || enviandoContacto}
-                style={{
-                  flex: 2,
-                  padding: '11px',
-                  background: 'var(--primary, #2DEFF2)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: '#000',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  cursor: !mensajeContacto.trim() || enviandoContacto ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                  opacity: !mensajeContacto.trim() || enviandoContacto ? 0.45 : 1,
-                }}
-              >
-                {enviandoContacto ? 'Enviando...' : 'Enviar mensaje'}
+              {renderBotonSeguir(seleccionado)}
+              <button className="pr-btn" onClick={() => handleContactar(seleccionado)}>
+                Contactar <Flecha />
               </button>
-            </div>
+            </footer>
           </div>
         </div>,
         document.body
       )}
-      {/* ═══ CUADRO VERDE DE ÉXITO — fijo abajo, portal ═══ */}
-      {toastContacto && createPortal(
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '28px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 9998,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            whiteSpace: 'nowrap',
-            backgroundColor: '#0d1f14',
-            border: '1px solid #22c55e',
-            borderRadius: '8px',
-            padding: '11px 14px',
-            fontSize: '14px',
-            color: '#86efac',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-            fontFamily: 'inherit',
-          }}
-        >
-          <span>¡Mensaje enviado con éxito!</span>
-          <span
-            onClick={() => {
-              setToastContacto(null)
-              navigate('/mensajes', { state: { conversacionInicial: toastContacto.conversacion } })
-            }}
-            style={{
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              fontWeight: 600,
-              color: '#4ade80',
-            }}
-          >
-            Hacé click aquí para ir al chat
-          </span>
-          <button
-            aria-label="Cerrar"
-            onClick={() => setToastContacto(null)}
-            style={{
-              marginLeft: '8px',
-              background: 'transparent',
-              border: 'none',
-              color: '#86efac',
-              fontSize: '16px',
-              cursor: 'pointer',
-              lineHeight: 1,
-              padding: 0,
-              flexShrink: 0,
-            }}
-          >✕</button>
+
+      {/* ── Contactar ── */}
+      {popupContacto && createPortal(
+        <div className="pr-overlay cl-overlay-top" onClick={() => !enviandoContacto && setPopupContacto(null)}>
+          <div className="pr-modal pr-modal--sm" role="dialog" aria-modal="true" aria-labelledby="en-contacto-titulo" onClick={(ev) => ev.stopPropagation()}>
+            <header className="pr-modal-head cl-modal-head--simple">
+              <h2 id="en-contacto-titulo" className="pr-modal-title">Escribirle a {nombreCompleto(popupContacto.entrenador)}</h2>
+              <button className="pr-close" onClick={() => setPopupContacto(null)} aria-label="Cerrar">×</button>
+            </header>
+            <div className="pr-modal-body">
+              <label className="cl-message">
+                <span>Tu mensaje le llega directo a su bandeja.</span>
+                <textarea
+                  placeholder={`Hola ${popupContacto.entrenador.nombre || ''}, me interesa…`}
+                  value={mensajeContacto}
+                  onChange={(ev) => setMensajeContacto(ev.target.value)}
+                  rows={5}
+                  autoFocus
+                  maxLength={500}
+                  onKeyDown={(ev) => { if (ev.key === 'Enter' && ev.ctrlKey) handleEnviarContacto() }}
+                />
+                <small>{mensajeContacto.length}/500 · Ctrl + Enter para enviar</small>
+              </label>
+              {errorContacto && <p className="pr-error">{errorContacto}</p>}
+            </div>
+            <footer className="pr-modal-foot">
+              <button className="pr-btn pr-btn--ghost" onClick={() => setPopupContacto(null)} disabled={enviandoContacto}>Cancelar</button>
+              <button className="pr-btn" onClick={handleEnviarContacto} disabled={!mensajeContacto.trim() || enviandoContacto}>
+                {enviandoContacto ? 'Enviando…' : 'Enviar mensaje'}
+              </button>
+            </footer>
+          </div>
         </div>,
         document.body
       )}
 
-      <div className="pagina-entrenamientos">
-        <div className="entrenamientos-layout">
-
-          {/* ═══════════════════════════════════════════════════
-              SIDEBAR FILTROS
-              ═══════════════════════════════════════════════════ */}
-          <aside className="filtros-sidebar">
-            <div>
-              <h2 className="filtros-titulo">Filtros</h2>
-              <p className="filtros-subtitulo">Refiná tu búsqueda</p>
-            </div>
-
-            {/* Filtro Deporte */}
-            <div className="filtro-grupo">
-              <div
-                className={`filtro-header ${sidebarExpandido.deporte ? 'abierto' : ''}`}
-                onClick={() => toggleSidebarSeccion('deporte')}
-              >
-                <span><IconoFutbol size={16} color="currentColor" className="icon-small" /> Deportes</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </div>
-              <div className={`filtro-contenido-wrapper ${sidebarExpandido.deporte ? 'open' : ''}`}>
-                <div className="filtro-contenido">
-                  <CustomSelect
-                    value={filtroDeporte}
-                    onChange={(e) => setFiltroDeporte(e.target.value)}
-                    placeholder="Todos los deportes"
-                    options={deportesDisponibles.map(d => ({ value: d.nombre, label: d.nombre }))}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Filtro Ubicación */}
-            <div className="filtro-grupo">
-              <div
-                className={`filtro-header ${sidebarExpandido.ubicacion ? 'abierto' : ''}`}
-                onClick={() => toggleSidebarSeccion('ubicacion')}
-              >
-                <span><IconoUbicacion size={16} color="currentColor" className="icon-small" /> Ubicación</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </div>
-              <div className={`filtro-contenido-wrapper ${sidebarExpandido.ubicacion ? 'open' : ''}`}>
-                <div className="filtro-contenido">
-                  <input
-                    type="text"
-                    className="filtro-input"
-                    placeholder="ej. Buenos Aires"
-                    value={filtroUbicacion}
-                    onChange={(e) => setFiltroUbicacion(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button className="btn-aplicar-filtros" onClick={aplicarFiltros}>
-              Aplicar Filtros
-            </button>
-            <button type="button" className="btn-reset-filtros" onClick={restablecerFiltros}>
-              Restablecer filtros
-            </button>
-          </aside>
-
-          {/* ═══════════════════════════════════════════════════
-              CONTENIDO PRINCIPAL
-              ═══════════════════════════════════════════════════ */}
-          <main className="entrenamientos-main">
-
-            <div className="entrenamientos-header">
-              <h1 className="entrenamientos-titulo-principal">Entrenadores</h1>
-              <p className="entrenamientos-descripcion">
-                Encontrá el entrenador ideal para potenciar tu rendimiento deportivo.
-              </p>
-            </div>
-
-            {/* Barra de Búsqueda */}
-            <div className="buscador-container">
-              <IconoBuscador size={16} color="currentColor" className="icon-small buscador-img" />
-              <input
-                type="text"
-                className="buscador-input"
-                placeholder="Buscar entrenadores, deportes, ubicación..."
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-              />
-            </div>
-
-            {/* Grilla de tarjetas */}
-            <div className="grid-entrenadores">
-              {entrenadoresFiltrados.length === 0 ? (
-                <div className="entrenadores-empty">
-                  <p>No se encontraron entrenadores con los filtros aplicados.</p>
-                </div>
-              ) : (
-                entrenadoresFiltrados.map((Entrenador) => (
-                <div key={Entrenador.identrenador} className="card-entrenador">
-
-                  {/* ── Imagen (mitad superior) ── */}
-                  <div className="card-entrenador-imagen">
-                    <Avatar 
-                      src={Entrenador.fotoperfil} 
-                      nombre={Entrenador.nombre} 
-                      size="100%" 
-                      style={{ borderRadius: 0, fontSize: '4rem' }} 
-                    />
-                    <div className="card-entrenador-imagen-overlay" aria-hidden="true" />
-                    {Entrenador.tieneclub && (
-                      <span className="badge-recomendado">RECOMENDADO</span>
-                    )}
-                  </div>
-
-                  {/* ── Cuerpo ── */}
-                  <div className="card-entrenador-body">
-                    <h2 className="card-entrenador-nombre">
-                      {Entrenador.nombre} {Entrenador.apellido}
-                    </h2>
-
-                    {Entrenador.titulo && (
-                      <p className="card-entrenador-titulo">{Entrenador.titulo}</p>
-                    )}
-
-                    {/* Píldoras de info */}
-                    <div className="card-entrenador-pills">
-                      {Entrenador.deportes.map((d, idx) => (
-                        <span key={idx} className="pill-info">
-                          <IconoMedalla size={14} color="currentColor" className="pill-icon" />
-                          {d.deporte}
-                        </span>
-                      ))}
-                      {Entrenador.experiencia && (
-                        <span className="pill-info">
-                          <IconoModalidad size={14} color="currentColor" className="pill-icon" />
-                          {Entrenador.experiencia}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Ubicación */}
-                    {Entrenador.ubicacion && (
-                      <p className="card-entrenador-ubicacion">
-                        <IconoUbicacion size={16} color="currentColor" className="pill-icon" />
-                        {Entrenador.ubicacion}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* ── Botones de acción ── */}
-                  <div className="card-entrenador-acciones">
-                    <button 
-                      className="btn-entrenador-perfil"
-                      onClick={() => navigate(`/perfil/${Entrenador.idusuario}`)}
-                    >
-                      Perfil
-                    </button>
-                    <button
-                      className="btn-entrenador-contactar"
-                      onClick={() => handleContactar(Entrenador)}
-                    >
-                      Contactar
-                    </button>
-                  </div>
-
-                </div>
-                ))
-              )}
-            </div>
-
-          </main>
-        </div>
-      </div>
-      <Footer />
-    </>
+      {/* ── Mensaje enviado ── */}
+      {toastContacto && createPortal(
+        <div className="pr-toast" role="status">
+          <div>
+            <p className="pr-toast-titulo">Mensaje enviado a {toastContacto.nombre}</p>
+            <p className="pr-toast-texto">Seguí la conversación desde tus mensajes.</p>
+          </div>
+          <button
+            className="pr-btn"
+            onClick={() => {
+              const conversacion = toastContacto.conversacion
+              setToastContacto(null)
+              navigate('/mensajes', { state: { conversacionInicial: conversacion } })
+            }}
+          >
+            Ir al chat
+          </button>
+        </div>,
+        document.body
+      )}
+    </div>
   )
 }
+
 
 export default EntrenadoresView

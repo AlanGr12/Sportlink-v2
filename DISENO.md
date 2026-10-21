@@ -2,8 +2,8 @@
 
 Guía del diseño aprobado para SportLink (red tipo LinkedIn para **jugadores, entrenadores y clubes**, Argentina). Cualquier vista nueva o rediseñada tiene que seguir esto **al pie de la letra**. Si algo no está acá, mirá cómo está resuelto en las vistas ya migradas y copiá ese criterio.
 
-Vistas ya migradas (referencia viva): **Landing** (`src/info/`), **Pruebas** (`src/pruebas/`), **Entrenamientos** (`src/entrenamientos/`).
-Todo lo demás (feed, perfil, clubes, entrenadores, calendario, mensajes, empleos, ajustes, registro, admin) **todavía usa el diseño viejo oscuro** y se migra de a una vista, mostrándosela al dueño antes de seguir.
+Vistas ya migradas (referencia viva): **Landing** (`src/info/`), **Pruebas** (`src/pruebas/`), **Entrenamientos** (`src/entrenamientos/`), **Clubes** (`src/mostrarClubes/`), **Entrenadores** (`src/mostrarEntrenadores/`).
+Todo lo demás (feed, perfil, jugadores, calendario, mensajes, empleos, ajustes, registro, admin) **todavía usa el diseño viejo oscuro** y se migra de a una vista, mostrándosela al dueño antes de seguir.
 
 ---
 
@@ -98,6 +98,9 @@ Reglas generales: separar superficies por **tono**, no por líneas finas (las ta
 3. `.pr-results`: contador ("6 pruebas · las de clubes que seguís aparecen primero"), grilla de tarjetas, vacío/carga/error, paginación `.pr-pager` si hace falta.
 4. Footer compartido.
 5. Modales por portal: detalle, crear/editar, confirmaciones.
+
+### Variante: listado de perfiles (Clubes)
+Misma estructura, pero la tarjeta muestra **identidad** en vez de un evento: avatar + nombre + ubicación, etiquetas (`N pruebas abiertas` en cian suave, `Lo seguís`), deportes como etiquetas tono step (no interactivas), descripción recortada a 3 líneas, y pie con `Ver club` (tinta) + `Seguir`/`Siguiendo` (ghost; activo en tono step). Orden: los seguidos primero, después los que tienen pruebas abiertas. El detalle muestra deportes, "Acerca del club", historia/premios **solo si hay datos**, sus pruebas abiertas como filas que llevan a `/pruebas/:id`, mapa de la sede si hay coordenadas, y acciones Ver perfil · Seguir · Contactar (cian). Contactar abre un modal chico con textarea (500 caracteres, Ctrl+Enter) y al enviar muestra un toast con "Ir al chat". Estilos en `src/mostrarClubes/ClubesView.css` (prefijo `cl-`), que **Entrenadores** importa tal cual. En Entrenadores la tarjeta suma la nota real (`★ 4,8 · 12 reseñas`, etiqueta tinta, de `GET /api/resenias/entrenador/:identrenador`), la cantidad de entrenamientos publicados (de `GET /api/entrenamientos`), "Trabaja con un club" (`tieneclub`) y datos Zona/Experiencia; el detalle lista sus entrenamientos (llevan a `/entrenamientos/:id`) y el CV si tiene. **Jugadores** debería usar esta misma variante.
 
 ## 6. Landing (`src/info/InfoView.jsx`, rutas `/` sin sesión, `/info`, `/landing`)
 

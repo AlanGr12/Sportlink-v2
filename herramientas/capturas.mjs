@@ -1,6 +1,7 @@
 // Capturas reales de la app para verificar diseño (ver DISENO.md §9).
 // Uso: node herramientas/capturas.mjs <url> <ancho> <alto> <salida-prefijo> <ms1,ms2,...> [js-después-de-cargar]
 //   MOCK=archivo.json  → responde la API local (localhost:3000) con datos de ejemplo
+//                       (claves: pruebas, inscritos, entrenamientos, inscritosEntr, perfil, rutas{'/api/x': respuesta})
 //   SETUP="js"         → corre antes de cada carga (tema, sesión simulada en localStorage)
 //   BROWSER=ruta       → ejecutable de Edge/Chrome (por defecto Edge en Windows)
 // Abre el navegador headless por CDP y captura el viewport en tiempo real en cada instante pedido.
@@ -38,7 +39,8 @@ if (process.env.MOCK) {
     if (d.method !== 'Fetch.requestPaused') return;
     const u = new URL(d.params.request.url);
     let body = [];
-    if (u.pathname === '/api/pruebas' || u.pathname === '/api/pruebas/deporte') body = mock.pruebas;
+    if (mock.rutas && u.pathname in mock.rutas) body = mock.rutas[u.pathname];
+    else if (u.pathname === '/api/pruebas' || u.pathname === '/api/pruebas/deporte') body = mock.pruebas;
     else if (u.pathname.startsWith('/api/login/perfil')) body = mock.perfil || {};
     else if (['/api/entrenamientos', '/api/entrenamientos/deporte', '/api/entrenamientos/mios'].includes(u.pathname)) body = mock.entrenamientos || [];
     else if (u.pathname === '/api/inscripcionesentrenamientos') {

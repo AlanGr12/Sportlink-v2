@@ -1,135 +1,141 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import api from '../axiosConfig.js'
-import '../entrenamientos/entrenamientos.css'
-import './clubes.css'
 import Footer from '../footer/footer.jsx'
-import Avatar from '../components/Avatar.jsx'
-import CustomSelect from '../components/CustomSelect.jsx'
-import { IconoUbicacion } from '../iconos/IconoUbicacion.jsx'
-import { IconoFutbol } from '../iconos/IconoFutbol.jsx'
-import { IconoBuscador } from '../iconos/IconoBuscador.jsx'
-import { IconoMedalla } from '../iconos/IconoMedalla.jsx'
+import CarruselChips from '../components/CarruselChips.jsx'
+import MapaUbicacionDark from '../components/maps/MapaUbicacionDark.jsx'
+import useSeguidos from '../hooks/useSeguidos.js'
+import { iniciales, fechaLarga } from '../utils/formato.js'
+import { formatearUbicacionCorta } from '../utils/mapUtils.js'
+import { haPasadoFecha } from '../utils/dateUtils.js'
+import '../pruebas/PruebasView.css'
+import './ClubesView.css'
 
 
 // Misma lista de deportes usada en Entrenamientos y Entrenadores
-const deportesDisponibles = [
-  { id: 1, nombre: 'Fútbol' },
-  { id: 2, nombre: 'Basket' },
-  { id: 3, nombre: 'Tenis' },
-  { id: 4, nombre: 'Voley' },
-  { id: 5, nombre: 'Pádel' },
-  { id: 6, nombre: 'Rugby' },
-  { id: 7, nombre: 'Hockey' },
-  { id: 8, nombre: 'Natación' },
-  { id: 9, nombre: 'Atletismo' },
-  { id: 10, nombre: 'Ciclismo' },
-  { id: 11, nombre: 'Boxeo' },
-  { id: 12, nombre: 'Artes Marciales' },
-  { id: 13, nombre: 'Handball' },
-  { id: 14, nombre: 'Béisbol' },
-  { id: 15, nombre: 'Golf' },
-]
+const DEPORTES = ['Fútbol', 'Basket', 'Tenis', 'Voley', 'Pádel', 'Rugby', 'Hockey', 'Natación', 'Atletismo', 'Ciclismo', 'Boxeo', 'Artes Marciales', 'Handball', 'Béisbol', 'Golf']
+
+const Flecha = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="square" />
+  </svg>
+)
+
+const tieneCoordenadas = (lat, lon) =>
+  lat !== null && lat !== undefined && lat !== '' && !isNaN(Number(lat)) &&
+  lon !== null && lon !== undefined && lon !== '' && !isNaN(Number(lon)) &&
+  (Number(lat) !== 0 || Number(lon) !== 0)
 
 
-function ClubesView(props) {
+function ClubesView({ usuario }) {
   const navigate = useNavigate()
   const [clubes, setClubes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [contactando, setContactando] = useState(null)
 
+  // Pruebas abiertas por club (dato real de /api/pruebas; si falla, no se muestra)
+  const [pruebasPorClub, setPruebasPorClub] = useState({})
 
   // Filtros
   const [busqueda, setBusqueda] = useState('')
   const [filtroDeporte, setFiltroDeporte] = useState('')
   const [filtroUbicacion, setFiltroUbicacion] = useState('')
 
+  // Seguir clubes
+  const seguidosIniciales = useSeguidos(usuario)
+  const [cambiosSeguir, setCambiosSeguir] = useState({}) // idusuario → true/false tras seguir/dejar
+  const [siguiendoCargando, setSiguiendoCargando] = useState(null)
+  const seguidos = useMemo(() => {
+    const set = new Set(seguidosIniciales)
+    Object.entries(cambiosSeguir).forEach(([id, sigue]) => (sigue ? set.add(Number(id)) : set.delete(Number(id))))
+    return set
+  }, [seguidosIniciales, cambiosSeguir])
 
-  // Sidebar accordion
-  const [sidebarExpandido, setSidebarExpandido] = useState({
-    deporte: true,
-    ubicacion: true,
-  })
-
-
-  // Modal de detalle
-  const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false)
+  // Detalle
   const [clubSeleccionado, setClubSeleccionado] = useState(null)
-  const [historiaExpandida, setHistoriaExpandida] = useState(false)
-  const [premiosExpandidos, setPremiosExpandidos] = useState(false)
 
-  // ── Estado del popup de contacto ──
+  // Contacto
   const [popupContacto, setPopupContacto] = useState(null)
   const [mensajeContacto, setMensajeContacto] = useState('')
   const [enviandoContacto, setEnviandoContacto] = useState(false)
+  const [errorContacto, setErrorContacto] = useState('')
   const [toastContacto, setToastContacto] = useState(null)
-
-
-  const toggleSidebarSeccion = (seccion) => {
-    setSidebarExpandido(prev => ({
-      ...prev,
-      [seccion]: !prev[seccion]
-    }))
-  }
 
 
   useEffect(() => {
     async function obtenerClubes() {
       try {
         const response = await api.get('/api/clubes')
-        setClubes(response.data)
+        setClubes(Array.isArray(response.data) ? response.data : [])
       } catch (err) {
         console.error(err)
-        setError('Error al obtener clubes')
+        setError('No pudimos cargar los clubes. Probá de nuevo en un rato.')
       } finally {
         setLoading(false)
       }
     }
     obtenerClubes()
+
+    api.get('/api/pruebas')
+      .then((res) => {
+        const mapa = {}
+        ;(Array.isArray(res.data) ? res.data : [])
+          .filter((p) => !haPasadoFecha(p.fechaprueba, p.horafin))
+          .forEach((p) => {
+            const id = Number(p.club?.idclub ?? p.idclub)
+            if (!id) return
+            ;(mapa[id] ||= []).push(p)
+          })
+        setPruebasPorClub(mapa)
+      })
+      .catch(() => {})
   }, [])
 
-
-  // Bloquea el scroll de fondo mientras un modal o popup está abierto
+  // Bloquea el scroll de fondo y cierra con Escape mientras hay un modal abierto
   useEffect(() => {
-    if (modalDetalleAbierto || popupContacto) {
-      const overflowOriginal = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
-      return () => {
-        document.body.style.overflow = overflowOriginal
-      }
+    if (!clubSeleccionado && !popupContacto) return
+    const overflowOriginal = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const alPresionar = (e) => {
+      if (e.key !== 'Escape') return
+      if (popupContacto) setPopupContacto(null)
+      else setClubSeleccionado(null)
     }
-  }, [modalDetalleAbierto, popupContacto])
+    window.addEventListener('keydown', alPresionar)
+    return () => {
+      document.body.style.overflow = overflowOriginal
+      window.removeEventListener('keydown', alPresionar)
+    }
+  }, [clubSeleccionado, popupContacto])
 
 
-  // Filtrado local
-  const clubesFiltrados = clubes.filter(c => {
-    const coincideBusqueda =
-      !busqueda ||
-      c.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      c.ubicacion?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      c.deportes?.some(d => d.deporte?.toLowerCase().includes(busqueda.toLowerCase()))
+  // Deportes presentes en los clubes (para los chips)
+  const deportesEnClubes = useMemo(() => {
+    const set = new Set()
+    clubes.forEach((c) => (c.deportes || []).forEach((d) => d?.deporte && set.add(d.deporte)))
+    return [...set].sort()
+  }, [clubes])
 
+  const texto = busqueda.trim().toLowerCase()
+  const clubesFiltrados = clubes
+    .filter((c) => {
+      const coincideBusqueda = !texto ||
+        c.nombre?.toLowerCase().includes(texto) ||
+        c.ubicacion?.toLowerCase().includes(texto) ||
+        c.deportes?.some((d) => d.deporte?.toLowerCase().includes(texto))
+      const coincideDeporte = !filtroDeporte || c.deportes?.some((d) => d.deporte === filtroDeporte)
+      const coincideUbicacion = !filtroUbicacion ||
+        [c.ubicacion, c.direccion].some((v) => v?.toLowerCase().includes(filtroUbicacion.trim().toLowerCase()))
+      return coincideBusqueda && coincideDeporte && coincideUbicacion
+    })
+    // Los clubes que seguís primero, después los que tienen pruebas abiertas
+    .sort((a, b) =>
+      (Number(seguidos.has(Number(b.idusuario))) - Number(seguidos.has(Number(a.idusuario)))) ||
+      ((pruebasPorClub[b.idclub]?.length || 0) - (pruebasPorClub[a.idclub]?.length || 0))
+    )
 
-    const coincideDeporte =
-      !filtroDeporte ||
-      c.deportes?.some(d => d.deporte === filtroDeporte)
-
-
-    const coincideUbicacion =
-      !filtroUbicacion ||
-      c.ubicacion?.toLowerCase().includes(filtroUbicacion.toLowerCase())
-
-
-    return coincideBusqueda && coincideDeporte && coincideUbicacion
-  })
-
-
-  const aplicarFiltros = () => {
-    // Los filtros ya se aplican reactivamente; el botón queda por consistencia de UI
-  }
-
+  const hayFiltros = !!(busqueda || filtroDeporte || filtroUbicacion)
 
   const restablecerFiltros = () => {
     setBusqueda('')
@@ -137,30 +143,43 @@ function ClubesView(props) {
     setFiltroUbicacion('')
   }
 
+  const puedeSeguir = (club) =>
+    !!usuario?.idusuario && Number(club.idusuario) !== Number(usuario.idusuario)
 
-  const handleVerClub = (club) => {
-    setClubSeleccionado(club)
-    setHistoriaExpandida(false)
-    setPremiosExpandidos(false)
-    setModalDetalleAbierto(true)
+  const alternarSeguir = async (club) => {
+    if (!usuario) { navigate('/login'); return }
+    const id = Number(club.idusuario)
+    const sigue = seguidos.has(id)
+    setSiguiendoCargando(id)
+    try {
+      const { data } = sigue
+        ? await api.delete(`/api/seguidores/${id}`)
+        : await api.post(`/api/seguidores/${id}`)
+      const ahora = typeof data?.siguiendo === 'boolean' ? data.siguiendo : !sigue
+      setCambiosSeguir((prev) => ({ ...prev, [id]: ahora }))
+    } catch (err) {
+      console.error('No se pudo actualizar el seguimiento:', err)
+    } finally {
+      setSiguiendoCargando(null)
+    }
   }
-
 
   // Botón Contactar: abre el popup para escribir el mensaje inicial
   const handleContactar = (club) => {
-    if (!props.usuario) {
+    if (!usuario) {
       navigate('/login')
       return
     }
     setMensajeContacto('')
+    setErrorContacto('')
     setToastContacto(null)
     setPopupContacto({ club })
   }
 
-  // Enviar el mensaje inicial desde el popup
   const handleEnviarContacto = async () => {
     if (!mensajeContacto.trim() || !popupContacto) return
     setEnviandoContacto(true)
+    setErrorContacto('')
     try {
       // 1. Crear o recuperar la conversación privada
       const { data: conversacion } = await api.post('/api/conversaciones/privada', {
@@ -170,575 +189,346 @@ function ClubesView(props) {
       await api.post(`/api/conversaciones/${conversacion.idconversacion}/mensajes`, {
         contenido: mensajeContacto.trim()
       })
-      // 3. Cerrar popup y mostrar el cuadro verde debajo
       const nombre = popupContacto.club.nombre
       setPopupContacto(null)
       setMensajeContacto('')
       setToastContacto({ nombre, conversacion })
     } catch (err) {
       console.error('Error al enviar mensaje:', err)
-      alert('No se pudo enviar el mensaje. Intentá de nuevo.')
+      setErrorContacto('No se pudo enviar el mensaje. Probá de nuevo.')
     } finally {
       setEnviandoContacto(false)
     }
   }
 
+  const renderAvatar = (club, grande = false) => (
+    <span className={`pr-avatar${grande ? ' pr-avatar--lg' : ''}`} aria-hidden="true">
+      {club.fotoperfil ? <img src={club.fotoperfil} alt="" /> : iniciales(club.nombre)}
+    </span>
+  )
 
-  if (loading) {
+  const renderBotonSeguir = (club, bloque = false) => {
+    if (!puedeSeguir(club)) return null
+    const sigue = seguidos.has(Number(club.idusuario))
     return (
-      <div className="pagina-entrenamientos">
-        <div className="entrenadores-loading-box">
-          <div className="entrenadores-spinner"></div>
-          <span>Cargando clubes...</span>
-        </div>
-      </div>
+      <button
+        className={`pr-btn pr-btn--ghost cl-follow${sigue ? ' is-on' : ''}${bloque ? ' pr-btn--block' : ''}`}
+        onClick={() => alternarSeguir(club)}
+        disabled={siguiendoCargando === Number(club.idusuario)}
+        aria-pressed={sigue}
+      >
+        {sigue ? 'Siguiendo' : 'Seguir'}
+      </button>
     )
   }
 
-
-  if (error) {
-    return (
-      <div className="pagina-entrenamientos">
-        <div className="entrenadores-error-box">
-          <span style={{ fontSize: '48px' }}>⚠️</span>
-          <p>{error}</p>
-        </div>
-      </div>
-    )
-  }
+  const pruebasDelClub = clubSeleccionado ? (pruebasPorClub[clubSeleccionado.idclub] || []) : []
 
 
   return (
-    <>
-      <div className="pagina-entrenamientos">
-        <div className="entrenamientos-layout">
-
-
-          {/* ═══════════════════════════════════════════════════
-              SIDEBAR FILTROS
-              ═══════════════════════════════════════════════════ */}
-          <aside className="filtros-sidebar">
-            <div>
-              <h2 className="filtros-titulo">Filtros</h2>
-              <p className="filtros-subtitulo">Ajustá tu búsqueda</p>
-            </div>
-
-
-            {/* Filtro Deporte */}
-            <div className="filtro-grupo">
-              <div
-                className={`filtro-header ${sidebarExpandido.deporte ? 'abierto' : ''}`}
-                onClick={() => toggleSidebarSeccion('deporte')}
-              >
-                <span><IconoFutbol size={16} color="currentColor" className="icon-small" /> Deporte</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </div>
-              <div className={`filtro-contenido-wrapper ${sidebarExpandido.deporte ? 'open' : ''}`}>
-                <div className="filtro-contenido">
-                  <CustomSelect
-                    value={filtroDeporte}
-                    onChange={(e) => setFiltroDeporte(e.target.value)}
-                    placeholder="Todos los deportes"
-                    options={deportesDisponibles.map(d => ({ value: d.nombre, label: d.nombre }))}
-                  />
-                </div>
-              </div>
-            </div>
-
-
-            {/* Filtro Ubicación */}
-            <div className="filtro-grupo">
-              <div
-                className={`filtro-header ${sidebarExpandido.ubicacion ? 'abierto' : ''}`}
-                onClick={() => toggleSidebarSeccion('ubicacion')}
-              >
-                <span><IconoUbicacion size={16} color="currentColor" className="icon-small" /> Ubicación</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </div>
-              <div className={`filtro-contenido-wrapper ${sidebarExpandido.ubicacion ? 'open' : ''}`}>
-                <div className="filtro-contenido">
-                  <input
-                    type="text"
-                    className="filtro-input"
-                    placeholder="ej. Buenos Aires"
-                    value={filtroUbicacion}
-                    onChange={(e) => setFiltroUbicacion(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-
-            <button className="btn-aplicar-filtros" onClick={aplicarFiltros}>
-              Aplicar Filtros
-            </button>
-            <button type="button" className="btn-reset-filtros" onClick={restablecerFiltros}>
-              Restablecer filtros
-            </button>
-          </aside>
-
-
-          {/* ═══════════════════════════════════════════════════
-              CONTENIDO PRINCIPAL
-              ═══════════════════════════════════════════════════ */}
-          <main className="entrenamientos-main">
-
-
-            <div className="entrenamientos-header">
-              <h1 className="entrenamientos-titulo-principal">Clubes</h1>
-              <p className="entrenamientos-descripcion">
-                Explorá la variedad de clubes que forman parte de Sportlink.
-              </p>
-            </div>
-
-
-            {/* Barra de Búsqueda */}
-            <div className="buscador-container">
-              <IconoBuscador size={16} color="currentColor" className="icon-small buscador-img" />
+    <div className="pr">
+      {/* ── Encabezado ── */}
+      <section className="pr-head">
+        <div className="pr-wrap pr-head-grid">
+          <div>
+            <h1 className="pr-display pr-title">Clubes</h1>
+            <p className="pr-lead">
+              Instituciones que forman parte de SportLink. Seguilas para ver primero sus pruebas
+              y escribiles directo desde acá.
+            </p>
+          </div>
+          <div className="pr-head-side">
+            <label className="pr-search">
+              <span className="pr-sr">Buscar clubes</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" strokeLinecap="square" />
+              </svg>
               <input
-                type="text"
-                className="buscador-input"
-                placeholder="Buscar clubes, deportes, ubicación..."
+                type="search"
+                placeholder="Buscar por nombre, deporte o zona"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
               />
-            </div>
-
-
-            {/* Grilla de tarjetas */}
-            <div className="grid-clubes">
-              {clubesFiltrados.length === 0 ? (
-                <div className="entrenadores-empty">
-                  <p>No se encontraron clubes con los filtros aplicados.</p>
-                </div>
-              ) : (
-                clubesFiltrados.map((club) => (
-                  <div key={club.idclub} className="card-club">
-
-
-                    {/* ── Logo (mitad superior, sobre fondo claro) ── */}
-                    <div className="card-club-imagen">
-                      <Avatar
-                        src={club.fotoperfil}
-                        nombre={club.nombre}
-                        size="100%"
-                        style={{ borderRadius: 0, fontSize: '3rem' }}
-                      />
-                    </div>
-
-
-                    {/* ── Cuerpo ── */}
-                    <div className="card-club-body">
-                      <h2 className="card-club-nombre">{club.nombre}</h2>
-
-
-                      {club.ubicacion && (
-                        <p className="card-club-ubicacion">
-                          <IconoUbicacion size={16} color="currentColor" className="pill-icon" />
-                          {club.ubicacion}
-                        </p>
-                      )}
-
-
-                      {/* Píldoras de deportes */}
-                      {club.deportes && club.deportes.length > 0 && (
-                        <div className="card-club-pills">
-                          {club.deportes.slice(0, 3).map((d, idx) => {
-                            const isFutbol = d.deporte.toLowerCase() === 'fútbol' || d.deporte.toLowerCase() === 'futbol';
-                            return (
-                              <span key={idx} className={`sport-badge ${isFutbol ? 'sport-badge-cyan' : 'sport-badge-gray'}`}>
-                                {d.deporte}
-                              </span>
-                            );
-                          })}
-                          {club.deportes.length > 3 && (
-                            <span className="sport-badge sport-badge-gray">
-                              +{club.deportes.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Resumen extra (Historia, Premios) */}
-                      <div className="card-club-resumen-extra">
-                        <span className="resumen-item">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-                          Historia
-                        </span>
-                        <span className="resumen-item">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-                          Premios
-                        </span>
-                      </div>
-                    </div>
-
-
-                    {/* ── Botón de acción ── */}
-                    <div className="card-club-acciones" style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        className="btn-entrenador-perfil"
-                        style={{ flex: 1 }}
-                        onClick={() => navigate(`/perfil/${club.idusuario}`)}
-                      >
-                        Perfil
-                      </button>
-                      <button
-                        className="btn-club-info"
-                        style={{ flex: 1 }}
-                        onClick={() => handleVerClub(club)}
-                      >
-                        Más info
-                      </button>
-                    </div>
-
-
-                  </div>
-                ))
-              )}
-            </div>
-
-
-          </main>
+            </label>
+          </div>
         </div>
-      </div>
+      </section>
 
+      {/* ── Filtros ── */}
+      <section className="pr-filters" aria-label="Filtros">
+        <div className="pr-wrap">
+          <CarruselChips ariaLabel="Deporte" deps={[clubes.length]}>
+            <button className={`pr-chip${filtroDeporte === '' ? ' is-on' : ''}`} aria-pressed={filtroDeporte === ''} onClick={() => setFiltroDeporte('')}>
+              Todos
+            </button>
+            {(deportesEnClubes.length ? deportesEnClubes : DEPORTES).map((d) => (
+              <button key={d} className={`pr-chip${filtroDeporte === d ? ' is-on' : ''}`} aria-pressed={filtroDeporte === d} onClick={() => setFiltroDeporte(d)}>
+                {d}
+              </button>
+            ))}
+          </CarruselChips>
 
-      {/* ═══════════════════════════════════════════════════
-          MODAL DETALLE DE CLUB
-          ═══════════════════════════════════════════════════ */}
-      {modalDetalleAbierto && clubSeleccionado && createPortal(
-        <div className="modal-overlay" onClick={() => setModalDetalleAbierto(false)}>
-          <div className="modal-contenedor" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-titulo">Detalle del club</h3>
-              <button className="btn-cerrar-modal" onClick={() => setModalDetalleAbierto(false)}>×</button>
+          <div className="pr-fields">
+            <label className="pr-field">
+              <span>Ubicación</span>
+              <input type="text" placeholder="Ej. Villa Crespo" value={filtroUbicacion} onChange={(e) => setFiltroUbicacion(e.target.value)} />
+            </label>
+            {hayFiltros && (
+              <button className="pr-link pr-clear" onClick={restablecerFiltros}>Limpiar filtros</button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Resultados ── */}
+      <section className="pr-results">
+        <div className="pr-wrap">
+          {!loading && !error && clubesFiltrados.length > 0 && (
+            <p className="pr-count">
+              {clubesFiltrados.length} {clubesFiltrados.length === 1 ? 'club' : 'clubes'}
+              {seguidos.size > 0 ? ' · los que seguís aparecen primero' : ''}
+            </p>
+          )}
+
+          {loading ? (
+            <div className="pr-grid" aria-busy="true" aria-label="Cargando clubes">
+              {[0, 1, 2].map((i) => <div key={i} className="pr-card pr-card--skeleton cl-skeleton" />)}
             </div>
-            <div className="modal-cuerpo">
-              <div className="detalle-club-imagen">
-                <Avatar
-                  src={clubSeleccionado.fotoperfil}
-                  nombre={clubSeleccionado.nombre}
-                  size="100%"
-                  style={{ borderRadius: 0, fontSize: '3rem' }}
-                />
-              </div>
+          ) : error ? (
+            <div className="pr-empty">
+              <h2 className="pr-display pr-empty-title">No pudimos cargar los clubes</h2>
+              <p>{error}</p>
+              <button className="pr-btn pr-btn--ink" onClick={() => window.location.reload()}>Reintentar</button>
+            </div>
+          ) : clubesFiltrados.length === 0 ? (
+            <div className="pr-empty">
+              <h2 className="pr-display pr-empty-title">No hay clubes con estos filtros</h2>
+              <p>Probá con otro deporte o una zona más amplia.</p>
+              <button className="pr-btn pr-btn--ink" onClick={restablecerFiltros}>Limpiar filtros</button>
+            </div>
+          ) : (
+            <ul className="pr-grid">
+              {clubesFiltrados.map((club) => {
+                const deportes = (club.deportes || []).map((d) => d.deporte).filter(Boolean)
+                const nPruebas = pruebasPorClub[club.idclub]?.length || 0
+                const sigue = seguidos.has(Number(club.idusuario))
+                return (
+                  <li key={club.idclub} className="pr-card">
+                    <div className="pr-card-head cl-card-head">
+                      {renderAvatar(club)}
+                      <div className="pr-card-id">
+                        <h3>{club.nombre}</h3>
+                        <p>{formatearUbicacionCorta(club.ubicacion || club.direccion) || 'Ubicación a confirmar'}</p>
+                      </div>
+                    </div>
 
-
-              <h2 className="detalle-club-nombre">{clubSeleccionado.nombre}</h2>
-
-
-              {clubSeleccionado.ubicacion && (
-                <p className="detalle-club-ubicacion">
-                  <IconoUbicacion size={16} color="currentColor" className="pill-icon" />
-                  {clubSeleccionado.ubicacion}
-                </p>
-              )}
-
-
-              {clubSeleccionado.deportes && clubSeleccionado.deportes.length > 0 && (
-                <div className="detalle-club-pills">
-                  {clubSeleccionado.deportes.map((d, idx) => {
-                    const isFutbol = d.deporte.toLowerCase() === 'fútbol' || d.deporte.toLowerCase() === 'futbol';
-                    return (
-                      <span key={idx} className={`sport-badge ${isFutbol ? 'sport-badge-cyan' : 'sport-badge-gray'}`}>
-                        {d.deporte}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-
-
-              {/* Sección Historia */}
-              <div className="detalle-seccion">
-                <div className="detalle-seccion-header" onClick={() => setHistoriaExpandida(!historiaExpandida)}>
-                  <h4>Historia</h4>
-                  <span className="icono-expandir">{historiaExpandida ? '−' : '+'}</span>
-                </div>
-                {historiaExpandida && (
-                  <div className="detalle-seccion-contenido">
-                    {clubSeleccionado.historia ? (
-                      <p>{clubSeleccionado.historia}</p>
-                    ) : (
-                      <div className="estado-vacio">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-                        <p>No hay información sobre la historia de este club aún.</p>
+                    {(nPruebas > 0 || sigue) && (
+                      <div className="pr-tags">
+                        {nPruebas > 0 && (
+                          <span className="cl-tag-live">
+                            {nPruebas} {nPruebas === 1 ? 'prueba abierta' : 'pruebas abiertas'}
+                          </span>
+                        )}
+                        {sigue && <span>Lo seguís</span>}
                       </div>
                     )}
-                  </div>
-                )}
-              </div>
 
-              {/* Sección Premios */}
-              <div className="detalle-seccion">
-                <div className="detalle-seccion-header" onClick={() => setPremiosExpandidos(!premiosExpandidos)}>
-                  <h4>Premios y Palmarés</h4>
-                  <span className="icono-expandir">{premiosExpandidos ? '−' : '+'}</span>
-                </div>
-                {premiosExpandidos && (
-                  <div className="detalle-seccion-contenido">
-                    {clubSeleccionado.premios && clubSeleccionado.premios.length > 0 ? (
-                      <ul>
-                        {clubSeleccionado.premios.map((p, i) => <li key={i}>{p}</li>)}
-                      </ul>
-                    ) : (
-                      <div className="estado-vacio">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-                        <p>El club aún no ha cargado sus premios.</p>
+                    {deportes.length > 0 && (
+                      <div className="cl-sports" aria-label="Deportes">
+                        {deportes.slice(0, 4).map((d) => <span key={d}>{d}</span>)}
+                        {deportes.length > 4 && <span>+{deportes.length - 4}</span>}
                       </div>
                     )}
-                  </div>
-                )}
-              </div>
 
-              {clubSeleccionado.descripcion && (
-                <div className="detalle-seccion">
-                  <div className="detalle-seccion-header" style={{ cursor: 'default' }}>
-                    <h4>Acerca del club</h4>
-                  </div>
-                  <div className="detalle-seccion-contenido">
-                    <p className="detalle-club-descripcion">{clubSeleccionado.descripcion}</p>
-                  </div>
-                </div>
-              )}
+                    {club.descripcion && <p className="cl-desc">{club.descripcion}</p>}
 
-
-              <div className="detalle-club-acciones" style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  className="btn-entrenador-perfil"
-                  style={{ flex: 1 }}
-                  onClick={() => {
-                    setModalDetalleAbierto(false)
-                    navigate(`/perfil/${clubSeleccionado.idusuario}`)
-                  }}
-                >
-                  Ver Perfil
-                </button>
-                <button
-                  className="btn-entrenador-contactar"
-                  style={{ flex: 1 }}
-                  onClick={() => handleContactar(clubSeleccionado)}
-                >
-                  Contactar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-
-      {/* ═══ POPUP DE CONTACTO — Portal sobre document.body ═══ */}
-      {popupContacto && createPortal(
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            backdropFilter: 'blur(4px)',
-          }}
-          onClick={(e) => { if (e.target === e.currentTarget) setPopupContacto(null) }}
-        >
-          <div
-            style={{
-              position: 'relative',
-              backgroundColor: '#1a1d1e',
-              border: '1px solid #2d3032',
-              borderRadius: '12px',
-              padding: '32px',
-              width: '90%',
-              maxWidth: '460px',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-              color: '#fff',
-              fontFamily: 'inherit',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Botón cerrar */}
-            <button
-              aria-label="Cerrar"
-              onClick={() => setPopupContacto(null)}
-              style={{
-                position: 'absolute',
-                top: '12px',
-                right: '12px',
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                border: '1px solid rgba(255,255,255,0.12)',
-                background: 'transparent',
-                color: '#8b949e',
-                fontSize: '15px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                lineHeight: 1,
-              }}
-            >✕</button>
-
-            {/* Cabecera */}
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{ marginBottom: '10px' }}>
-                <svg viewBox="0 0 24 24" width="34" height="34" stroke="#2DEFF2" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                  <polyline points="22,6 12,13 2,6"></polyline>
-                </svg>
-              </div>
-              <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>
-                Contactar a {popupContacto.club.nombre}
-              </h2>
-              <p style={{ fontSize: '13px', color: '#8b949e', margin: 0, lineHeight: 1.5 }}>
-                Escribí tu mensaje inicial y lo recibirá directamente en su bandeja.
-              </p>
-            </div>
-
-            {/* Textarea */}
-            <textarea
-              className="contacto-modal-textarea"
-              placeholder={`Hola, me interesa...`}
-              value={mensajeContacto}
-              onChange={(e) => setMensajeContacto(e.target.value)}
-              rows={4}
-              autoFocus
-              maxLength={500}
-              onKeyDown={(e) => { if (e.key === 'Enter' && e.ctrlKey) handleEnviarContacto() }}
-              style={{
-                width: '100%',
-                padding: '12px',
-                backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '8px',
-                color: '#fff',
-                fontSize: '14px',
-                resize: 'none',
-                outline: 'none',
-                fontFamily: 'inherit',
-                boxSizing: 'border-box'
-              }}
-            />
-            <div style={{ textAlign: 'right', fontSize: '11px', color: '#8b949e', margin: '4px 2px 16px' }}>
-              {mensajeContacto.length}/500
-            </div>
-
-            {/* Acciones */}
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => setPopupContacto(null)}
-                disabled={enviandoContacto}
-                style={{
-                  flex: 1,
-                  padding: '11px',
-                  background: 'transparent',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
-                  color: '#8b949e',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  opacity: enviandoContacto ? 0.45 : 1,
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleEnviarContacto}
-                disabled={!mensajeContacto.trim() || enviandoContacto}
-                style={{
-                  flex: 2,
-                  padding: '11px',
-                  background: 'var(--primary, #2DEFF2)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: '#000',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  cursor: !mensajeContacto.trim() || enviandoContacto ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                  opacity: !mensajeContacto.trim() || enviandoContacto ? 0.45 : 1,
-                }}
-              >
-                {enviandoContacto ? 'Enviando...' : 'Enviar mensaje'}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* ═══ CUADRO VERDE DE ÉXITO — fijo abajo, portal ═══ */}
-      {toastContacto && createPortal(
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '28px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 9998,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            whiteSpace: 'nowrap',
-            backgroundColor: '#0d1f14',
-            border: '1px solid #22c55e',
-            borderRadius: '8px',
-            padding: '11px 14px',
-            fontSize: '14px',
-            color: '#86efac',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-            fontFamily: 'inherit',
-          }}
-        >
-          <span>¡Mensaje enviado con éxito!</span>
-          <span
-            onClick={() => {
-              setToastContacto(null)
-              navigate('/mensajes', { state: { conversacionInicial: toastContacto.conversacion } })
-            }}
-            style={{
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              fontWeight: 600,
-              color: '#4ade80',
-            }}
-          >
-            Hacé click aquí para ir al chat
-          </span>
-          <button
-            aria-label="Cerrar"
-            onClick={() => setToastContacto(null)}
-            style={{
-              marginLeft: '8px',
-              background: 'transparent',
-              border: 'none',
-              color: '#86efac',
-              fontSize: '16px',
-              cursor: 'pointer',
-              lineHeight: 1,
-              padding: 0,
-              flexShrink: 0,
-            }}
-          >✕</button>
-        </div>,
-        document.body
-      )}
+                    <div className="pr-card-foot cl-card-foot">
+                      <button className="pr-btn pr-btn--ink" onClick={() => setClubSeleccionado(club)}>
+                        Ver club
+                      </button>
+                      {renderBotonSeguir(club)}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+      </section>
 
       <Footer />
-    </>
+
+      {/* ── Detalle del club ── */}
+      {clubSeleccionado && createPortal(
+        <div className="pr-overlay" onClick={() => setClubSeleccionado(null)}>
+          <div className="pr-modal" role="dialog" aria-modal="true" aria-labelledby="cl-detalle-titulo" onClick={(e) => e.stopPropagation()}>
+            <header className="pr-modal-head cl-modal-head">
+              {renderAvatar(clubSeleccionado, true)}
+              <div className="pr-card-id">
+                <h2 id="cl-detalle-titulo" className="pr-modal-title">{clubSeleccionado.nombre}</h2>
+                <p>{formatearUbicacionCorta(clubSeleccionado.ubicacion || clubSeleccionado.direccion) || 'Ubicación a confirmar'}</p>
+              </div>
+              <button className="pr-close" onClick={() => setClubSeleccionado(null)} aria-label="Cerrar">×</button>
+            </header>
+
+            <div className="pr-modal-body">
+              {(clubSeleccionado.deportes || []).length > 0 && (
+                <div className="pr-block">
+                  <h3>Deportes</h3>
+                  <div className="cl-sports">
+                    {clubSeleccionado.deportes.map((d) => d?.deporte && <span key={d.deporte}>{d.deporte}</span>)}
+                  </div>
+                </div>
+              )}
+
+              {clubSeleccionado.descripcion && (
+                <div className="pr-block">
+                  <h3>Acerca del club</h3>
+                  <p className="pr-desc">{clubSeleccionado.descripcion}</p>
+                </div>
+              )}
+
+              {clubSeleccionado.historia && (
+                <div className="pr-block">
+                  <h3>Historia</h3>
+                  <p className="pr-desc">{clubSeleccionado.historia}</p>
+                </div>
+              )}
+
+              {Array.isArray(clubSeleccionado.premios) && clubSeleccionado.premios.length > 0 && (
+                <div className="pr-block">
+                  <h3>Premios y palmarés</h3>
+                  <ul className="cl-list">
+                    {clubSeleccionado.premios.map((p, i) => <li key={i}>{p}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              <div className="pr-block">
+                <h3>Pruebas abiertas</h3>
+                {pruebasDelClub.length === 0 ? (
+                  <p className="pr-muted">Este club no tiene pruebas abiertas en este momento.</p>
+                ) : (
+                  <ul className="cl-pruebas">
+                    {pruebasDelClub.map((p) => (
+                      <li key={p.idprueba}>
+                        <button onClick={() => { setClubSeleccionado(null); navigate(`/pruebas/${p.idprueba}`) }}>
+                          <span>
+                            <strong>Prueba de {(p.deporte?.deporte || 'jugadores').toLowerCase()}{p.categoria ? ` · ${p.categoria}` : ''}</strong>
+                            <span>{fechaLarga(p.fechaprueba, p.horainicio)}</span>
+                          </span>
+                          <Flecha />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {tieneCoordenadas(clubSeleccionado.latitud, clubSeleccionado.longitud) && (
+                <div className="pr-block">
+                  <h3>Sede</h3>
+                  <MapaUbicacionDark
+                    latitud={Number(clubSeleccionado.latitud)}
+                    longitud={Number(clubSeleccionado.longitud)}
+                    direccion={clubSeleccionado.direccion || clubSeleccionado.ubicacion || ''}
+                    zona={formatearUbicacionCorta(clubSeleccionado.ubicacion || clubSeleccionado.direccion || '')}
+                    nombre={clubSeleccionado.nombre}
+                    tipo="club"
+                    esEditable={false}
+                    height="200px"
+                  />
+                  <a
+                    className="pr-link pr-maps"
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${Number(clubSeleccionado.latitud)},${Number(clubSeleccionado.longitud)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Cómo llegar en Google Maps <Flecha />
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <footer className="pr-modal-foot">
+              <button
+                className="pr-btn pr-btn--ghost"
+                onClick={() => {
+                  const id = clubSeleccionado.idusuario
+                  setClubSeleccionado(null)
+                  navigate(`/perfil/${id}`)
+                }}
+              >
+                Ver perfil
+              </button>
+              {renderBotonSeguir(clubSeleccionado)}
+              <button className="pr-btn" onClick={() => handleContactar(clubSeleccionado)}>
+                Contactar <Flecha />
+              </button>
+            </footer>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Contactar ── */}
+      {popupContacto && createPortal(
+        <div className="pr-overlay cl-overlay-top" onClick={() => !enviandoContacto && setPopupContacto(null)}>
+          <div className="pr-modal pr-modal--sm" role="dialog" aria-modal="true" aria-labelledby="cl-contacto-titulo" onClick={(e) => e.stopPropagation()}>
+            <header className="pr-modal-head cl-modal-head--simple">
+              <h2 id="cl-contacto-titulo" className="pr-modal-title">Escribirle a {popupContacto.club.nombre}</h2>
+              <button className="pr-close" onClick={() => setPopupContacto(null)} aria-label="Cerrar">×</button>
+            </header>
+            <div className="pr-modal-body">
+              <label className="cl-message">
+                <span>Tu mensaje le llega directo a su bandeja.</span>
+                <textarea
+                  placeholder="Hola, me interesa…"
+                  value={mensajeContacto}
+                  onChange={(e) => setMensajeContacto(e.target.value)}
+                  rows={5}
+                  autoFocus
+                  maxLength={500}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && e.ctrlKey) handleEnviarContacto() }}
+                />
+                <small>{mensajeContacto.length}/500 · Ctrl + Enter para enviar</small>
+              </label>
+              {errorContacto && <p className="pr-error">{errorContacto}</p>}
+            </div>
+            <footer className="pr-modal-foot">
+              <button className="pr-btn pr-btn--ghost" onClick={() => setPopupContacto(null)} disabled={enviandoContacto}>Cancelar</button>
+              <button className="pr-btn" onClick={handleEnviarContacto} disabled={!mensajeContacto.trim() || enviandoContacto}>
+                {enviandoContacto ? 'Enviando…' : 'Enviar mensaje'}
+              </button>
+            </footer>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Mensaje enviado ── */}
+      {toastContacto && createPortal(
+        <div className="pr-toast" role="status">
+          <div>
+            <p className="pr-toast-titulo">Mensaje enviado a {toastContacto.nombre}</p>
+            <p className="pr-toast-texto">Seguí la conversación desde tus mensajes.</p>
+          </div>
+          <button
+            className="pr-btn"
+            onClick={() => {
+              const conversacion = toastContacto.conversacion
+              setToastContacto(null)
+              navigate('/mensajes', { state: { conversacionInicial: conversacion } })
+            }}
+          >
+            Ir al chat
+          </button>
+        </div>,
+        document.body
+      )}
+    </div>
   )
 }
 
 
 export default ClubesView
-

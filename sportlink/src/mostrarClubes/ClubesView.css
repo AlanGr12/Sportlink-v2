@@ -1,0 +1,95 @@
+/* ============================================================
+   Listados de perfiles (Clubes, Entrenadores) — reutiliza
+   src/pruebas/PruebasView.css (.pr-*); prefijo cl-
+   ============================================================ */
+
+.cl-card-head { grid-template-columns: auto minmax(0, 1fr); }
+
+/* Deportes del club: etiquetas en tono step (no chips interactivos) */
+.cl-sports { display: flex; flex-wrap: wrap; gap: 6px; }
+.cl-sports span {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--slk-step);
+  font-size: 14px;
+  font-weight: 600;
+}
+:root[data-tema='oscuro'] .pr-card .cl-sports span { background: var(--slk-ink-step); }
+
+.pr-tags .cl-tag-rate { background: var(--slk-text); color: var(--slk-ground); }
+:root[data-tema='oscuro'] .pr-tags .cl-tag-rate { background: var(--slk-on-ink); color: #0e1011; }
+.pr-tags .cl-tag-live { background: rgba(45, 239, 242, 0.22); color: #046c6e; }
+:root[data-tema='oscuro'] .pr-tags .cl-tag-live { background: rgba(45, 239, 242, 0.16); color: var(--slk-accent); }
+
+.cl-desc {
+  margin: 0;
+  font-size: 15px;
+  color: var(--slk-text-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cl-card-foot { grid-template-columns: 1fr auto; justify-items: stretch; }
+.cl-card-foot .pr-btn { padding-top: 13px; padding-bottom: 13px; }
+
+/* Seguir / Siguiendo */
+.cl-follow.is-on { background: var(--slk-step); box-shadow: none; }
+.cl-follow.is-on:hover { background: var(--slk-step-hover); }
+:root[data-tema='oscuro'] .pr-card .cl-follow.is-on { background: var(--slk-ink-step); }
+:root[data-tema='oscuro'] .pr-card .cl-follow.is-on:hover { background: var(--slk-step-hover); }
+
+.cl-skeleton { min-height: 280px; }
+
+/* Detalle */
+.cl-modal-head { grid-template-columns: auto minmax(0, 1fr) auto; }
+.cl-modal-head--simple { grid-template-columns: minmax(0, 1fr) auto; }
+
+.cl-list { margin: 0; padding-left: 20px; }
+.cl-list li { margin-bottom: 4px; }
+
+.cl-pruebas { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cl-pruebas button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: var(--slk-step);
+  color: var(--slk-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.cl-pruebas button:hover { background: var(--slk-step-hover); }
+.cl-pruebas button > span { display: flex; flex-direction: column; gap: 2px; }
+.cl-pruebas strong { font-weight: 700; }
+.cl-pruebas button > span > span { font-size: 14px; color: var(--slk-text-2); }
+.cl-pruebas svg { flex: none; transition: transform 0.3s var(--slk-ease); }
+.cl-pruebas button:hover svg { transform: translateX(3px); }
+
+/* Contacto (encima del detalle) */
+.cl-overlay-top { z-index: 10002; }
+.cl-message { display: grid; gap: 8px; }
+.cl-message > span { font-size: 15px; color: var(--slk-text-2); }
+.cl-message textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 0;
+  background: var(--slk-step);
+  color: var(--slk-text);
+  font: inherit;
+  font-size: 16px;
+  resize: vertical;
+}
+.cl-message textarea:focus-visible { outline: 3px solid var(--slk-text); outline-offset: 2px; }
+.cl-message small { justify-self: end; font-size: 13px; color: var(--slk-text-2); }
+
+@media (max-width: 560px) {
+  .cl-card-foot { grid-template-columns: 1fr; }
+  .cl-modal-head { grid-template-columns: auto minmax(0, 1fr) auto; }
+}
