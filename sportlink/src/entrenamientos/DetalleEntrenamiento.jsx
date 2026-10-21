@@ -11,8 +11,8 @@ import iconModalidad from '../assets/modalidad.png';
 import iconFecha from '../assets/fecha.png';
 import iconUbicacion from '../assets/ubicacion.png';
 import MapaUbicacionDark from '../components/maps/MapaUbicacionDark.jsx';
-import { formatearFechaLocal } from '../utils/dateUtils.js';
 import { formatearUbicacionCorta } from '../utils/mapUtils.js';
+import { fechaLarga, precio as formatearPrecio } from '../utils/formato.js';
 
 import './DetalleEntrenamiento.css';
 import { useNavigate } from 'react-router-dom';
@@ -240,19 +240,6 @@ const DetalleEntrenamiento = ({ entrenamiento, usuario, idjugador, onCerrar, onI
   };
 console.log(entrenamiento)
 
-  const formatearFecha = (fechaStr) => {
-    try {
-      return formatearFechaLocal(fechaStr, {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }) || fechaStr;
-    } catch {
-      return fechaStr;
-    }
-  };
-
   const diasSemana = {
     1: 'Lunes',
     2: 'Martes',
@@ -331,7 +318,7 @@ console.log(entrenamiento)
         <div className="detalle-items-grid">
           <div className="detalle-item-caja">
             <span className="detalle-item-label"><img src={iconPrecio} alt="Precio" className="icon-small" /> Precio</span>
-            <span className="detalle-item-valor">{entrenamiento.precio ? `$${entrenamiento.precio}` : 'A consultar'}</span>
+            <span className="detalle-item-valor">{formatearPrecio(entrenamiento.precio) || 'A consultar'}</span>
           </div>
 
           <div className="detalle-item-caja">
@@ -346,7 +333,7 @@ console.log(entrenamiento)
               const ins = Number(entrenamiento.inscritosCount ?? entrenamiento.inscritos ?? 0);
               if (!cap) return 'A confirmar';
               const completo = ins >= cap;
-              return `${ins} / ${cap} (${completo ? 'Completo' : `quedan ${cap - ins}`})`;
+              return `${ins} de ${cap} · ${completo ? 'completo' : `${cap - ins} ${cap - ins === 1 ? 'libre' : 'libres'}`}`;
             })()}</span>
           </div>
 
@@ -360,12 +347,7 @@ console.log(entrenamiento)
           <div className="detalle-item-caja">
             <span className="detalle-item-label"><img src={iconFecha} alt="Horario" className="icon-small" /> Horario</span>
             <span className="detalle-item-valor small">
-              {formatearFecha(entrenamiento.fechaentr)}
-              {entrenamiento.horainicio && entrenamiento.horafin && (
-                <span style={{ display: 'block', marginTop: '4px', color: '#888', fontWeight: '500' }}>
-                  {entrenamiento.horainicio.substring(0, 5)} - {entrenamiento.horafin.substring(0, 5)} hs
-                </span>
-              )}
+              {fechaLarga(entrenamiento.fechaentr, entrenamiento.horainicio, entrenamiento.horafin)}
             </span>
           </div>
         </div>
@@ -502,7 +484,7 @@ console.log(entrenamiento)
                       fontWeight: '600'
                     }}
                   >
-                    {isInscripto ? "INSCRIPTO" : "VERIFICANDO..."}
+                    {isInscripto ? "Inscripto" : "Verificando…"}
                   </button>
                   {isInscripto && (
                     <button
@@ -523,7 +505,7 @@ console.log(entrenamiento)
                           marginRight:'10px'
                       }}
                     >
-                      {desuscripcionLoading ? "Cancelando..." : "DESUSCRIBIRSE"}
+                      {desuscripcionLoading ? "Cancelando…" : "Cancelar inscripción"}
                     </button>
                   )}
                 </div>
@@ -557,7 +539,7 @@ console.log(entrenamiento)
                         fontWeight: '600'
                       }}
                     >
-                      {listaEsperaLoading ? "Anotando..." : "Anotarme a Lista de Espera"}
+                      {listaEsperaLoading ? "Anotando…" : "Anotarme en lista de espera"}
                     </button>
                   )}
                 </div>
@@ -577,12 +559,12 @@ console.log(entrenamiento)
                   }}
                 >
                   {inscripcionLoading
-                    ? "Inscribiendo..."
+                    ? "Inscribiendo…"
                     : sinCupos
-                      ? "SIN CUPOS"
+                      ? "Sin cupos"
                     : idjugadorResuelto
-                      ? "INSCRIBIRSE"
-                      : "Cargando jugador..."}
+                      ? "Inscribirme"
+                      : "Cargando jugador…"}
                 </button>
             )
         )}

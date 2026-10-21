@@ -2,29 +2,36 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import api from "../axiosConfig.js";
-import MenuPruebas from "./menuPruebas";
-import PruebasHeader from "./pruebasHeader";
 import FormularioPrueba from "./FormularioPrueba";
-import Footer from "../footer/footer";
+import Footer from "../footer/footer.jsx";
 import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscripcion.jsx';
 import ModalConfirmacionEliminar from '../calendario/ModalConfirmacionEliminar.jsx';
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
 import useSeguidos from '../hooks/useSeguidos.js';
+import CarruselChips from '../components/CarruselChips.jsx';
+import { iniciales as inicialesClub, fechaLarga } from '../utils/formato.js';
 import MapaUbicacionDark from '../components/maps/MapaUbicacionDark.jsx';
 import { formatearUbicacionCorta } from '../utils/mapUtils.js';
-import { parsearFechaLocal, formatearFechaLocal, haPasadoFecha } from '../utils/dateUtils.js';
+import { parsearFechaLocal, haPasadoFecha } from '../utils/dateUtils.js';
 
 // Iconos hechos con codigo
-import { IconoMedalla } from "../iconos/IconoMedalla.jsx";
-import { IconoUbicacion } from "../iconos/IconoUbicacion.jsx";
-import { IconoFecha } from "../iconos/IconoFecha.jsx";
-import { IconoModalidad } from "../iconos/IconoModalidad.jsx";
 
-import "../entrenamientos/entrenamientos.css";
-import "./pruebas.css";
+import "./PruebasView.css";
+
+// Opciones de filtro (mismas listas que el registro y el formulario de pruebas)
+const DEPORTES = ["Fútbol", "Basket", "Tenis", "Voley", "Pádel", "Rugby", "Hockey", "Natación", "Atletismo", "Ciclismo", "Boxeo", "Artes Marciales", "Handball", "Béisbol", "Golf"];
+const ZONAS = ["CABA", "Zona Norte", "Zona Sur", "Zona Oeste", "Conurbano", "Interior"];
+const CATEGORIAS = ["Primera", "Reserva", "Juveniles"];
+
+const Flecha = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="square" />
+  </svg>
+);
 
 function Pruebas({ idJugador, usuario }) {
   const [pruebas, setPruebas] = useState([]);
+  const [cargandoPruebas, setCargandoPruebas] = useState(true);
   const [busqueda, setBusqueda] = useState("");
   const [deporte, setDeporte] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -83,7 +90,7 @@ function Pruebas({ idJugador, usuario }) {
   const [postulantes, setPostulantes] = useState([]);
   const [postulantesLoading, setPostulantesLoading] = useState(false);
   const [postulantesError, setPostulantesError] = useState("");
-  const [fotoJugador, setFotoJugador] = useState("");
+  const [, setFotoJugador] = useState("");
 
   // ── Clubes que sigo: sus pruebas aparecen primero ─────────────
   const seguidosIds = useSeguidos(usuarioEfectivo);
@@ -662,6 +669,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
   }, [deporteUsuario, mostrarTodas, deporte]);
 
   async function obtenerPruebas(forceGeneral = mostrarTodas) {
+    setCargandoPruebas(true);
     try {
       const filtrarPorDeporte = !(forceGeneral || !idJugadorReal);
       const url = filtrarPorDeporte
@@ -696,12 +704,10 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
       }
     } catch (error) {
       console.error("Pruebas: error al cargar pruebas", error);
+    } finally {
+      setCargandoPruebas(false);
     }
   }
-
-  const aplicarFiltros = () => {
-    obtenerPruebas(mostrarTodas);
-  };
 
   const restablecerFiltros = () => {
     setDeporte("");
@@ -759,48 +765,125 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
     pruebaSeleccionada?.club?.nombre
   );
 
-  // ── Formato de fecha ──────────────────────────────────────
-  const formatearFecha = (fechaStr) => {
-    try {
-      return formatearFechaLocal(fechaStr, {
-        day: "2-digit", month: "long", year: "numeric"
-      }) || "Fecha a confirmar";
-    } catch {
-      return "Fecha a confirmar";
+  // ── Datos para la vista ───────────────────────────────────
+  // Inscripción según la lista ya cargada (sin logs, se usa por tarjeta)
+  const inscriptoEnLista = (prueba) =>
+    !esClub && !!idjugadorResuelto && Array.isArray(prueba.inscripciones) &&
+    prueba.inscripciones.some((i) => Number(i.idjugador ?? i.idJugador ?? i.jugadorId) === Number(idjugadorResuelto));
+
+  const estadoPrueba = (prueba) => {
+    const c = getCupos(prueba);
+    if (inscriptoEnLista(prueba)) return { texto: "Inscripto", clase: "ok" };
+    if (c.completo) return { texto: "Completa", clase: "full" };
+    if (c.restantes !== null && c.restantes <= 3) return { texto: "Últimos cupos", clase: "warn" };
+    return { texto: "Abierta", clase: "open" };
+  };
+
+  const deportesEnLista = [...new Set(pruebas.map((p) => p.deporte?.deporte).filter(Boolean))].sort();
+  const zonasDisponibles = [...new Set([...ZONAS, ...pruebas.map((p) => p.zona).filter(Boolean)])];
+  const categoriasDisponibles = [...new Set([...CATEGORIAS, ...pruebas.map((p) => p.categoria).filter(Boolean)])];
+  const hayFiltros = !!(deporte || categoria || zona || fechaDesde || fechaHasta || busqueda);
+  // La lista vino filtrada por el deporte del jugador (endpoint /deporte)
+  const listaDeSuDeporte = !mostrarTodas && !!deporteUsuario;
+
+  // Elegir deporte: si la lista vino filtrada por el deporte del jugador, se pide la general
+  const elegirDeporte = (d) => {
+    setDeporte(d);
+    if (listaDeSuDeporte) {
+      setMostrarTodas(true);
+      obtenerPruebas(true);
     }
   };
 
-  //FALTA CAMBIAR : LOS FILTRAR ZONA Y FILTRAR DEPORTE TIENEN QUE SER LOS MISMO QUE LOS ARRAYS DE REGISTRAR JUGADOR
+  const verTodosLosDeportes = () => {
+    setDeporte("");
+    setMostrarTodas(true);
+    obtenerPruebas(true);
+  };
+
+  const limpiarFiltros = () => {
+    setBusqueda("");
+    restablecerFiltros();
+  };
+
+  const textoBoton = (prueba) => {
+    if (esClub) return "Ver postulantes";
+    if (inscriptoEnLista(prueba)) return "Ver mi inscripción";
+    if (getCupos(prueba).completo) return esJugador ? "Anotarme en lista de espera" : "Ver prueba";
+    return esJugador ? "Postularme" : "Ver prueba";
+  };
+
+  // Datos de la tarjeta y del detalle (misma estructura en los dos lugares)
+  const renderDatos = (prueba, completo = false) => (
+    <dl className="pr-facts">
+      <div><dt>Deporte</dt><dd>{prueba.deporte?.deporte || "A confirmar"}</dd></div>
+      <div>
+        <dt>Categoría</dt>
+        <dd>{[prueba.categoria, prueba.genero].filter(Boolean).join(" · ") || "A confirmar"}</dd>
+      </div>
+      <div><dt>Fecha</dt><dd>{fechaLarga(prueba.fechaprueba, prueba.horainicio, completo ? prueba.horafin : null)}</dd></div>
+      <div>
+        <dt>Lugar</dt>
+        <dd title={prueba.direccion || prueba.zona || ""}>
+          {formatearUbicacionCorta(prueba.direccion || prueba.zona) || "A confirmar"}
+        </dd>
+      </div>
+      {completo && prueba.fechacierre && (
+        <div><dt>Cierre de inscripción</dt><dd>{fechaLarga(prueba.fechacierre)}</dd></div>
+      )}
+    </dl>
+  );
+
+  const renderCupos = (prueba) => {
+    const c = getCupos(prueba);
+    if (!c.capacidad) return <p className="pr-cupos-texto">Cupos a confirmar</p>;
+    const pct = Math.min(100, Math.round((c.inscritos / c.capacidad) * 100));
+    return (
+      <div className="pr-cupos">
+        <div className="pr-cupos-texto">
+          <span>{c.inscritos} de {c.capacidad} cupos tomados</span>
+          <span>{c.completo ? "Sin cupos" : `${c.restantes} ${c.restantes === 1 ? "libre" : "libres"}`}</span>
+        </div>
+        <div className="pr-cupos-barra" role="progressbar" aria-valuemin={0} aria-valuemax={c.capacidad} aria-valuenow={c.inscritos} aria-label="Cupos tomados">
+          <i style={{ width: `${pct}%` }} className={c.completo ? "is-full" : ""} />
+        </div>
+      </div>
+    );
+  };
+
+  const renderAvatar = (club, grande = false) => (
+    <span className={`pr-avatar${grande ? " pr-avatar--lg" : ""}`} aria-hidden="true">
+      {club?.fotoperfil ? <img src={club.fotoperfil} alt="" /> : inicialesClub(club?.nombre)}
+    </span>
+  );
+
+  const pruebaDetalle = modalDetalleValido
+    ? (pruebas.find((p) => obtenerIdPrueba(p) === obtenerIdPrueba(pruebaSeleccionada)) || pruebaSeleccionada)
+    : null;
+
+  // Escape cierra el modal abierto
+  useEffect(() => {
+    if (!modalAbierto && !modalCrearAbierto) return;
+    const alPresionar = (e) => {
+      if (e.key !== 'Escape') return;
+      if (modalCrearAbierto) setModalCrearAbierto(false);
+      else cerrarModal();
+    };
+    window.addEventListener('keydown', alPresionar);
+    return () => window.removeEventListener('keydown', alPresionar);
+  }, [modalAbierto, modalCrearAbierto]);
 
   // ── Render ────────────────────────────────────────────────
   return (
-    <>
-      {/* Toast de notificación */}
+    <div className="pr">
+      {/* Aviso tras publicar una prueba */}
       {toast && (
-        <div className="toast-banner custom-toast">
-          <div className="toast-cuerpo">
-            {fotoJugador ? (
-              <img src={fotoJugador} alt="Avatar" className="toast-avatar" />
-            ) : (
-              <div className="toast-avatar-fallback">
-                👤
-              </div>
-            )}
-            <div className="toast-texto">
-             <h4 className="toast-titulo">
-  {toast.titulo}
-</h4>
-
-<p className="toast-descripcion">
-  {toast.mensaje}
-</p>
-            </div>
+        <div className="pr-toast" role="status">
+          <div>
+            <p className="pr-toast-titulo">{toast.titulo}</p>
+            <p className="pr-toast-texto">{toast.mensaje}</p>
           </div>
-          <div className="toast-acciones">
-            <button className="btn-toast-entendido" onClick={() => setToast(null)}>
-              ENTENDIDO
-            </button>
-          </div>
+          <button className="pr-btn pr-btn--ink" onClick={() => setToast(null)}>Entendido</button>
         </div>
       )}
 
@@ -814,164 +897,189 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
         onCerrar={() => setPruebaPorEliminar(null)}
       />
 
-      <div className="contenedor-pruebas">
-        <div className="pruebas-layout">
-          <MenuPruebas
-            deporte={deporte}       setDeporte={setDeporte}
-            categoria={categoria}   setCategoria={setCategoria}
-            zona={zona}             setZona={setZona}
-            fechaDesde={fechaDesde} setFechaDesde={setFechaDesde}
-            fechaHasta={fechaHasta} setFechaHasta={setFechaHasta}
-            onAplicar={aplicarFiltros}
-            onReset={restablecerFiltros}
-          />
-
-          <main className="contenido-pruebas">
-            <PruebasHeader
-              busqueda={busqueda}
-              setBusqueda={setBusqueda}
-              esClub={esClub}
-              idclubResuelto={idclubResuelto}
-              onCrear={() => setModalCrearAbierto(true)}
-            />
-
-            <div className="grid-pruebas">
-              {pruebasFiltradas.map((prueba) => (
-                <div className="card-prueba" key={prueba.idprueba}>
-
-                  {/* ── Imagen (mitad superior, altura fija 200px) ── */}
-                  <div className="card-imagen-wrapper">
-                    {prueba.imagen ? (
-                      <img src={prueba.imagen} alt={prueba.club?.nombre || "prueba"} />
-                    ) : (
-                      <div className="sin-imagen">SIN FOTO</div>
-                    )}
-                    <div className="card-imagen-overlay" aria-hidden="true" />
-                    {puedeEliminarPrueba(prueba) && (
-                      <button
-                        type="button"
-                        title={esAdmin ? "Eliminar prueba (Admin)" : "Eliminar prueba"}
-                        aria-label="Eliminar prueba"
-                        onClick={(e) => { e.stopPropagation(); setErrorEliminarPrueba(null); setPruebaPorEliminar(prueba); }}
-                        style={{
-                          position: 'absolute', top: 10, right: 10, zIndex: 3,
-                          width: 34, height: 34, borderRadius: '50%', cursor: 'pointer',
-                          border: '1px solid rgba(239,68,68,0.5)', background: 'rgba(0,0,0,0.65)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-                        }}
-                      >
-                        🗑️
-                      </button>
-                    )}
-                    {deporteUsuario && prueba.deporte?.deporte === deporteUsuario && (
-                      <span className="tag-flotante">RECOMENDADO</span>
-                    )}
-                  </div>
-
-                  {/* ── Info (flex-grow:1 → queda dentro del fondo) ── */}
-                  <div className="card-prueba-info">
-                    <h2>
-                      {prueba.club?.nombre
-                        ? prueba.club.nombre.toUpperCase()
-                        : "CLUB DESCONOCIDO"}
-                    </h2>
-
-                    <div className="card-prueba-detalles-lista">
-                      <div className="card-prueba-detalle-item">
-                        <IconoMedalla size={16} color="currentColor" className="card-icon-asset" />
-                        <p>{prueba.deporte?.deporte || "Deporte no especificado"}</p>
-                      </div>
-
-                      <div className="card-prueba-detalle-item item-ubicacion">
-                        <IconoUbicacion size={20} color="currentColor" className="card-icon-ubicacion" />
-                        <p className="detalle-ubicacion-texto" title={prueba.direccion || prueba.zona || ""}>
-                          {formatearUbicacionCorta(prueba.direccion || prueba.zona) || "Zona no especificada"}
-                        </p>
-                      </div>
-
-                      <div className="card-prueba-detalle-item">
-                        <IconoFecha size={16} color="currentColor" className="card-icon-asset" />
-                        <p>{prueba.fechaprueba ? formatearFecha(prueba.fechaprueba) : "Fecha a confirmar"}</p>
-                      </div>
-
-                      <div className="card-prueba-detalle-item">
-                        <IconoModalidad size={16} color="currentColor" className="card-icon-asset" />
-                        <p>
-                          {getCupos(prueba).capacidad > 0
-                            ? `${getCupos(prueba).inscritos} / ${getCupos(prueba).capacidad} cupos`
-                            : "Cupos a confirmar"}
-                        </p>
-                        {getCupos(prueba).restantes > 0 && getCupos(prueba).restantes <= 2 && (
-                          <span className="pocos-cupos">
-                            Quedan {getCupos(prueba).restantes} cupo{getCupos(prueba).restantes > 1 ? "s" : ""}
-                          </span>
-                        )}
-                        {getCupos(prueba).completo && (
-                          <span className="pocos-cupos full">Completo</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ── Pie: botón siempre dentro de la card ── */}
-                  <div className="card-prueba-pie">
-                    {!esClub && idjugadorResuelto && Array.isArray(prueba.inscripciones) &&
-                      prueba.inscripciones.some((i) => Number(i.idjugador ?? i.idJugador ?? i.jugadorId) === Number(idjugadorResuelto)) && (
-                      <div className="inscripto-badge">Estás inscripto</div>
-                    )}
-                    <button
-                      className="btn-mas-info"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        abrirModal(prueba);
-                      }}
-                    >
-                      MÁS INFORMACIÓN
-                    </button>
-                  </div>
-
-                </div>
-              ))}
-            </div>
-          </main>
+      {/* ── Encabezado ── */}
+      <section className="pr-head">
+        <div className="pr-wrap pr-head-grid">
+          <div>
+            <h1 className="pr-display pr-title">{esClub ? "Tus pruebas" : "Pruebas"}</h1>
+            <p className="pr-lead">
+              {esClub
+                ? "Publicá convocatorias, seguí los cupos y revisá a cada postulante con su perfil completo."
+                : "Convocatorias abiertas de clubes. Filtrá por deporte, categoría y zona, y postulate desde tu perfil."}
+            </p>
+          </div>
+          <div className="pr-head-side">
+            <label className="pr-search">
+              <span className="pr-sr">Buscar pruebas</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" strokeLinecap="square" />
+              </svg>
+              <input
+                type="search"
+                placeholder="Buscar por club o descripción"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+              />
+            </label>
+            {esClub && (
+              <button className="pr-btn" onClick={() => setModalCrearAbierto(true)} disabled={!idclubResuelto}>
+                {idclubResuelto ? "Crear prueba" : "Cargando club…"} <Flecha />
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* ── Filtros ── */}
+      <section className="pr-filters" aria-label="Filtros">
+        <div className="pr-wrap">
+          {listaDeSuDeporte && (
+            <p className="pr-notice">
+              Te mostramos pruebas de <strong>{deporteUsuario}</strong>, tu deporte.{" "}
+              <button className="pr-link" onClick={verTodosLosDeportes}>Ver todos los deportes</button>
+            </p>
+          )}
+
+          <CarruselChips ariaLabel="Deporte" deps={[pruebas, mostrarTodas]}>
+            <button className={`pr-chip${deporte === "" ? " is-on" : ""}`} aria-pressed={deporte === ""} onClick={() => elegirDeporte("")}>
+              Todos
+            </button>
+            {(deportesEnLista.length ? deportesEnLista : DEPORTES).map((d) => (
+              <button key={d} className={`pr-chip${deporte === d ? " is-on" : ""}`} aria-pressed={deporte === d} onClick={() => elegirDeporte(d)}>
+                {d}
+              </button>
+            ))}
+          </CarruselChips>
+
+          <div className="pr-fields">
+            <label className="pr-field">
+              <span>Zona</span>
+              <select value={zona} onChange={(e) => setZona(e.target.value)}>
+                <option value="">Todas</option>
+                {zonasDisponibles.map((z) => <option key={z} value={z}>{z}</option>)}
+              </select>
+            </label>
+            <label className="pr-field">
+              <span>Categoría</span>
+              <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+                <option value="">Todas</option>
+                {categoriasDisponibles.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+            <label className="pr-field">
+              <span>Desde</span>
+              <input type="date" value={fechaDesde} onChange={(e) => setFechaDesde(e.target.value)} />
+            </label>
+            <label className="pr-field">
+              <span>Hasta</span>
+              <input type="date" value={fechaHasta} min={fechaDesde || undefined} onChange={(e) => setFechaHasta(e.target.value)} />
+            </label>
+            {hayFiltros && (
+              <button className="pr-link pr-clear" onClick={limpiarFiltros}>Limpiar filtros</button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Resultados ── */}
+      <section className="pr-results">
+        <div className="pr-wrap">
+          {!cargandoPruebas && pruebasFiltradas.length > 0 && (
+            <p className="pr-count">
+              {pruebasFiltradas.length} {pruebasFiltradas.length === 1 ? "prueba" : "pruebas"}
+              {seguidosIds.size > 0 && !esClub ? " · las de clubes que seguís aparecen primero" : ""}
+            </p>
+          )}
+
+          {cargandoPruebas ? (
+            <div className="pr-grid" aria-busy="true" aria-label="Cargando pruebas">
+              {[0, 1, 2].map((i) => <div key={i} className="pr-card pr-card--skeleton" />)}
+            </div>
+          ) : pruebasFiltradas.length === 0 ? (
+            <div className="pr-empty">
+              <h2 className="pr-display pr-empty-title">
+                {esClub && !hayFiltros ? "Todavía no publicaste pruebas" : "No hay pruebas con estos filtros"}
+              </h2>
+              <p>
+                {esClub && !hayFiltros
+                  ? "Creá tu primera convocatoria y empezá a recibir postulantes."
+                  : "Probá con otro deporte, otra zona o un rango de fechas más amplio."}
+              </p>
+              {esClub && !hayFiltros ? (
+                <button className="pr-btn" onClick={() => setModalCrearAbierto(true)} disabled={!idclubResuelto}>
+                  Crear prueba <Flecha />
+                </button>
+              ) : (
+                <button className="pr-btn pr-btn--ink" onClick={limpiarFiltros}>Limpiar filtros</button>
+              )}
+            </div>
+          ) : (
+            <ul className="pr-grid">
+              {pruebasFiltradas.map((prueba) => {
+                const estado = estadoPrueba(prueba);
+                const esSeguido = seguidosIds.has(Number(prueba.club?.idusuario));
+                const esTuDeporte = deporteUsuario && prueba.deporte?.deporte === deporteUsuario;
+                return (
+                  <li className="pr-card" key={prueba.idprueba}>
+                    <div className="pr-card-head">
+                      {renderAvatar(prueba.club)}
+                      <div className="pr-card-id">
+                        <h3>{prueba.club?.nombre || "Club"}</h3>
+                        <p>Prueba de {(prueba.deporte?.deporte || "jugadores").toLowerCase()}</p>
+                      </div>
+                      <span className={`pr-pill pr-pill--${estado.clase}`}>{estado.texto}</span>
+                    </div>
+
+                    {(esSeguido || esTuDeporte) && (
+                      <div className="pr-tags">
+                        {esTuDeporte && <span>Tu deporte</span>}
+                        {esSeguido && <span>Club que seguís</span>}
+                      </div>
+                    )}
+
+                    {renderDatos(prueba)}
+                    {renderCupos(prueba)}
+
+                    <div className="pr-card-foot">
+                      <button className="pr-btn pr-btn--ink pr-btn--block" onClick={() => abrirModal(prueba)}>
+                        {textoBoton(prueba)}
+                      </button>
+                      {puedeEliminarPrueba(prueba) && (
+                        <button
+                          className="pr-link pr-link--danger"
+                          onClick={() => { setErrorEliminarPrueba(null); setPruebaPorEliminar(prueba); }}
+                        >
+                          Eliminar prueba
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </section>
 
       <Footer />
 
-      {/* ── MODAL CREAR PRUEBA ──────────────────────────────────
-          Renderizado en document.body vía portal                 */}
+      {/* ── Crear prueba ── */}
       {modalCrearAbierto && createPortal(
-        <div
-          className="modal-prueba-overlay"
-          onClick={() => setModalCrearAbierto(false)}
-        >
-          <div
-            className="modal-prueba-contenedor"
-            style={{ maxWidth: "640px" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header sticky */}
-            <div className="modal-prueba-header">
-              <h3 className="modal-prueba-titulo">Crear Nueva Prueba</h3>
-              <button
-                className="modal-prueba-cerrar"
-                onClick={() => setModalCrearAbierto(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Cuerpo con el formulario */}
-            <div className="modal-prueba-cuerpo">
+        <div className="pr-overlay" onClick={() => setModalCrearAbierto(false)}>
+          <div className="pr-modal pr-modal--form" role="dialog" aria-modal="true" aria-labelledby="pr-crear-titulo" onClick={(e) => e.stopPropagation()}>
+            <header className="pr-modal-head">
+              <h2 id="pr-crear-titulo" className="pr-modal-title">Nueva prueba</h2>
+              <button className="pr-close" onClick={() => setModalCrearAbierto(false)} aria-label="Cerrar">×</button>
+            </header>
+            <div className="pr-modal-body">
               <FormularioPrueba
                 idclub={idclubResuelto}
                 onGuardado={() => {
                   setModalCrearAbierto(false);
                   mostrarToast(
-  "Prueba publicada correctamente",
-  "Tu prueba ya está disponible para que los jugadores puedan verla e inscribirse."
-);
+                    "Prueba publicada",
+                    "Tu prueba ya está disponible para que los jugadores la vean y se postulen."
+                  );
                   obtenerPruebas(mostrarTodas);
                 }}
                 onCancelar={() => setModalCrearAbierto(false)}
@@ -982,361 +1090,194 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
         document.body
       )}
 
-      {/* ── MODAL DE DETALLE ────────────────────────────────
-          Renderizado en document.body vía portal (igual que
-          el modal de DetalleEntrenamiento)                  */}
-      {modalDetalleValido && createPortal(
-        mostrarExitoModal ? null : (
-        <div
-          className="modal-prueba-overlay"
-          onClick={cerrarModal}
-        >
-          <div
-            className="modal-prueba-contenedor"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header sticky */}
-            <div className="modal-prueba-header">
-              <h3 className="modal-prueba-titulo">
-                {pruebaSeleccionada.club?.nombre
-                  ? pruebaSeleccionada.club.nombre.toUpperCase()
-                  : "DETALLE DE PRUEBA"}
-              </h3>
-              <button className="modal-prueba-cerrar" onClick={cerrarModal}>×</button>
-            </div>
-
-            {/* Cuerpo scrollable */}
-            <div className="modal-prueba-cuerpo">
-
-              {/* Banner */}
-              {pruebaSeleccionada.imagen ? (
-                <img
-                  src={pruebaSeleccionada.imagen}
-                  alt={pruebaSeleccionada.club?.nombre || "prueba"}
-                  className="modal-prueba-banner"
-                />
-              ) : (
-                <div className="modal-prueba-banner-fallback">
-                  Sin imagen disponible
-                </div>
-              )}
-
-              {/* Nombre del club */}
-              <h2 className="modal-prueba-club">
-                {pruebaSeleccionada.club?.nombre || "Club Desconocido"}
-              </h2>
-
-              {/* Grilla de especificaciones */}
-              <div className="modal-prueba-specs">
-
-                <div className="modal-prueba-spec-item">
-                  <span className="modal-prueba-spec-label">
-                    <IconoMedalla size={16} color="currentColor" />
-                    Deporte
-                  </span>
-                  <span className="modal-prueba-spec-valor">
-                    {pruebaSeleccionada.deporte?.deporte || "No especificado"}
-                  </span>
-                </div>
-
-                <div className="modal-prueba-spec-item">
-                  <span className="modal-prueba-spec-label">
-                    <IconoModalidad size={16} color="currentColor" />
-                    Categoría
-                  </span>
-                  <span className="modal-prueba-spec-valor">
-                    {pruebaSeleccionada.categoria || "No especificada"}
-                  </span>
-                </div>
-
-                <div className="modal-prueba-spec-item">
-                  <span className="modal-prueba-spec-label">
-                    <IconoUbicacion size={16} color="currentColor" />
-                    Zona
-                  </span>
-                  <span className="modal-prueba-spec-valor" title={pruebaSeleccionada.direccion || pruebaSeleccionada.zona || ''}>
-                    {formatearUbicacionCorta(pruebaSeleccionada.zona || pruebaSeleccionada.direccion) || "No especificada"}
-                  </span>
-                </div>
-
-                <div className="modal-prueba-spec-item">
-                  <span className="modal-prueba-spec-label">
-                    <IconoFecha size={16} color="currentColor" />
-                    Fecha
-                  </span>
-                  <span className="modal-prueba-spec-valor">
-                    {pruebaSeleccionada.fechaprueba
-                      ? formatearFecha(pruebaSeleccionada.fechaprueba)
-                      : "A confirmar"}
-                  </span>
-                </div>
-
-                <div className="modal-prueba-spec-item">
-                  <span className="modal-prueba-spec-label">
-                    <IconoModalidad size={16} color="currentColor" />
-                    Cupos
-                  </span>
-                  <span className="modal-prueba-spec-valor">
-                    {(() => {
-                      const c = getCupos(pruebas.find((p) => obtenerIdPrueba(p) === obtenerIdPrueba(pruebaSeleccionada)) || pruebaSeleccionada);
-                      if (!c.capacidad) return "A confirmar";
-                      return `${c.inscritos} / ${c.capacidad} (${c.completo ? "Completo" : `quedan ${c.restantes}`})`;
-                    })()}
-                  </span>
-                </div>
-
+      {/* ── Detalle de la prueba ── */}
+      {modalDetalleValido && !mostrarExitoModal && createPortal(
+        <div className="pr-overlay" onClick={cerrarModal}>
+          <div className="pr-modal" role="dialog" aria-modal="true" aria-labelledby="pr-detalle-titulo" onClick={(e) => e.stopPropagation()}>
+            <header className="pr-modal-head">
+              {renderAvatar(pruebaDetalle.club, true)}
+              <div className="pr-card-id">
+                <h2 id="pr-detalle-titulo" className="pr-modal-title">{pruebaDetalle.club?.nombre || "Prueba"}</h2>
+                <p>Prueba de {(pruebaDetalle.deporte?.deporte || "jugadores").toLowerCase()}</p>
               </div>
+              <span className={`pr-pill pr-pill--${isInscripto ? "ok" : estadoPrueba(pruebaDetalle).clase}`}>
+                {isInscripto ? "Inscripto" : estadoPrueba(pruebaDetalle).texto}
+              </span>
+              <button className="pr-close" onClick={cerrarModal} aria-label="Cerrar">×</button>
+            </header>
 
-              {/* Descripción (si existe) */}
-              {pruebaSeleccionada.descripcion && (
-                <>
-                  <p className="modal-prueba-descripcion-titulo">Descripción</p>
-                  <p className="modal-prueba-descripcion-texto">
-                    {pruebaSeleccionada.descripcion}
-                  </p>
-                </>
+            <div className="pr-modal-body">
+              {pruebaDetalle.imagen && (
+                <img src={pruebaDetalle.imagen} alt={`Imagen de la prueba de ${pruebaDetalle.club?.nombre || "el club"}`} className="pr-modal-banner" />
               )}
 
-              {/* Ubicación en Mapa Dark (si la prueba tiene coordenadas) */}
+              {renderDatos(pruebaDetalle, true)}
+              {renderCupos(pruebaDetalle)}
+
+              {pruebaDetalle.descripcion && (
+                <div className="pr-block">
+                  <h3>Descripción</h3>
+                  <p className="pr-desc">{pruebaDetalle.descripcion}</p>
+                </div>
+              )}
+
               {(() => {
-                const lat = pruebaSeleccionada.latitud ?? pruebaSeleccionada.club?.latitud;
-                const lon = pruebaSeleccionada.longitud ?? pruebaSeleccionada.club?.longitud;
+                const lat = pruebaDetalle.latitud ?? pruebaDetalle.club?.latitud;
+                const lon = pruebaDetalle.longitud ?? pruebaDetalle.club?.longitud;
                 const tieneCoords =
                   lat !== null && lat !== undefined && lat !== '' && !isNaN(Number(lat)) &&
                   lon !== null && lon !== undefined && lon !== '' && !isNaN(Number(lon)) &&
                   (Number(lat) !== 0 || Number(lon) !== 0);
-
                 if (!tieneCoords) return null;
-
-                const latNum = Number(lat);
-                const lonNum = Number(lon);
-
                 return (
-                  <div className="modal-prueba-mapa-seccion" style={{ marginTop: '16px', marginBottom: '16px' }}>
-                    <p className="modal-prueba-descripcion-titulo" style={{ marginBottom: '10px' }}>Ubicación en el Mapa</p>
+                  <div className="pr-block">
+                    <h3>Ubicación</h3>
                     <MapaUbicacionDark
-                      latitud={latNum}
-                      longitud={lonNum}
-                      direccion={pruebaSeleccionada.direccion || pruebaSeleccionada.zona || pruebaSeleccionada.club?.direccion || ''}
-                      zona={formatearUbicacionCorta(pruebaSeleccionada.zona || pruebaSeleccionada.direccion || '')}
-                      nombre={pruebaSeleccionada.club?.nombre || pruebaSeleccionada.nombre || 'Prueba'}
+                      latitud={Number(lat)}
+                      longitud={Number(lon)}
+                      direccion={pruebaDetalle.direccion || pruebaDetalle.zona || pruebaDetalle.club?.direccion || ''}
+                      zona={formatearUbicacionCorta(pruebaDetalle.zona || pruebaDetalle.direccion || '')}
+                      nombre={pruebaDetalle.club?.nombre || 'Prueba'}
                       tipo="prueba"
                       esEditable={false}
-                      height="180px"
+                      height="200px"
                     />
-                    <button
-                      type="button"
-                      className="btn-como-llegar-sportlink"
-                      onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${latNum},${lonNum}`, '_blank', 'noopener,noreferrer')}
+                    <a
+                      className="pr-link pr-maps"
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${Number(lat)},${Number(lon)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="3 11 22 2 13 21 11 13 3 11" />
-                      </svg>
-                      ¿CÓMO LLEGAR? (ABRIR EN GOOGLE MAPS)
-                    </button>
+                      Cómo llegar en Google Maps <Flecha />
+                    </a>
                   </div>
                 );
               })()}
 
-              {/* Sección de Postulantes (solo para clubes) */}
               {esClub && (
-                <div className="modal-prueba-postulantes-seccion">
-                  <p className="modal-prueba-descripcion-titulo">Postulantes Inscriptos ({postulantes.length})</p>
+                <div className="pr-block">
+                  <h3>Postulantes ({postulantes.length})</h3>
                   {postulantesLoading ? (
-                    <div className="postulantes-loading">Cargando postulantes...</div>
+                    <p className="pr-muted">Cargando postulantes…</p>
                   ) : postulantesError ? (
-                    <div className="form-error-banner">{postulantesError}</div>
+                    <p className="pr-error">{postulantesError}</p>
                   ) : postulantes.length === 0 ? (
-                    <div className="postulantes-vacio">Aún no hay postulantes inscriptos en esta prueba.</div>
+                    <p className="pr-muted">Todavía no hay postulantes en esta prueba.</p>
                   ) : (
-                    <div className="postulantes-lista">
+                    <ul className="pr-people">
                       {postulantes.map((item, index) => {
-                        const inscrito = item;
                         const jugador = item.jugador || item.jugadores || item;
-                        
-                        const nombreCompleto = (jugador?.nombre && jugador?.apellido)
+                        const nombre = (jugador?.nombre && jugador?.apellido)
                           ? `${jugador.nombre} ${jugador.apellido}`
-                          : (jugador?.nombre || jugador?.apellido || 
-                             inscrito?.nombre || inscrito?.usuario?.nombre || 
-                             inscrito?.jugador?.nombre || "Jugador Sin Nombre");
-
-                        const deporte = jugador?.deportes?.deporte || jugador?.deporte || inscrito?.deporte || "No especificado";
-                        const ubicacion = jugador?.ubicacion || inscrito?.ubicacion || "No especificada";
-                        const telefono = jugador?.telefono || inscrito?.telefono || "No especificado";
-                        const genero = jugador?.genero || inscrito?.genero || "No especificado";
-                        const foto = jugador?.fotoperfil || inscrito?.fotoperfil || "";
-
+                          : (jugador?.nombre || jugador?.apellido || item?.nombre || item?.usuario?.nombre || "Jugador sin nombre");
+                        const dato = (v) => (v && v !== "No especificado" ? v : "—");
+                        const foto = jugador?.fotoperfil || item?.fotoperfil || "";
                         return (
-                          <div key={jugador?.idjugador || inscrito?.idjugador || index} className="postulante-card">
-                            {foto ? (
-                              <img src={foto} alt={nombreCompleto} className="postulante-foto" />
-                            ) : (
-                              <div className="postulante-foto-fallback">
-                                {nombreCompleto.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                            <div className="postulante-info">
-                              <h4 className="postulante-nombre">{nombreCompleto}</h4>
-                              <div className="postulante-detalles">
-                                <p><span>🏅 Deporte:</span> {deporte}</p>
-                                <p><span>📍 Ubicación:</span> {ubicacion}</p>
-                                <p><span>📞 Teléfono:</span> {telefono}</p>
-                                <p><span>⚧ Género:</span> {genero}</p>
-                              </div>
+                          <li key={jugador?.idjugador || item?.idjugador || index} className="pr-person">
+                            <span className="pr-avatar" aria-hidden="true">
+                              {foto ? <img src={foto} alt="" /> : nombre.charAt(0).toUpperCase()}
+                            </span>
+                            <div>
+                              <p className="pr-person-name">{nombre}</p>
+                              <p className="pr-person-meta">
+                                {[jugador?.deportes?.deporte || jugador?.deporte, jugador?.ubicacion || item?.ubicacion, jugador?.genero || item?.genero]
+                                  .map(dato).filter((v) => v !== "—").join(" · ") || "Sin datos de perfil"}
+                              </p>
+                              {(jugador?.telefono || item?.telefono) && (
+                                <p className="pr-person-meta">Tel. {jugador?.telefono || item?.telefono}</p>
+                              )}
                             </div>
-                          </div>
+                          </li>
                         );
                       })}
-                    </div>
+                    </ul>
                   )}
                 </div>
               )}
 
-              {/* Mensaje de error de inscripción */}
-              {inscripcionError && (
-                <div className="form-error-banner" style={{ marginBottom: "14px" }}>
-                  {inscripcionError}
-                </div>
+              {inscripcionError && <p className="pr-error">{inscripcionError}</p>}
+              {esJugador && pruebaModalCompleta && listaEspera.enLista && !isInscripto && (
+                <p className="pr-notice">Estás en el puesto {listaEspera.posicion} de la lista de espera.</p>
               )}
-
-              {/* Pie con botón cerrar */}
-              <div className="modal-prueba-acciones">
-                {esJugador && (
-                  isInscripto || verificandoInscripcion ? (
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginRight: '10px' }}>
-                      <button
-                        className="btn-guardar"
-                        disabled
-                        style={{
-                          backgroundColor: "#ffffff",
-                          color: "#111111",
-                          border: "1px solid #d1d5db",
-                          cursor: "not-allowed",
-                          opacity: 0.7
-                          
-                        }}
-                      >
-                        {isInscripto ? "INSCRIPTO" : "VERIFICANDO..."}
-                      </button>
-                      {isInscripto && (
-                        <button
-                          className="btn-cancelar"
-                          onClick={handleDesuscribirse}
-                          disabled={desuscripcionLoading}
-                          style={{
-                            backgroundColor: "#ff4444",
-                            color: "#fff",
-                            border: "none",
-                            cursor: desuscripcionLoading ? "not-allowed" : "pointer",
-                            padding: '10px 16px',
-                            borderRadius: '8px',
-                            fontWeight: '600',
-                            fontSize: '14px',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          {desuscripcionLoading ? "Cancelando..." : "DESUSCRIBIRSE"}
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    pruebaModalCompleta ? (
-                      <div className="lista-espera-acciones">
-                        {listaEspera.enLista && (
-                          <div className="lista-espera-info">
-                            Estás en el puesto N° {listaEspera.posicion} de la lista de espera
-                          </div>
-                        )}
-                        {listaEspera.enLista ? (
-                          <button
-                            className="btn-cancelar"
-                            onClick={handleSalirListaEspera}
-                            disabled={listaEsperaLoading}
-                          >
-                            {listaEsperaLoading ? "Saliendo..." : "Salir de la lista de espera"}
-                          </button>
-                        ) : (
-                          <button
-                            className="btn-guardar"
-                            onClick={handleAnotarseListaEspera}
-                            disabled={listaEsperaLoading || !idjugadorResuelto}
-                          >
-                            {listaEsperaLoading ? "Anotando..." : "Anotarme a Lista de Espera"}
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                    <button
-                      className="btn-guardar"
-                      onClick={handleInscribirse}
-                      disabled={inscripcionLoading || !idjugadorResuelto}
-                    >
-                      {inscripcionLoading
-                        ? "Inscribiendo..."
-                        : idjugadorResuelto
-                          ? "INSCRIBIRSE"
-                          : "Cargando jugador..."}
-                    </button>
-                    )
-                  )
-                )}
-                <button className="btn-cancelar" onClick={cerrarModal}>
-                  Cerrar
-                </button>
-              </div>
-
             </div>
+
+            <footer className="pr-modal-foot">
+              <button className="pr-btn pr-btn--ghost" onClick={cerrarModal}>Cerrar</button>
+              {esJugador && (
+                isInscripto || verificandoInscripcion ? (
+                  isInscripto ? (
+                    <button className="pr-btn pr-btn--danger" onClick={handleDesuscribirse} disabled={desuscripcionLoading}>
+                      {desuscripcionLoading ? "Cancelando…" : "Cancelar inscripción"}
+                    </button>
+                  ) : (
+                    <button className="pr-btn" disabled>Verificando…</button>
+                  )
+                ) : pruebaModalCompleta ? (
+                  listaEspera.enLista ? (
+                    <button className="pr-btn pr-btn--ink" onClick={handleSalirListaEspera} disabled={listaEsperaLoading}>
+                      {listaEsperaLoading ? "Saliendo…" : "Salir de la lista de espera"}
+                    </button>
+                  ) : (
+                    <button className="pr-btn" onClick={handleAnotarseListaEspera} disabled={listaEsperaLoading || !idjugadorResuelto}>
+                      {listaEsperaLoading ? "Anotando…" : "Anotarme en lista de espera"}
+                    </button>
+                  )
+                ) : (
+                  <button className="pr-btn" onClick={handleInscribirse} disabled={inscripcionLoading || !idjugadorResuelto}>
+                    {inscripcionLoading ? "Postulando…" : idjugadorResuelto ? "Postularme" : "Cargando jugador…"}
+                  </button>
+                )
+              )}
+            </footer>
           </div>
-        </div>
-        ),
+        </div>,
         document.body
       )}
 
       {mostrarExitoModal && (
-        <ModalConfirmacionInscripcion 
-          tipoEvento="prueba" 
+        <ModalConfirmacionInscripcion
+          tipoEvento="prueba"
           onCerrar={() => {
             setMostrarExitoModal(false);
             cerrarModal();
-          }} 
+          }}
         />
       )}
 
-      {/* Modal Confirmación Desuscripción */}
+      {/* ── Confirmar cancelación de inscripción ── */}
       {mostrarConfirmacion && createPortal(
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(4px)' }} onClick={() => !desuscripcionLoading && setMostrarConfirmacion(false)}>
-          <div style={{ backgroundColor: '#1a1d1e', padding: '32px', borderRadius: '12px', textAlign: 'center', color: '#ffffff', border: '1px solid #2d3032', maxWidth: '420px', width: '90%', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ width: '64px', height: '64px', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-              <span style={{ fontSize: '32px' }}>⚠️</span>
+        <div className="pr-overlay" onClick={() => !desuscripcionLoading && setMostrarConfirmacion(false)}>
+          <div className="pr-modal pr-modal--sm" role="alertdialog" aria-modal="true" aria-labelledby="pr-baja-titulo" onClick={(e) => e.stopPropagation()}>
+            <div className="pr-modal-body">
+              <h2 id="pr-baja-titulo" className="pr-modal-title">¿Cancelar tu inscripción?</h2>
+              <p className="pr-desc">Vas a perder tu lugar en la prueba y salir del grupo de chat.</p>
             </div>
-            <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>¿Cancelar Inscripción?</h3>
-            <p style={{ fontSize: '14px', color: '#a1a1aa', marginBottom: '24px' }}>Estás a punto de cancelar tu inscripción a esta prueba. Perderás tu lugar y serás removido del grupo de chat.</p>
-            <div style={{ display: 'flex', gap: '12px', width: '100%', justifyContent: 'center' }}>
-              <button onClick={() => setMostrarConfirmacion(false)} disabled={desuscripcionLoading} style={{ padding: '10px 24px', fontSize: '13px', fontWeight: '700', borderRadius: '6px', cursor: 'pointer', border: '1px solid #555', backgroundColor: 'transparent', color: '#fff' }}>CANCELAR</button>
-              <button onClick={confirmarDesuscripcion} disabled={desuscripcionLoading} style={{ padding: '10px 24px', fontSize: '13px', fontWeight: '700', borderRadius: '6px', cursor: 'pointer', border: 'none', backgroundColor: '#ef4444', color: '#fff' }}>{desuscripcionLoading ? 'CANCELANDO...' : 'SÍ, DESUSCRIBIRME'}</button>
-            </div>
+            <footer className="pr-modal-foot">
+              <button className="pr-btn pr-btn--ghost" onClick={() => setMostrarConfirmacion(false)} disabled={desuscripcionLoading}>Volver</button>
+              <button className="pr-btn pr-btn--danger" onClick={confirmarDesuscripcion} disabled={desuscripcionLoading}>
+                {desuscripcionLoading ? "Cancelando…" : "Sí, cancelar"}
+              </button>
+            </footer>
           </div>
         </div>,
         document.body
       )}
 
-      {/* Modal Éxito Desuscripción */}
       {mostrarExitoDesuscripcion && createPortal(
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(4px)' }} onClick={() => { setMostrarExitoDesuscripcion(false); }}>
-          <div style={{ backgroundColor: '#1a1d1e', padding: '32px', borderRadius: '12px', textAlign: 'center', color: '#ffffff', border: '1px solid #2d3032', maxWidth: '420px', width: '90%', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ width: '64px', height: '64px', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-              <svg style={{ width: '32px', height: '32px', color: '#34d399' }} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"></path>
-              </svg>
+        <div className="pr-overlay" onClick={() => setMostrarExitoDesuscripcion(false)}>
+          <div className="pr-modal pr-modal--sm" role="dialog" aria-modal="true" aria-labelledby="pr-baja-ok" onClick={(e) => e.stopPropagation()}>
+            <div className="pr-modal-body">
+              <h2 id="pr-baja-ok" className="pr-modal-title">Inscripción cancelada</h2>
+              <p className="pr-desc">Ya no figurás como postulante en esta prueba.</p>
             </div>
-            <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>¡Desuscripción exitosa!</h3>
-            <p style={{ fontSize: '14px', color: '#a1a1aa', marginBottom: '24px' }}>Se ha cancelado tu inscripción a la prueba correctamente.</p>
-            <button type="button" style={{ padding: '10px 24px', fontSize: '13px', fontWeight: '700', borderRadius: '6px', cursor: 'pointer', border: 'none', backgroundColor: 'var(--primary, #2DEFF2)', color: '#000' }} onClick={() => { setMostrarExitoDesuscripcion(false); }}>ENTENDIDO</button>
+            <footer className="pr-modal-foot">
+              <button className="pr-btn" onClick={() => setMostrarExitoDesuscripcion(false)}>Entendido</button>
+            </footer>
           </div>
         </div>,
         document.body
       )}
-    </>
+    </div>
   );
 }
 

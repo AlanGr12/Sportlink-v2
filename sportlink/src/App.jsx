@@ -288,6 +288,7 @@ function App() {
             }
           />
           <Route path="/info" element={<InfoView usuario={usuario} />} />
+          <Route path="/landing" element={<InfoView usuario={usuario} />} />
           <Route path="/landing-old" element={<LandingOld usuario={usuario} />} />
 
           <Route

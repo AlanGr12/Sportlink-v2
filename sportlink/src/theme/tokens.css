@@ -1,0 +1,53 @@
+/* ============================================================
+   SportLink — design tokens
+   Dirección "cartel de club": planos de color pintados como las
+   paredes de una sede, una sola familia (Archivo) ancha y pesada
+   para títulos, y el cian del logo como pintura de acento.
+   Prefijo --slk- (los CSS de registro ya usan --sl-*).
+   ============================================================ */
+
+:root {
+  /* Superficies */
+  --slk-ground: #f1f2ef;
+  --slk-step: #e4e6e2;
+  --slk-step-hover: #d9dcd7;
+  --slk-surface: #ffffff;
+  --slk-ink: #0e1011;
+  --slk-ink-step: #1b1e20;
+
+  /* Texto */
+  --slk-text: #0e1011;
+  --slk-text-2: #4a4f52;
+  --slk-on-ink: #f1f2ef;
+  --slk-on-ink-2: #a6acaf;
+
+  /* Acento (cian del logo) */
+  --slk-accent: #2deff2;
+  --slk-on-accent: #0e1011;
+
+  /* Tipografía */
+  --slk-font: 'Archivo', system-ui, sans-serif;
+
+  /* Layout */
+  --slk-max: 1300px;
+  --slk-gutter: clamp(20px, 3vw, 40px);
+  --slk-header-h: 80px;
+  --slk-section: clamp(120px, 16vh, 200px);
+
+  /* Motion */
+  --slk-ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+}
+
+/* Modo oscuro (lo activa el botón del header en <html data-tema="oscuro">).
+   Las secciones "tinta" pasan a un gris apenas más claro que el fondo. */
+:root[data-tema='oscuro'] {
+  --slk-ground: #0e1011;
+  --slk-step: #1b1e20;
+  --slk-step-hover: #25292c;
+  --slk-surface: #1b1e20;
+  --slk-ink: #16191b;
+  --slk-ink-step: #22262a;
+  --slk-text: #f1f2ef;
+  --slk-text-2: #a6acaf;
+  color-scheme: dark;
+}

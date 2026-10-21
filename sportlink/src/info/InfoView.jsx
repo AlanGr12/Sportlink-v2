@@ -1,501 +1,475 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { BASE_URL } from '../axiosConfig.js';
+import Footer from '../footer/footer.jsx';
+import fotoAtlanta from '../assets/atlanta.png';
+import fotoFemenino from '../assets/futbol-femenino.jpg';
+import fotoEntrenadorCancha from '../assets/entrenador-cancha.jpg';
+import fotoRiestra from '../assets/riestra.png';
+import fotoCalendario from '../assets/calendar.png';
+import entrenador1 from '../assets/entrenador1.png';
+import entrenador2 from '../assets/entrenador2.png';
+import entrenador3 from '../assets/entrenador3.png';
 import './InfoView.css';
 
-/* ── SVG Icons ── */
-const ArrowIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" strokeLinecap="round" strokeLinejoin="round" />
+const Flecha = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="square" />
   </svg>
 );
 
-const XIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+/* Se muestran solo si la API no responde (p. ej. backend apagado) */
+const PRUEBAS_EJEMPLO = [
+  { id: 'e1', club: 'Club Atlético Atlanta', deporte: 'Fútbol', categoria: 'Sub-17 masculino', fecha: '2026-10-31', hora: '09:00', zona: 'Villa Crespo, CABA' },
+  { id: 'e2', club: 'Estudiantes de La Plata', deporte: 'Fútbol', categoria: 'Sub-15 masculino', fecha: '2026-11-05', hora: '10:00', zona: 'City Bell, La Plata' },
+  { id: 'e3', club: 'Deportivo Riestra', deporte: 'Fútbol', categoria: 'Sub-19 masculino', fecha: '2026-11-08', hora: '08:30', zona: 'Bajo Flores, CABA' },
+  { id: 'e4', club: 'Club Atlético Atlanta', deporte: 'Básquet', categoria: 'U17 mixto', fecha: '2026-11-03', hora: '18:00', zona: 'Villa Crespo, CABA' },
+  { id: 'e5', club: 'Estudiantes de La Plata', deporte: 'Hockey', categoria: 'Sub-16 femenino', fecha: '2026-11-09', hora: '11:00', zona: 'City Bell, La Plata' },
+  { id: 'e6', club: 'Deportivo Riestra', deporte: 'Vóley', categoria: 'Sub-18 femenino', fecha: '2026-11-12', hora: '19:00', zona: 'Bajo Flores, CABA' },
+];
 
-const CheckIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-/* ── Role panel feature sets ── */
-const ROLE_FEATURES = {
-  athlete: [
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      title: 'Visibilidad directa',
-      desc: 'Conectá con ojeadores verificados sin intermediarios ni comisiones.'
-    },
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      title: 'Portfolio audiovisual',
-      desc: 'Subí videos de rendimiento y destacá tus mejores jugadas.'
-    },
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      title: 'Convocatorias oficiales',
-      desc: 'Filtrá pruebas por disciplina, categoría y ubicación geográfica.'
-    },
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-9.33-5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M9 17v1a3 3 0 006 0v-1" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      title: 'Alertas en tiempo real',
-      desc: 'Notificaciones instantáneas cuando un club abre una vacante para vos.'
-    },
-  ],
-  coach: [
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      title: 'Captación de alumnos',
-      desc: 'Publicá clínicas, entrenamientos y programas para atraer nuevos atletas.'
-    },
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      title: 'Búsquedas laborales',
-      desc: 'Accedé a vacantes técnicas publicadas por clubes e instituciones.'
-    },
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      title: 'Agenda integrada',
-      desc: 'Organizá horarios, turnos y cupos de tus sesiones directamente.'
-    },
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      title: 'Seguimiento de atletas',
-      desc: 'Registrá la evolución física y técnica de cada deportista a tu cargo.'
-    },
-  ],
-  club: [
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      title: 'Publicación de pruebas',
-      desc: 'Convocatorias segmentadas por edad, posición y nivel deportivo.'
-    },
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      title: 'Scouting inteligente',
-      desc: 'Filtros avanzados por métricas, ubicación geográfica y material audiovisual.'
-    },
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      title: 'Fichaje de staff técnico',
-      desc: 'Reclutá entrenadores certificados para tus equipos y cuerpo técnico.'
-    },
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      title: 'Gestión institucional',
-      desc: 'Centralizá postulaciones, agendas y comunicaciones en un solo lugar.'
-    },
-  ],
-};
-
-/* ── Panel data ── */
-const PANELS = [
+/* Hero: un lugar para cada rol. Solo fotos con resolución nativa
+   suficiente para el marco (~530×610 px) a densidad 2x. */
+const HERO_ROLES = [
   {
-    id: 'athlete',
-    num: '01 // ATLETA',
-    badge: 'Talento Joven & Pro',
-    pulse: true,
-    title: 'JUGADOR',
-    roleLabel: 'Regístrate como',
-    desc: 'Subí tu ficha técnica, cargá videos de rendimiento y postulate a pruebas abiertas de clubes en tiempo real.',
-    chips: ['Pruebas Oficiales', 'Sin Intermediarios'],
-    ctaLabel: 'Crear perfil jugador',
-    img: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?q=80&w=1600&auto=format&fit=crop',
-    imgAlt: 'Swimmer athlete',
+    id: 'jugador',
+    nombre: 'Jugador',
+    desc: 'Mostrá tu juego y llegá a los clubes.',
+    foto: fotoFemenino,
+    alt: 'Dos jugadoras disputan la pelota en un partido de fútbol femenino amateur',
+    pos: '50% 42%',
+    caption: 'Fútbol femenino amateur. Foto: Laura Rincón, Pexels.',
   },
   {
-    id: 'coach',
-    num: '02 // COACH',
-    badge: 'Staff Técnico & DTs',
-    pulse: false,
-    title: 'ENTRENADOR',
-    roleLabel: 'Regístrate como',
-    desc: 'Ofrecé entrenamientos personalizados, gestioná atletas y postulate a vacantes de cuerpos técnicos.',
-    chips: ['Búsquedas Laborales', 'Gestión de Alumnos'],
-    ctaLabel: 'Unirme como entrenador',
-    img: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=80&w=1600&auto=format&fit=crop',
-    imgAlt: 'Coach on sideline',
+    id: 'entrenador',
+    nombre: 'Entrenador',
+    desc: 'Llená tus grupos y sumate a un cuerpo técnico.',
+    foto: fotoEntrenadorCancha,
+    alt: 'Un entrenador da indicaciones a un equipo infantil en una cancha de césped sintético',
+    pos: '50% 55%',
+    caption: 'Charla técnica antes de empezar. Foto: Unsplash.',
   },
   {
     id: 'club',
-    num: '03 // CLUB',
-    badge: 'Instituciones & Academias',
-    pulse: false,
-    title: 'CLUB STAFF',
-    roleLabel: 'Regístrate como',
-    desc: 'Publicá convocatorias oficiales, filtrá prospectos por métricas y contratá directores técnicos certificados.',
-    chips: ['Scouting Digital', 'Filtro Geográfico'],
-    ctaLabel: 'Panel institucional',
-    img: 'https://images.unsplash.com/photo-1577223625816-7546f13df25d?q=80&w=1600&auto=format&fit=crop',
-    imgAlt: 'Sports club complex',
+    nombre: 'Club',
+    desc: 'Encontrá talento y armá tu staff técnico.',
+    foto: fotoRiestra,
+    alt: 'Cancha de césped y bancos de suplentes de la sede del Deportivo Riestra',
+    pos: '52% 50%',
+    caption: 'Deportivo Riestra, Bajo Flores.',
   },
 ];
 
-/* ── Component ── */
+const HERO_INTERVALO = 6000;
+
+/* Lo que aparece sobre la foto del hero para el rol activo */
+const ROLES = {
+  jugador: {
+    desc: 'Subí tu ficha técnica, cargá videos y postulate a pruebas de clubes en tiempo real.',
+    features: [
+      { t: 'Visibilidad directa', d: 'Clubes y ojeadores te encuentran sin intermediarios.' },
+      { t: 'Portfolio en video', d: 'Tus mejores jugadas en tu perfil.' },
+      { t: 'Pruebas abiertas', d: 'Filtradas por deporte, categoría y zona.' },
+      { t: 'Alertas', d: 'Te avisamos cuando abren una prueba para vos.' },
+    ],
+  },
+  entrenador: {
+    desc: 'Ofrecé entrenamientos, gestioná a tus alumnos y postulate a búsquedas de clubes.',
+    features: [
+      { t: 'Entrenamientos', d: 'Cupos, horarios y lista de espera.' },
+      { t: 'Búsquedas laborales', d: 'Vacantes de cuerpos técnicos.' },
+      { t: 'Agenda integrada', d: 'Turnos y sesiones en tu calendario.' },
+      { t: 'Reseñas', d: 'Tus alumnos califican tu trabajo.' },
+    ],
+  },
+  club: {
+    desc: 'Publicá convocatorias, revisá postulantes con su perfil completo y contratá staff.',
+    features: [
+      { t: 'Pruebas', d: 'Convocatorias por edad, posición y nivel.' },
+      { t: 'Scouting', d: 'Postulantes filtrados por deporte y zona.' },
+      { t: 'Staff técnico', d: 'Publicá empleos y entrevistá entrenadores.' },
+      { t: 'Panel del club', d: 'Postulaciones y agenda en un lugar.' },
+    ],
+  },
+};
+
+const ENTRENADORES = [
+  { foto: entrenador1, nombre: 'Lucas Quintana', deporte: 'Tenis', foco: 'Alto rendimiento', nota: '4,9' },
+  { foto: entrenador2, nombre: 'Sofía Hernández', deporte: 'Fútbol', foco: 'Formativas femeninas', nota: '4,8' },
+  { foto: entrenador3, nombre: 'Javier López', deporte: 'Hockey', foco: 'Preparación física', nota: '4,5' },
+];
+
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+
+const formatearFecha = (iso) => {
+  const [y, m, d] = (iso || '').slice(0, 10).split('-').map(Number);
+  if (!y) return '—';
+  const f = new Date(y, m - 1, d);
+  return `${DIAS[f.getDay()]} ${d} ${MESES[m - 1]}`;
+};
+
+// Normaliza la respuesta de GET /api/pruebas al formato del tablero
+const normalizarPrueba = (p) => ({
+  id: p.idprueba ?? p.id,
+  club: p.club?.nombre || p.clubes?.nombre || 'Club',
+  deporte: p.deporte?.deporte || p.deportes?.deporte || 'Deporte',
+  categoria: [p.categoria, p.genero].filter(Boolean).join(' '),
+  fecha: p.fechaprueba,
+  hora: (p.horainicio || '').slice(0, 5),
+  zona: p.zona || p.club?.ubicacion || p.clubes?.ubicacion || p.direccion || '',
+  real: true,
+});
+
+/* Revela [data-reveal] al entrar en pantalla; sin JS el contenido queda visible */
+function useReveal() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    root.classList.add('lp--js');
+    const els = root.querySelectorAll('[data-reveal]');
+    if (!('IntersectionObserver' in window)) {
+      els.forEach((el) => el.classList.add('is-in'));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('is-in');
+          io.unobserve(e.target);
+        }
+      }),
+      { threshold: 0.15 }
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+  return ref;
+}
+
 const InfoView = ({ usuario }) => {
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(null);
+  const rootRef = useReveal();
+  const [pruebas, setPruebas] = useState(null);
+  const [esEjemplo, setEsEjemplo] = useState(false);
+  const [deporte, setDeporte] = useState('Todos');
+  const heroRef = useRef(null);
+  const [heroIdx, setHeroIdx] = useState(0);
+  const [heroPrev, setHeroPrev] = useState(null);
+  const [heroVisible, setHeroVisible] = useState(true);
+  const [sinMovimiento] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  );
 
-  useEffect(() => { window.scrollTo(0, 0); }, []);
-
-  const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  const irAHero = (i) => {
+    if (i === heroIdx) return;
+    setHeroPrev(heroIdx);
+    setHeroIdx(i);
   };
 
-  const getPanelClass = (id) => {
-    if (!expanded) return 'info-panel';
-    if (id === expanded) return 'info-panel info-panel--expanded';
-    return 'info-panel info-panel--collapsed';
-  };
+  // El cuadro rota solo mientras el hero está en pantalla; un clic reinicia el tiempo
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(([e]) => setHeroVisible(e.isIntersecting), { threshold: 0.3 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!heroVisible || sinMovimiento) return;
+    const t = setTimeout(() => {
+      setHeroPrev(heroIdx);
+      setHeroIdx((heroIdx + 1) % HERO_ROLES.length);
+    }, HERO_INTERVALO);
+    return () => clearTimeout(t);
+  }, [heroIdx, heroVisible, sinMovimiento]);
+
+  const heroRol = HERO_ROLES[heroIdx];
+  const heroInfo = ROLES[heroRol.id];
+
+  // Tablero en vivo: pruebas reales si la API responde, ejemplos si no
+  useEffect(() => {
+    let vivo = true;
+    axios.get(`${BASE_URL}/api/pruebas`, { timeout: 4000 })
+      .then((res) => {
+        if (!vivo) return;
+        const lista = Array.isArray(res.data) ? res.data.map(normalizarPrueba) : [];
+        setPruebas(lista);
+      })
+      .catch(() => {
+        if (!vivo) return;
+        setPruebas(PRUEBAS_EJEMPLO);
+        setEsEjemplo(true);
+      });
+    return () => { vivo = false; };
+  }, []);
+
+  const deportes = useMemo(
+    () => ['Todos', ...new Set((pruebas || []).map((p) => p.deporte))],
+    [pruebas]
+  );
+  const visibles = (pruebas || [])
+    .filter((p) => deporte === 'Todos' || p.deporte === deporte)
+    .slice(0, 8);
+
+  const cta = usuario
+    ? { label: 'Ir a mi feed', ruta: '/feed' }
+    : { label: 'Crear mi perfil', ruta: '/registro' };
 
   return (
-    <div className="info-root">
+    <div className="lp" ref={rootRef}>
 
-      {/* ── NAV ── */}
-      <nav className="info-nav">
-        <div className="info-nav-inner">
-          <button className="info-logo" onClick={() => navigate('/')}>
-            SPORT<span className="info-logo-accent">LINK</span>
-            <span className="info-logo-dot" />
-          </button>
+      {/* ── Hero: bienvenida y un lugar para cada rol ── */}
+      <section
+        className="lp-hero"
+        aria-labelledby="lp-title"
+        ref={heroRef}
+      >
+        <div className="lp-hero-grid">
+          <div className="lp-hero-copy">
+            <h1 id="lp-title" className="lp-display lp-hero-title" data-reveal>
+              Bienvenidos <br />a la cancha.
+            </h1>
+            <p className="lp-hero-lead" data-reveal style={{ '--d': '80ms' }}>
+              SportLink es la red profesional del deporte. Hay un lugar para cada uno:
+            </p>
 
-          <div className="info-nav-links">
-            <button className="info-nav-btn" onClick={() => scrollTo('roles')}>Explorar</button>
-            <button className="info-nav-btn" onClick={() => scrollTo('about')}>¿Qué es?</button>
-            <button className="info-nav-btn" onClick={() => scrollTo('pillars')}>Ecosistema</button>
-            <button className="info-nav-btn" onClick={() => { setExpanded('coach'); scrollTo('roles'); }}>Entrenadores</button>
-            <button className="info-nav-btn" onClick={() => { setExpanded('club'); scrollTo('roles'); }}>Clubes</button>
+            <div className="lp-hero-roles" role="tablist" aria-label="Elegí tu rol" data-reveal style={{ '--d': '140ms' }}>
+              {HERO_ROLES.map((r, i) => (
+                <button
+                  key={r.id}
+                  role="tab"
+                  id={`hero-tab-${r.id}`}
+                  aria-selected={heroIdx === i}
+                  aria-controls="lp-hero-frame"
+                  className={`lp-hero-role${heroIdx === i ? ' is-on' : ''}`}
+                  onClick={() => irAHero(i)}
+                >
+                  <span className="lp-hero-role-name">{r.nombre}</span>
+                  <span className="lp-hero-role-desc">{r.desc}</span>
+                  {heroIdx === i && (
+                    <span
+                      className={`lp-hero-role-bar${sinMovimiento ? ' is-paused' : ''}`}
+                      style={{ '--t': `${HERO_INTERVALO}ms` }}
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <div className="lp-actions" data-reveal style={{ '--d': '200ms' }}>
+              <button className="lp-btn" onClick={() => navigate(cta.ruta)}>
+                {usuario ? cta.label : 'Registrarse'} <Flecha />
+              </button>
+              {!usuario && (
+                <button className="lp-link" onClick={() => navigate('/login')}>Ya tengo cuenta</button>
+              )}
+            </div>
           </div>
 
-          <div className="info-nav-actions">
-            {!usuario ? (
-              <>
-                <button className="info-btn-ghost" onClick={() => navigate('/login')}>Iniciar sesión</button>
-                <button className="info-btn-primary" onClick={() => navigate('/registro')}>
-                  Registrarse <ArrowIcon />
-                </button>
-              </>
-            ) : (
-              <button className="info-btn-primary" onClick={() => navigate('/feed')}>
-                Ir al feed <ArrowIcon />
+          <figure className="lp-hero-media">
+            <div className="lp-hero-frame" id="lp-hero-frame" role="tabpanel" aria-labelledby={`hero-tab-${heroRol.id}`}>
+              {HERO_ROLES.map((r, i) => (
+                <img
+                  key={r.id}
+                  src={r.foto}
+                  alt={i === heroIdx ? r.alt : ''}
+                  aria-hidden={i !== heroIdx}
+                  style={{ objectPosition: r.pos }}
+                  className={i === heroIdx ? 'is-on' : i === heroPrev ? 'is-prev' : ''}
+                  decoding="async"
+                />
+              ))}
+
+              {/* Arriba: qué hace este rol. Abajo: sus funciones y el registro */}
+              <div className="lp-hero-top" key={`top-${heroRol.id}`}>
+                <p className="lp-hero-info-desc">{heroInfo.desc}</p>
+                <p className="lp-hero-credit" aria-live="polite">{heroRol.caption}</p>
+              </div>
+
+              <div className="lp-hero-info" key={heroRol.id}>
+                <ul className="lp-hero-feats">
+                  {heroInfo.features.map((f) => (
+                    <li key={f.t}>
+                      <strong>{f.t}</strong>
+                      <span>{f.d}</span>
+                    </li>
+                  ))}
+                </ul>
+                {!usuario && (
+                  <button className="lp-btn lp-hero-info-cta" onClick={() => navigate('/registro')}>
+                    Registrarse como {heroRol.nombre.toLowerCase()} <Flecha />
+                  </button>
+                )}
+              </div>
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      {/* ── Tablero de pruebas (lo vivo de la página) ── */}
+      <section className="lp-board" id="pruebas" aria-labelledby="lp-board-title">
+        <div className="lp-wrap">
+          <div className="lp-board-head">
+            <h2 id="lp-board-title" className="lp-display lp-h2" data-reveal>Pruebas abiertas</h2>
+            <p className="lp-board-lead" data-reveal style={{ '--d': '80ms' }}>
+              Clubes que están buscando jugadores ahora. Elegí tu deporte y postulate desde tu perfil.
+            </p>
+          </div>
+
+          <div className="lp-filter" role="group" aria-label="Filtrar por deporte" data-reveal style={{ '--d': '140ms' }}>
+            {deportes.map((d) => (
+              <button
+                key={d}
+                className={`lp-chip${deporte === d ? ' is-on' : ''}`}
+                aria-pressed={deporte === d}
+                onClick={() => setDeporte(d)}
+              >
+                {d}
               </button>
+            ))}
+          </div>
+
+          <div className="lp-table-wrap" data-reveal style={{ '--d': '200ms' }}>
+            {pruebas === null ? (
+              <p className="lp-board-empty">Cargando pruebas…</p>
+            ) : visibles.length === 0 ? (
+              <div className="lp-board-empty">
+                <p>No hay pruebas abiertas de {deporte === 'Todos' ? 'ningún deporte' : deporte.toLowerCase()} esta semana.</p>
+                <button className="lp-link" onClick={() => navigate('/registro')}>Avisame cuando haya</button>
+              </div>
+            ) : (
+              <table className="lp-table">
+                <caption className="lp-sr">Pruebas abiertas{esEjemplo ? ' (ejemplos)' : ''}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Club</th>
+                    <th scope="col">Deporte</th>
+                    <th scope="col">Categoría</th>
+                    <th scope="col">Fecha</th>
+                    <th scope="col">Zona</th>
+                    <th scope="col"><span className="lp-sr">Acción</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibles.map((p) => (
+                    <tr key={p.id}>
+                      <th scope="row">{p.club}</th>
+                      <td data-k="Deporte">{p.deporte}</td>
+                      <td data-k="Categoría">{p.categoria || '—'}</td>
+                      <td data-k="Fecha">{formatearFecha(p.fecha)}{p.hora ? `, ${p.hora} h` : ''}</td>
+                      <td data-k="Zona">{p.zona || '—'}</td>
+                      <td>
+                        <button
+                          className="lp-row-go"
+                          onClick={() => navigate(p.real ? `/pruebas/${p.id}` : '/pruebas')}
+                          aria-label={`Ver la prueba de ${p.club}`}
+                        >
+                          Ver prueba <Flecha />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
-        </div>
-      </nav>
 
-      {/* ── HERO ── */}
-      <section className="info-hero" id="roles">
-        {/* Panels */}
-        <div className="info-panels">
-          {PANELS.map((panel) => (
-            <article
-              key={panel.id}
-              className={getPanelClass(panel.id)}
-              onClick={() => {
-                if (expanded !== panel.id) setExpanded(panel.id);
-              }}
-            >
-              {/* Background image */}
-              <img className="info-panel-img" src={panel.img} alt={panel.imgAlt} />
-
-              {/* Overlays */}
-              <div className="info-panel-overlay-base" />
-              <div className="info-panel-overlay-side" />
-              <div className="info-panel-border" />
-
-              {/* Content */}
-              <div className="info-panel-content">
-                {/* Top */}
-                <div className="info-panel-top">
-                  <span className="info-panel-badge">
-                    <span
-                      className={`info-panel-badge-dot${panel.pulse ? ' info-panel-badge-dot--pulse' : ''}`}
-                    />
-                    {panel.badge}
-                  </span>
-                  <span className="info-panel-num">
-                    {panel.num}
-                    {expanded === panel.id && (
-                      <button
-                        className="info-panel-close"
-                        onClick={(e) => { e.stopPropagation(); setExpanded(null); }}
-                        title="Cerrar"
-                      >
-                        <XIcon />
-                      </button>
-                    )}
-                  </span>
-                </div>
-
-                {/* Bottom */}
-                <div className="info-panel-bottom">
-                  {/* Left info */}
-                  <div className="info-panel-left">
-                    <span className="info-panel-role-label">{panel.roleLabel}</span>
-                    <h2 className="info-panel-title">{panel.title}</h2>
-                    <p className="info-panel-desc">{panel.desc}</p>
-                    <div className="info-panel-chips">
-                      {panel.chips.map((c) => (
-                        <span key={c} className="info-panel-chip">{c}</span>
-                      ))}
-                    </div>
-                    <button
-                      className="info-panel-cta"
-                      onClick={(e) => { e.stopPropagation(); navigate('/registro'); }}
-                    >
-                      {panel.ctaLabel}
-                      <span className="info-panel-cta-icon"><ArrowIcon /></span>
-                    </button>
-                  </div>
-
-                  {/* Right features grid (only when expanded) */}
-                  {expanded === panel.id && (
-                    <div className="info-panel-right">
-                      <div className="info-features-grid">
-                        {ROLE_FEATURES[panel.id].map((f) => (
-                          <div className="info-feature-card" key={f.title}>
-                            <div className="info-feature-icon">{f.icon}</div>
-                            <div>
-                              <div className="info-feature-title">{f.title}</div>
-                              <p className="info-feature-desc">{f.desc}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* ── ABOUT ── */}
-      <section className="info-about" id="about">
-        <div className="info-about-inner">
-          <span className="info-eyebrow">
-            <span className="info-eyebrow-dot" />
-            El futuro del scouting deportivo
-          </span>
-
-          <h2 className="info-section-title">
-            ¿Qué es <span className="info-accent">SportLink</span>?
-          </h2>
-
-          <p className="info-about-body">
-            SportLink es el ecosistema digital diseñado para conectar directamente a{' '}
-            <strong>deportistas</strong>, <strong>clubes</strong> y{' '}
-            <strong>entrenadores</strong> en un único espacio transparente, derribando
-            barreras geográficas y eliminando intermediarios tradicionales.
-          </p>
-
-          <p className="info-about-body-secondary">
-            Impulsamos el crecimiento deportivo facilitando que cada atleta tenga
-            visibilidad real, cada preparador encuentre oportunidades en cuerpos técnicos,
-            y cada club capte el mejor talento disponible para sus pruebas.
-          </p>
-
-          {/* Metrics */}
-          <div className="info-metrics">
-            {[
-              { value: '100%', label: 'Acceso Directo', accent: true },
-              { value: '+500', label: 'Clubes Conectados', accent: false },
-              { value: '24/7', label: 'Pruebas Activas', accent: true },
-              { value: '0', label: 'Intermediarios', accent: false },
-            ].map((m) => (
-              <div className="info-metric" key={m.label}>
-                <span className={`info-metric-value ${m.accent ? 'info-metric-value--cyan' : 'info-metric-value--white'}`}>
-                  {m.value}
-                </span>
-                <span className="info-metric-label">{m.label}</span>
-              </div>
-            ))}
+          <div className="lp-board-foot">
+            {esEjemplo && <p>No pudimos cargar las pruebas ahora: estas son convocatorias de ejemplo.</p>}
+            <button className="lp-btn lp-btn--ink" onClick={() => navigate('/pruebas')}>
+              Ver todas las pruebas <Flecha />
+            </button>
           </div>
         </div>
       </section>
 
-      <div className="info-divider" />
-
-      {/* ── PILLARS ── */}
-      <section className="info-pillars" id="pillars">
-        <div className="info-pillars-inner">
-          <div className="info-pillars-header">
-            <h2 className="info-section-title" style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)' }}>
-              Tres pilares, un ecosistema
-            </h2>
-            <p className="info-pillars-subtitle">
-              Diseñado para las necesidades específicas de cada protagonista del deporte moderno.
-            </p>
-          </div>
-
-          <div className="info-pillars-grid">
-            {/* Pillar 1 */}
-            <div className="info-pillar">
-              <div className="info-pillar-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" />
-                </svg>
-              </div>
-              <h4 className="info-pillar-title">Para Deportistas</h4>
-              <ul className="info-pillar-list">
-                {[
-                  'Perfil digital con estadísticas y material audiovisual.',
-                  'Postulación directa a pruebas oficiales por disciplina.',
-                  'Contacto con entrenadores especializados.'
-                ].map((item) => (
-                  <li key={item}>
-                    <span className="info-pillar-check"><CheckIcon /></span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Pillar 2 */}
-            <div className="info-pillar">
-              <div className="info-pillar-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" />
-                </svg>
-              </div>
-              <h4 className="info-pillar-title">Para Entrenadores</h4>
-              <ul className="info-pillar-list">
-                {[
-                  'Difusión de programas técnicos y servicios deportivos.',
-                  'Captación constante de nuevos alumnos y atletas.',
-                  'Postulación a búsquedas laborales institucionales.'
-                ].map((item) => (
-                  <li key={item}>
-                    <span className="info-pillar-check"><CheckIcon /></span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Pillar 3 */}
-            <div className="info-pillar">
-              <div className="info-pillar-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" />
-                </svg>
-              </div>
-              <h4 className="info-pillar-title">Para Clubes & Staff</h4>
-              <ul className="info-pillar-list">
-                {[
-                  'Convocatorias segmentadas por edad, posición y nivel.',
-                  'Scouting con filtros geográficos y de rendimiento.',
-                  'Contratación ágil de staff técnico capacitado.'
-                ].map((item) => (
-                  <li key={item}>
-                    <span className="info-pillar-check"><CheckIcon /></span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section className="info-cta">
-        <div className="info-cta-card">
-          <div className="info-cta-inner">
-            <h3 className="info-cta-title">¿Listo para dar el salto?</h3>
-            <p className="info-cta-desc">
-              Unite a la comunidad que está transformando la forma en que el talento
-              deportivo es descubierto y potenciado en todo el continente.
-            </p>
-            <div className="info-cta-actions">
-              <button className="info-cta-btn-main" onClick={() => navigate('/registro')}>
-                Empezar ahora gratis
-              </button>
-              <button className="info-cta-btn-ghost" onClick={() => scrollTo('about')}>
-                Saber más
+      {/* ── Entrenadores ── */}
+      <section className="lp-section lp-coaches" aria-labelledby="lp-coaches-title">
+        <div className="lp-wrap">
+          <div className="lp-coaches-head">
+            <h2 id="lp-coaches-title" className="lp-display lp-h2" data-reveal>Entrenadores destacados</h2>
+            <div className="lp-coaches-side" data-reveal style={{ '--d': '80ms' }}>
+              <p>
+                Profesionales de cada disciplina con perfil verificado, entrenamientos publicados
+                y la calificación que les dejan sus alumnos.
+              </p>
+              <button className="lp-btn lp-btn--ink" onClick={() => navigate('/entrenadores')}>
+                Ver todos los entrenadores <Flecha />
               </button>
             </div>
           </div>
+          <ul className="lp-coaches-list">
+            {ENTRENADORES.map((e, i) => (
+              <li key={e.nombre} data-reveal style={{ '--d': `${120 + i * 90}ms` }}>
+                <button className="lp-coach" onClick={() => navigate('/entrenadores')}>
+                  <span className="lp-coach-photo">
+                    <img src={e.foto} alt={`Retrato de ${e.nombre}`} />
+                    <span className="lp-coach-rate">★ {e.nota}</span>
+                  </span>
+                  <span className="lp-coach-name">{e.nombre}</span>
+                  <span className="lp-coach-meta">{e.deporte} · {e.foco}</span>
+                </button>
+              </li>
+            ))}
+            <li className="lp-coach-join" data-reveal style={{ '--d': '390ms' }}>
+              <p className="lp-coach-join-title">¿Sos entrenador?</p>
+              <p>Publicá tus entrenamientos, llená tus grupos y sumá reseñas de tus alumnos.</p>
+              <button className="lp-btn" onClick={() => navigate(usuario ? '/entrenamientos' : '/registro')}>
+                {usuario ? 'Publicar entrenamiento' : 'Registrarse'} <Flecha />
+              </button>
+            </li>
+          </ul>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer className="info-footer">
-        <div className="info-footer-inner">
-          <div className="info-footer-brand">
-            <div className="info-footer-logo">
-              SPORT<span>LINK</span>
-            </div>
-            <span className="info-footer-copy">© 2026 SportLink Platform. Todos los derechos reservados.</span>
+      {/* ── Calendario — plano tinta, como la propia app ── */}
+      <section className="lp-section lp-agenda" aria-labelledby="lp-agenda-title">
+        <div className="lp-wrap lp-agenda-grid">
+          <div className="lp-agenda-copy">
+            <h2 id="lp-agenda-title" className="lp-display lp-h2" data-reveal>Tu agenda deportiva</h2>
+            <p data-reveal style={{ '--d': '80ms' }}>
+              Las pruebas a las que te anotás, tus entrenamientos y tus entrevistas se suman solos
+              a tu calendario, y te avisamos antes de cada uno.
+            </p>
+            <ul className="lp-legend" data-reveal style={{ '--d': '140ms' }}>
+              <li style={{ '--c': '#1de9b6' }}><strong>Pruebas</strong><span>Fecha, horario y sede de cada convocatoria.</span></li>
+              <li style={{ '--c': '#2deff2' }}><strong>Entrenamientos</strong><span>Tus sesiones y las de tus alumnos.</span></li>
+              <li style={{ '--c': '#ffe100' }}><strong>Entrevistas</strong><span>Las búsquedas laborales en curso.</span></li>
+              <li style={{ '--c': '#d9d9d9' }}><strong>Eventos propios</strong><span>Lo que quieras agendar vos.</span></li>
+            </ul>
+            <button className="lp-btn" onClick={() => navigate('/calendario')} data-reveal style={{ '--d': '200ms' }}>
+              Ir a mi calendario <Flecha />
+            </button>
           </div>
-
-          <div className="info-footer-links">
-            {['Términos del Servicio', 'Política de Privacidad', 'Reglamento de Pruebas', 'Soporte y Contacto'].map((l) => (
-              <button key={l} className="info-footer-link">{l}</button>
-            ))}
-          </div>
-
-          <div className="info-footer-status">
-            <span className="info-footer-dot" />
-            Sistema activo
+          <div className="lp-agenda-media" data-reveal style={{ '--d': '120ms' }}>
+            <img src={fotoCalendario} alt="Calendario de SportLink con pruebas, entrenamientos y entrevistas marcados en el mes" />
           </div>
         </div>
-      </footer>
+      </section>
 
+      {/* ── Cierre: la pared de la sede ── */}
+      <section className="lp-close" aria-labelledby="lp-close-title">
+        <figure className="lp-wrap lp-close-media" data-reveal>
+          <img src={fotoAtlanta} alt="Bancos de suplentes y sede del Club Atlético Atlanta, pintada de azul y amarillo" />
+          <figcaption>Club Atlético Atlanta, Villa Crespo.</figcaption>
+        </figure>
+        <div className="lp-wrap lp-close-inner">
+          <h2 id="lp-close-title" className="lp-display lp-close-title" data-reveal>Armá tu perfil.</h2>
+          <div className="lp-close-side" data-reveal style={{ '--d': '100ms' }}>
+            <p>Es gratis. Elegí si sos jugador, entrenador o club, y empezá a moverte.</p>
+            <button className="lp-btn lp-btn--ink" onClick={() => navigate(cta.ruta)}>
+              {cta.label} <Flecha />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 };
