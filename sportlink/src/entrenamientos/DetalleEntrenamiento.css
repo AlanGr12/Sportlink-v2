@@ -63,3 +63,7 @@
   padding-left: 24px;
   padding-right: 24px;
 }
+
+/* Foto del entrenador junto a su nombre */
+.detalle-autor-fila { display: flex; align-items: center; gap: 12px; }
+.detalle-autor-fila .pr-avatar { width: 44px; height: 44px; font-size: 16px; flex: none; }

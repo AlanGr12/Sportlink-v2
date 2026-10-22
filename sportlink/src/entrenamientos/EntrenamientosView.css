@@ -144,22 +144,6 @@
 .pr-modal--detalle .adjunto-nombre { color: var(--slk-text); }
 .pr-modal--detalle .adjunto-descargar { border-radius: 0; background: var(--slk-accent); color: var(--slk-on-accent); }
 
-/* Inscriptos (estilos en línea del componente) */
-.pr-modal--detalle .postulantes-lista > div {
-  background: var(--slk-step) !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-}
-.pr-modal--detalle .postulantes-lista h4 { color: var(--slk-text) !important; }
-.pr-modal--detalle .postulantes-lista p { color: var(--slk-text-2) !important; }
-.pr-modal--detalle .postulantes-lista img,
-.pr-modal--detalle .postulantes-lista > div > div:first-child { border-radius: 0 !important; }
-.pr-modal--detalle .postulantes-lista > div > div:first-child:not(:last-child) {
-  background: var(--slk-text) !important;
-  color: var(--slk-ground) !important;
-}
-.pr-modal--detalle .detalle-seccion > div[style] { color: var(--slk-text-2) !important; }
-
 .pr-modal--detalle .lista-espera-info {
   border: 0;
   border-radius: 0;

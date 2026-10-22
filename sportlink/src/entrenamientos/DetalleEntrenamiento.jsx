@@ -13,6 +13,8 @@ import iconUbicacion from '../assets/ubicacion.png';
 import MapaUbicacionDark from '../components/maps/MapaUbicacionDark.jsx';
 import { formatearUbicacionCorta } from '../utils/mapUtils.js';
 import { fechaLarga, precio as formatearPrecio } from '../utils/formato.js';
+import { AvatarSlk } from '../components/ImagenesSlk.jsx';
+import ListaInscriptos from '../components/ListaInscriptos.jsx';
 
 import './DetalleEntrenamiento.css';
 import { useNavigate } from 'react-router-dom';
@@ -289,9 +291,15 @@ console.log(entrenamiento)
       <div className="detalle-info-header">
         <span className="detalle-tipo">{entrenamiento.deportes?.deporte || 'ENTRENAMIENTO'}</span>
         <h2 className="detalle-titulo">{entrenamiento.titulo}</h2>
-        <p className="detalle-autor">
-          Entrenador/a: {[entrenamiento.entrenadores?.nombre, entrenamiento.entrenadores?.apellido].filter(Boolean).join(' ') || 'Entrenador Asociado'}
-        </p>
+        <div className="detalle-autor-fila">
+          <AvatarSlk
+            foto={entrenamiento.entrenadores?.fotoperfil}
+            nombre={[entrenamiento.entrenadores?.nombre, entrenamiento.entrenadores?.apellido].filter(Boolean).join(' ') || entrenamiento.titulo}
+          />
+          <p className="detalle-autor">
+            Entrenador/a: {[entrenamiento.entrenadores?.nombre, entrenamiento.entrenadores?.apellido].filter(Boolean).join(' ') || 'Entrenador Asociado'}
+          </p>
+        </div>
         {puedeContactar && (
           <button
             type="button"
@@ -417,48 +425,15 @@ console.log(entrenamiento)
       )}
 
       {esEntrenador && (
-        <div className="detalle-seccion">
-          <h4 className="detalle-seccion-titulo">Jugadores Inscriptos ({postulantes.length})</h4>
-          {postulantesLoading ? (
-            <div style={{color: '#aaa', padding: '10px 0'}}>Cargando jugadores...</div>
-          ) : postulantesError ? (
-            <div style={{color: '#ff4444', padding: '10px 0'}}>{postulantesError}</div>
-          ) : postulantes.length === 0 ? (
-            <div style={{color: '#aaa', padding: '10px 0'}}>Aún no hay jugadores inscriptos en este entrenamiento.</div>
-          ) : (
-            <div className="postulantes-lista" style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px'}}>
-              {postulantes.map((item, index) => {
-                const jugador = item.jugador || item;
-                const nombreCompleto = `${jugador?.nombre || ''} ${jugador?.apellido || ''}`.trim() || 'Jugador Sin Nombre';
-                const deporte = jugador?.deportes?.deporte || jugador?.deporte || "No especificado";
-                const ubicacion = jugador?.ubicacion || "No especificada";
-                const foto = jugador?.fotoperfil || "";
-
-                return (
-                  <div key={index} style={{
-                      display: 'flex', alignItems: 'center', gap: '15px', backgroundColor: '#1a1a1a', 
-                      padding: '12px', borderRadius: '8px', border: '1px solid #333'
-                  }}>
-                    {foto ? (
-                      <img src={foto} alt={nombreCompleto} style={{width:'40px', height:'40px', borderRadius:'50%', objectFit:'cover'}} />
-                    ) : (
-                      <div style={{
-                          width:'40px', height:'40px', borderRadius:'50%', backgroundColor:'#333', 
-                          display:'flex', alignItems:'center', justifyContent:'center', color:'#00f0ff', fontWeight:'bold'
-                      }}>
-                        {nombreCompleto.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div>
-                      <h4 style={{margin:'0 0 5px', color:'#fff', fontSize:'15px'}}>{nombreCompleto}</h4>
-                      <p style={{margin:0, color:'#aaa', fontSize:'13px'}}>🏅 {deporte} &nbsp;|&nbsp; 📍 {ubicacion}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <ListaInscriptos
+          titulo="Inscriptos"
+          vacio="Todavía no hay jugadores inscriptos en este entrenamiento."
+          inscripciones={postulantes}
+          cargando={postulantesLoading}
+          error={postulantesError}
+          evento={{ identrenamiento }}
+          nombreEvento={entrenamiento.titulo || 'tu entrenamiento'}
+        />
       )}
 
       {inscripcionError && (

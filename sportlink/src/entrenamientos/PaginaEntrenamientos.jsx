@@ -13,7 +13,8 @@ import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
 import useSeguidos from '../hooks/useSeguidos.js';
 import { haPasadoFecha, obtenerFechaHoyLocal } from '../utils/dateUtils.js';
 import { formatearUbicacionCorta } from '../utils/mapUtils.js';
-import { iniciales, fechaLarga, precio } from '../utils/formato.js';
+import { fechaLarga, precio } from '../utils/formato.js';
+import { AvatarSlk, MediaEvento } from '../components/ImagenesSlk.jsx';
 
 const Flecha = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -495,15 +496,13 @@ const PaginaEntrenamientos = ({ usuario }) => {
 
       {/* ── Encabezado ── */}
       <section className="pr-head">
-        <div className="pr-wrap pr-head-grid">
-          <div>
-            <h1 className="pr-display pr-title">Entrenamientos</h1>
-            <p className="pr-lead">
-              {tipoUsuario === 'entrenador'
-                ? 'Publicá tus sesiones con cupos, horarios y precio, y seguí quién se inscribe.'
-                : 'Clínicas y sesiones con entrenadores de cada disciplina. Elegí deporte, día y zona, e inscribite desde tu perfil.'}
-            </p>
-          </div>
+        <div className="pr-wrap pr-head-grid pr-head-grid--ancho">
+          <h1 className="pr-display pr-title">Entrenamientos</h1>
+          <p className="pr-lead">
+            {tipoUsuario === 'entrenador'
+              ? 'Publicá tus sesiones con cupos, horarios y precio, y seguí quién se inscribe.'
+              : 'Clínicas y sesiones con entrenadores de cada disciplina. Elegí deporte, día y zona, e inscribite desde tu perfil.'}
+          </p>
           <div className="pr-head-side">
             <label className="pr-search">
               <span className="pr-sr">Buscar entrenamientos</span>
@@ -623,10 +622,9 @@ const PaginaEntrenamientos = ({ usuario }) => {
                 const pct = c.capacidad ? Math.min(100, Math.round((c.inscritos / c.capacidad) * 100)) : 0;
                 return (
                   <li className="pr-card" key={idDe(e)}>
+                    <MediaEvento imagen={e.imagen} deporte={e.deportes?.deporte || e.tipo} alt={e.titulo || 'Entrenamiento'} />
                     <div className="pr-card-head">
-                      <span className="pr-avatar" aria-hidden="true">
-                        {e.entrenadores?.fotoperfil ? <img src={e.entrenadores.fotoperfil} alt="" /> : iniciales(coach || e.titulo)}
-                      </span>
+                      <AvatarSlk foto={e.entrenadores?.fotoperfil} nombre={coach || e.titulo} />
                       <div className="pr-card-id">
                         <h3>{e.titulo || `Entrenamiento de ${(e.deportes?.deporte || '').toLowerCase()}`}</h3>
                         <p>{coach ? `Con ${coach}` : 'Entrenador asociado'}</p>

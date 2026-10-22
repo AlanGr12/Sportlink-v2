@@ -9,7 +9,9 @@ import ModalConfirmacionEliminar from '../calendario/ModalConfirmacionEliminar.j
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
 import useSeguidos from '../hooks/useSeguidos.js';
 import CarruselChips from '../components/CarruselChips.jsx';
-import { iniciales as inicialesClub, fechaLarga } from '../utils/formato.js';
+import { fechaLarga } from '../utils/formato.js';
+import { AvatarSlk, MediaEvento } from '../components/ImagenesSlk.jsx';
+import ListaInscriptos from '../components/ListaInscriptos.jsx';
 import MapaUbicacionDark from '../components/maps/MapaUbicacionDark.jsx';
 import { formatearUbicacionCorta } from '../utils/mapUtils.js';
 import { parsearFechaLocal, haPasadoFecha } from '../utils/dateUtils.js';
@@ -852,9 +854,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
   };
 
   const renderAvatar = (club, grande = false) => (
-    <span className={`pr-avatar${grande ? " pr-avatar--lg" : ""}`} aria-hidden="true">
-      {club?.fotoperfil ? <img src={club.fotoperfil} alt="" /> : inicialesClub(club?.nombre)}
-    </span>
+    <AvatarSlk foto={club?.fotoperfil} nombre={club?.nombre} grande={grande} />
   );
 
   const pruebaDetalle = modalDetalleValido
@@ -1021,6 +1021,11 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
                 const esTuDeporte = deporteUsuario && prueba.deporte?.deporte === deporteUsuario;
                 return (
                   <li className="pr-card" key={prueba.idprueba}>
+                    <MediaEvento
+                      imagen={prueba.imagen}
+                      deporte={prueba.deporte?.deporte}
+                      alt={`Prueba de ${prueba.club?.nombre || "el club"}`}
+                    />
                     <div className="pr-card-head">
                       {renderAvatar(prueba.club)}
                       <div className="pr-card-id">
@@ -1155,44 +1160,15 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
               })()}
 
               {esClub && (
-                <div className="pr-block">
-                  <h3>Postulantes ({postulantes.length})</h3>
-                  {postulantesLoading ? (
-                    <p className="pr-muted">Cargando postulantes…</p>
-                  ) : postulantesError ? (
-                    <p className="pr-error">{postulantesError}</p>
-                  ) : postulantes.length === 0 ? (
-                    <p className="pr-muted">Todavía no hay postulantes en esta prueba.</p>
-                  ) : (
-                    <ul className="pr-people">
-                      {postulantes.map((item, index) => {
-                        const jugador = item.jugador || item.jugadores || item;
-                        const nombre = (jugador?.nombre && jugador?.apellido)
-                          ? `${jugador.nombre} ${jugador.apellido}`
-                          : (jugador?.nombre || jugador?.apellido || item?.nombre || item?.usuario?.nombre || "Jugador sin nombre");
-                        const dato = (v) => (v && v !== "No especificado" ? v : "—");
-                        const foto = jugador?.fotoperfil || item?.fotoperfil || "";
-                        return (
-                          <li key={jugador?.idjugador || item?.idjugador || index} className="pr-person">
-                            <span className="pr-avatar" aria-hidden="true">
-                              {foto ? <img src={foto} alt="" /> : nombre.charAt(0).toUpperCase()}
-                            </span>
-                            <div>
-                              <p className="pr-person-name">{nombre}</p>
-                              <p className="pr-person-meta">
-                                {[jugador?.deportes?.deporte || jugador?.deporte, jugador?.ubicacion || item?.ubicacion, jugador?.genero || item?.genero]
-                                  .map(dato).filter((v) => v !== "—").join(" · ") || "Sin datos de perfil"}
-                              </p>
-                              {(jugador?.telefono || item?.telefono) && (
-                                <p className="pr-person-meta">Tel. {jugador?.telefono || item?.telefono}</p>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </div>
+                <ListaInscriptos
+                  titulo="Postulantes"
+                  vacio="Todavía no hay postulantes en esta prueba."
+                  inscripciones={postulantes}
+                  cargando={postulantesLoading}
+                  error={postulantesError}
+                  evento={{ idprueba: obtenerIdPrueba(pruebaDetalle) }}
+                  nombreEvento={`la prueba de ${(pruebaDetalle.deporte?.deporte || "jugadores").toLowerCase()}`}
+                />
               )}
 
               {inscripcionError && <p className="pr-error">{inscripcionError}</p>}
