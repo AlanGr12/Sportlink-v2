@@ -30,6 +30,7 @@ import AdminUsuarios from './admin/AdminUsuarios.jsx'
 import AdminEventos from './admin/AdminEventos.jsx'
 import AdminPublicaciones from './admin/AdminPublicaciones.jsx'
 import BackofficeClub from './backoffice/BackofficeClub.jsx'
+import PanelEntrenador from './panelEntrenador/PanelEntrenador.jsx'
 
 // ── Página 404 ───────────────────────────────────────────────────────────────
 function NotFound404() {
@@ -381,6 +382,15 @@ function App() {
             element={
               <ProtectedRoute usuario={usuario}>
                 <BackofficeClub usuario={usuario} />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/entrenador/panel"
+            element={
+              <ProtectedRoute usuario={usuario}>
+                <PanelEntrenador usuario={usuario} />
               </ProtectedRoute>
             }
           />

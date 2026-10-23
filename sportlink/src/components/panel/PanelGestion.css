@@ -1,0 +1,269 @@
+/* ============================================================
+   Panel de gestión — sistema compartido por los paneles con
+   estadísticas, pestañas, tablas y selección múltiple (panel
+   del entrenador, panel del club, backoffice de administración).
+   Reutiliza src/pruebas/PruebasView.css (.pr-*, que ya neutraliza
+   landing.css); prefijo pnl-
+   ============================================================ */
+
+.pnl-head-grid { grid-template-columns: minmax(0, 1fr) auto; }
+.pnl-head-side { align-items: flex-end; }
+.pnl-head-side .pr-btn { align-self: flex-end; }
+.pnl-range { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+/* Chip activo en tinta: el cian queda para la acción principal */
+.pnl .pr-chip.is-on { background: var(--slk-text); border-color: var(--slk-text); color: var(--slk-ground); }
+.pnl-pill--off { background: var(--slk-step); color: var(--slk-text-2); }
+:root[data-tema='oscuro'] .pnl-pill--off { background: var(--slk-ink-step); }
+
+.pnl-body { padding: 0 0 clamp(96px, 12vh, 160px); }
+/* minmax(0, 1fr): la tabla ancha scrollea dentro de su contenedor sin estirar la página */
+.pnl-content { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; transition: opacity 0.2s; }
+.pnl-content.is-loading { opacity: 0.6; }
+.pnl-content > .pr-notice { margin: 0; }
+.pnl-error { margin-bottom: 20px; }
+.pnl-strong { font-weight: 700; }
+.pnl-note { margin: 12px 0 0; font-size: 14px; color: var(--slk-text-2); }
+
+/* ── Números ── */
+.pnl-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 6px;
+}
+.pnl-stat { padding: 24px 24px 22px; background: var(--slk-step); }
+.pnl-stat-num {
+  margin: 0 0 8px;
+  font-size: clamp(30px, 2.6vw, 44px);
+  font-weight: 800;
+  white-space: nowrap;
+  font-variation-settings: 'wdth' 112;
+  letter-spacing: -0.035em !important;
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+}
+.pnl-stat-label { margin: 0; font-size: 15px; color: var(--slk-text-2); }
+.pnl-stat--skeleton { min-height: 118px; animation: pr-pulse 1.4s ease-in-out infinite; }
+.pnl-skeleton { min-height: 360px; margin-top: 28px; background: var(--slk-step); animation: pr-pulse 1.4s ease-in-out infinite; }
+
+/* ── Pestañas ── */
+.pnl-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.pnl-tabs .pr-chip { position: relative; }
+
+/* Contador de pendientes sobre una pestaña */
+.pnl-count-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--slk-accent);
+  color: var(--slk-on-accent);
+  font-size: 12px;
+  font-weight: 800;
+}
+.pnl-tabs .pr-chip.is-on .pnl-count-badge { background: var(--slk-ground); color: var(--slk-text); }
+
+/* ── Bloques de gráficos ── */
+.pnl-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 28px;
+}
+.pnl-block { padding: 26px; background: var(--slk-surface); }
+:root[data-tema='oscuro'] .pnl-block { background: var(--slk-step); }
+.pnl-block-title {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 800;
+  font-variation-settings: 'wdth' 106;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.pnl-block-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 20px; }
+.pnl-block-head .pnl-block-title { margin: 0; }
+.pnl-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.pnl-bar-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--slk-text); font-weight: 600; }
+.pnl-bars .pr-cupos-texto > span:last-child { flex: none; }
+:root[data-tema='oscuro'] .pnl-block .pr-cupos-barra { background: var(--slk-ink-step); }
+.pnl-facts { margin-top: 26px; }
+
+/* Grupo de botones chicos tipo segmentado (p. ej. "Postulantes por Categoría/Género/Disciplina") */
+.pnl-segmented { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.pnl-segmented button {
+  padding: 6px 12px;
+  border: 2px solid var(--slk-step-hover);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--slk-text-2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+.pnl-segmented button:hover { border-color: var(--slk-text); }
+.pnl-segmented button[aria-pressed='true'] { background: var(--slk-text); border-color: var(--slk-text); color: var(--slk-ground); }
+
+/* Barra apilada (p. ej. convocatorias abiertas vs. cerradas) */
+.pnl-stacked { display: flex; height: 10px; overflow: hidden; background: var(--slk-step); margin-bottom: 14px; }
+:root[data-tema='oscuro'] .pnl-stacked { background: var(--slk-ink-step); }
+.pnl-stacked span.a { background: var(--slk-accent); }
+.pnl-stacked span.b { background: var(--slk-step-hover); }
+:root[data-tema='oscuro'] .pnl-stacked span.b { background: var(--slk-text-2); opacity: 0.4; }
+.pnl-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 20px; font-size: 14px; color: var(--slk-text-2); }
+.pnl-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.pnl-legend i { width: 10px; height: 10px; border-radius: 2px; }
+.pnl-legend b { color: var(--slk-text); }
+
+/* ── Tabla (tabla real: lleva líneas) ── */
+.pnl-table-wrap { overflow-x: auto; background: var(--slk-surface); }
+:root[data-tema='oscuro'] .pnl-table-wrap { background: var(--slk-step); }
+.pnl-table { width: 100%; min-width: 920px; border-collapse: collapse; font-size: 15px; }
+.pnl-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slk-text-2);
+  background: var(--slk-step);
+  white-space: nowrap;
+}
+:root[data-tema='oscuro'] .pnl-table th { background: var(--slk-ink-step); }
+.pnl-table td { padding: 14px 16px; border-top: 1px solid var(--slk-step-hover); vertical-align: middle; }
+.pnl-table :is(th, td).num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pnl-table tr.is-open > td { background: var(--slk-step); }
+:root[data-tema='oscuro'] .pnl-table tr.is-open > td { background: var(--slk-ink-step); }
+.pnl-table .pr-pill { display: inline-block; }
+.pnl-table .pr-link { font-size: 15px; white-space: nowrap; }
+.pnl-table td.pnl-date { white-space: nowrap; }
+.pnl-table-title { display: block; color: var(--slk-text); font-weight: 700; text-decoration: none; }
+.pnl-table-title:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.pnl-table-sub { display: block; font-size: 14px; color: var(--slk-text-2); }
+.pnl-mini { display: flex; align-items: center; gap: 10px; min-width: 130px; }
+.pnl-mini .pr-cupos-barra { flex: 1; }
+.pnl-mini b { min-width: 3.2em; font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; }
+
+.pnl-row-detail > td { padding: 4px 16px 18px; background: var(--slk-step); border-top: 0; }
+:root[data-tema='oscuro'] .pnl-row-detail > td { background: var(--slk-ink-step); }
+.pnl-detail-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 6px 0 10px; }
+.pnl-detail-head .pr-muted { font-size: 14px; }
+
+/* ── Listas de personas (alumnos, participantes, solicitudes…) ── */
+.pnl-people { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pnl-person {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--slk-surface);
+}
+:root[data-tema='oscuro'] .pnl-person { background: var(--slk-step); }
+.pnl-row-detail .pnl-person { background: var(--slk-ground); }
+.pnl-person.is-selected { box-shadow: inset 4px 0 0 var(--slk-accent); }
+.pnl-person .pr-avatar { width: 44px; height: 44px; font-size: 16px; }
+.pnl-person-id { min-width: 0; }
+.pnl-person-id .pr-person-name a { color: var(--slk-text); text-decoration: none; }
+.pnl-person-id .pr-person-name a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.pnl-person-actions .pr-link:disabled { opacity: 0.45; cursor: not-allowed; text-decoration-color: currentColor; }
+.pnl-done { font-size: 14px; font-weight: 700; color: #1b5e2a; }
+:root[data-tema='oscuro'] .pnl-done { color: #8fe39a; }
+/* Fila sin casilla (p. ej. una recomendación recibida, no seleccionable) */
+.pnl-person--sin-check { grid-template-columns: auto minmax(0, 1fr) auto; }
+.pnl-quote { margin: 6px 0 0; font-size: 15px; color: var(--slk-text-2); white-space: pre-line; }
+
+.pnl-check {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--slk-text);
+  cursor: pointer;
+}
+
+/* ── Confirmación en línea (p. ej. "Dar de baja" / "Descartar") ── */
+.pnl-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+/* ── Barra de selección (flota abajo) ── */
+.pnl-selbar {
+  font-family: var(--slk-font);
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  width: min(880px, calc(100% - 32px));
+  padding: 14px 18px;
+  background: var(--slk-text);
+  color: var(--slk-ground);
+  transform: translateX(-50%);
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.5);
+  animation: pr-up 0.3s var(--slk-ease) both;
+}
+/* Va por portal fuera de .pr: neutraliza también acá las reglas de landing.css */
+.pnl-selbar * { box-sizing: border-box; }
+.pnl-selbar :where(p, button, span) { font-family: inherit !important; letter-spacing: inherit; text-transform: none; }
+.pnl-selbar :where(button) { font: inherit; overflow: visible; position: static; }
+.pnl-selbar :where(button)::after { content: none; }
+.pnl-selbar p { margin: 0; font-weight: 700; color: inherit; }
+.pnl-selbar-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.pnl-selbar .pr-link { color: var(--slk-ground); font-size: 15px; }
+.pnl-selbar .pr-btn--ghost { color: var(--slk-ground); box-shadow: inset 0 0 0 2px rgba(241, 242, 239, 0.35); }
+.pnl-selbar .pr-btn--ghost:hover { background: rgba(241, 242, 239, 0.12); }
+:root[data-tema='oscuro'] .pnl-selbar .pr-btn--ghost { box-shadow: inset 0 0 0 2px rgba(14, 16, 17, 0.3); }
+:root[data-tema='oscuro'] .pnl-selbar .pr-btn--ghost:hover { background: rgba(14, 16, 17, 0.08); }
+.pnl-selbar .pr-btn:focus-visible,
+.pnl-selbar .pr-link:focus-visible { outline: 3px solid var(--slk-accent); outline-offset: 2px; }
+
+/* ── Modal con nota / mensaje (p. ej. "Recomendar al club") ── */
+.pnl-overlay-top { z-index: 10002; }
+.pnl-modal-head { grid-template-columns: minmax(0, 1fr) auto; }
+.pnl-selected { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.pnl-selected li { padding: 5px 12px; border-radius: 999px; background: var(--slk-step); font-size: 14px; font-weight: 600; }
+.pnl-message { display: grid; gap: 8px; }
+.pnl-message > span { font-size: 15px; color: var(--slk-text-2); }
+.pnl-message textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 0;
+  background: var(--slk-step);
+  color: var(--slk-text);
+  font: inherit;
+  font-size: 16px;
+  resize: vertical;
+}
+.pnl-message textarea:focus-visible { outline: 3px solid var(--slk-text); outline-offset: 2px; }
+.pnl-message small { justify-self: end; font-size: 13px; color: var(--slk-text-2); }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .pnl-head-grid { grid-template-columns: 1fr; }
+  .pnl-head-side,
+  .pnl-head-side .pr-btn { align-items: flex-start; align-self: flex-start; }
+  .pnl-range { justify-content: flex-start; }
+  .pnl-split { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .pnl-block { padding: 20px; }
+  .pnl-stats { grid-template-columns: 1fr 1fr; }
+  .pnl-stat { padding: 18px; }
+  .pnl-person { grid-template-columns: auto auto minmax(0, 1fr); }
+  .pnl-person-actions { grid-column: 1 / -1; justify-content: flex-start; gap: 20px; }
+  .pnl-person--sin-check { grid-template-columns: auto minmax(0, 1fr); }
+  .pnl-person--sin-check .pr-pill { grid-column: 2; justify-self: start; }
+  /* Deja libre la esquina del botón flotante del chatbot */
+  .pnl-selbar { bottom: 0; width: 100%; padding-right: 88px; }
+  .pnl-detail-head { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pnl-selbar, .pnl-stat--skeleton, .pnl-skeleton { animation: none; }
+}
