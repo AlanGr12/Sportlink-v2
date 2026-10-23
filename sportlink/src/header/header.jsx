@@ -159,7 +159,7 @@ const Header = ({ usuario, onLogout }) => {
   // Vistas ya migradas al nuevo diseño: admiten modo claro y oscuro.
   // El resto sigue con el diseño oscuro anterior hasta que se migre.
   const vistaMigrada =
-    ['/info', '/landing', '/pruebas', '/entrenamientos', '/clubes', '/entrenadores'].includes(location.pathname) ||
+    ['/info', '/landing', '/pruebas', '/entrenamientos', '/clubes', '/entrenadores', '/entrenador/panel'].includes(location.pathname) ||
     location.pathname.startsWith('/pruebas/') ||
     location.pathname.startsWith('/entrenamientos/') ||
     (location.pathname === '/' && !estaLogueado);
@@ -395,6 +395,16 @@ const IcoInfo = () => (
         return (
           <>
             {itemSobreNosotros}
+            <ItemDropdown
+              ruta="/entrenador/panel"
+              icono={
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+              }
+              titulo="Tu panel"
+              desc="Estadísticas de tus entrenamientos y alumnos; recomendá jugadores a tu club."
+            />
             <ItemDropdown ruta="/empleos" icono={<IconoEmpleos size={22} color="currentColor" />} titulo="Empleos" desc="Postúlate a vacantes técnicas de clubes y academias." />
             <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Gestiona u observa las convocatorias del mercado de pases." />
             <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Diseña y planifica sesiones tácticas avanzadas." />
