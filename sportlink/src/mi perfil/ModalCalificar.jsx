@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import api from '../axiosConfig.js';
-import './PerfilResenas.css';
 
 /**
  * ModalCalificar:
@@ -181,145 +180,78 @@ export default function ModalCalificar({
     textoopinion.trim().length < 10;
 
   return createPortal(
-    <div className="modal-calificar-overlay" onClick={handleCerrar} role="dialog" aria-modal="true">
-      <div className="modal-calificar-card" onClick={(e) => e.stopPropagation()}>
-        {/* Encabezado */}
-        <div className="modal-calificar-header">
-          <div className="modal-calificar-header-text">
-            <span className="modal-calificar-tag">NUEVA EVALUACIÓN</span>
-            <h3 className="modal-calificar-titulo">Calificar a {nombreEntidad}</h3>
-          </div>
-          <button
-            type="button"
-            className="modal-calificar-btn-close"
-            onClick={handleCerrar}
-            disabled={cargando}
-            aria-label="Cerrar modal"
-          >
-            ×
-          </button>
+    <div className="pr-overlay" onClick={handleCerrar}>
+      <div className="pr-modal pr-modal--form pf-calificar" role="dialog" aria-modal="true" aria-labelledby="pf-calificar-titulo" onClick={(e) => e.stopPropagation()}>
+        <div className="pr-modal-head pf-modal-head">
+          <h2 id="pf-calificar-titulo" className="pr-modal-title">Calificar a {nombreEntidad}</h2>
+          <button type="button" className="pr-close" onClick={handleCerrar} disabled={cargando} aria-label="Cerrar">×</button>
         </div>
 
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="modal-calificar-form">
-          {/* Alerta de error visible sin colapsar la vista */}
-          {errorAlerta && (
-            <div className="modal-calificar-alerta-error" role="alert">
-              <svg className="alerta-error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              <div className="alerta-error-texto">{errorAlerta}</div>
-            </div>
-          )}
+        <form onSubmit={handleSubmit} className="pf-form">
+          <div className="pr-modal-body">
+            {errorAlerta && <p className="pr-error" role="alert">{errorAlerta}</p>}
 
-          {/* Selector interactivo de 1 a 5 estrellas */}
-          <div className="modal-calificar-field field-centrado">
-            <label className="modal-calificar-label">
-              Calificación general <span className="req">*</span>
-            </label>
-            <div
-              className="star-selector-stars-interactive"
-              onMouseLeave={() => setHoverEstrellas(0)}
-              role="radiogroup"
-              aria-label="Calificación de 1 a 5 estrellas"
-            >
-              {[1, 2, 3, 4, 5].map((star) => {
-                const activa = (hoverEstrellas || estrellitas) >= star;
-                return (
-                  <button
-                    key={star}
-                    type="button"
-                    className={`star-btn-select ${activa ? 'activa' : 'inactiva'}`}
-                    onClick={() => setEstrellitas(star)}
-                    onMouseEnter={() => setHoverEstrellas(star)}
-                    aria-label={`${star} estrella${star > 1 ? 's' : ''}`}
-                    role="radio"
-                    aria-checked={estrellitas === star}
-                  >
-                    <svg viewBox="0 0 24 24">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                    </svg>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="star-feedback-caption">
-              {captionsEstrellas[hoverEstrellas || estrellitas]}
-            </div>
-          </div>
-
-          {/* Asociación de Evento (Dropdown puramente opcional si hay eventosPasados) */}
-          {Array.isArray(eventosPasados) && eventosPasados.length > 0 && (
-            <div className="modal-calificar-field">
-              <label htmlFor="select-evento-asociado" className="modal-calificar-label">
-                Evento relacionado <span className="modal-calificar-opcional">(Opcional)</span>
-              </label>
-              <select
-                id="select-evento-asociado"
-                className="modal-calificar-select"
-                value={eventoSeleccionado || ''}
-                onChange={(e) => setEventoSeleccionado(e.target.value)}
-              >
-                <option value="">- Sin asociar a evento en particular -</option>
-                {eventosPasados.map((ev, idx) => {
-                  const idprueba = ev.idprueba ?? ev.id_prueba ?? (ev.tipo === 'prueba' ? ev.id : null);
-                  const identrenamiento = ev.identrenamiento ?? ev.id_entrenamiento ?? (ev.tipo === 'entrenamiento' ? ev.id : null);
-                  const valueObj = JSON.stringify({ idprueba, identrenamiento });
-                  const tipoLabel = idprueba ? 'Prueba' : identrenamiento ? 'Entrenamiento' : 'Evento';
-                  const nombreEv = ev.titulo || ev.nombre || ev.deporte || `Evento #${idx + 1}`;
-                  const fechaStr = ev.fecha ? ` (${new Date(ev.fecha).toLocaleDateString()})` : '';
-
+            <fieldset className="pf-estrellas-campo">
+              <legend>Calificación</legend>
+              <div className="pf-estrellas-elegir" onMouseLeave={() => setHoverEstrellas(0)} role="radiogroup" aria-label="Calificación de 1 a 5 estrellas">
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const activa = (hoverEstrellas || estrellitas) >= star;
                   return (
-                    <option key={idx} value={valueObj}>
-                      {tipoLabel}: {nombreEv}{fechaStr}
-                    </option>
+                    <button
+                      key={star}
+                      type="button"
+                      className={`pf-estrella-btn${activa ? ' is-on' : ''}`}
+                      onClick={() => setEstrellitas(star)}
+                      onMouseEnter={() => setHoverEstrellas(star)}
+                      aria-label={`${star} estrella${star > 1 ? 's' : ''}`}
+                      role="radio"
+                      aria-checked={estrellitas === star}
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                    </button>
                   );
                 })}
-              </select>
-            </div>
-          )}
+                <span className="pf-estrellas-texto">{captionsEstrellas[hoverEstrellas || estrellitas]}</span>
+              </div>
+            </fieldset>
 
-          {/* Área de Opinión: <textarea> para textoopinion */}
-          <div className="modal-calificar-field">
-            <div className="modal-calificar-label-row">
-              <label htmlFor="textarea-textoopinion" className="modal-calificar-label">
-                Tu Opinión <span className="req">*</span>
+            {Array.isArray(eventosPasados) && eventosPasados.length > 0 && (
+              <label className="pf-campo">
+                <span>Evento relacionado (opcional)</span>
+                <select value={eventoSeleccionado || ''} onChange={(e) => setEventoSeleccionado(e.target.value)}>
+                  <option value="">Sin asociar a un evento</option>
+                  {eventosPasados.map((ev, idx) => {
+                    const idprueba = ev.idprueba ?? ev.id_prueba ?? (ev.tipo === 'prueba' ? ev.id : null);
+                    const identrenamiento = ev.identrenamiento ?? ev.id_entrenamiento ?? (ev.tipo === 'entrenamiento' ? ev.id : null);
+                    const valueObj = JSON.stringify({ idprueba, identrenamiento });
+                    const tipoLabel = idprueba ? 'Prueba' : identrenamiento ? 'Entrenamiento' : 'Evento';
+                    const nombreEv = ev.titulo || ev.nombre || ev.deporte || `Evento #${idx + 1}`;
+                    const fechaStr = ev.fecha ? ` (${new Date(ev.fecha).toLocaleDateString('es-AR')})` : '';
+                    return <option key={idx} value={valueObj}>{tipoLabel}: {nombreEv}{fechaStr}</option>;
+                  })}
+                </select>
               </label>
-              <span className={`modal-calificar-charcount ${textoopinion.trim().length < 10 ? 'insuficiente' : ''}`}>
-                {textoopinion.length} / 500 {textoopinion.trim().length < 10 && '(mínimo 10 caracteres)'}
-              </span>
-            </div>
-            <textarea
-              id="textarea-textoopinion"
-              className="modal-calificar-textarea"
-              value={textoopinion}
-              onChange={(e) => setTextoopinion(e.target.value)}
-              placeholder="Contá tu experiencia sobre la prueba/entrenamiento, el trato y las instalaciones..."
-              maxLength={500}
-              rows={4}
-              required
-            />
+            )}
+
+            <label className="pf-campo">
+              <span>Tu opinión</span>
+              <textarea
+                value={textoopinion}
+                onChange={(e) => setTextoopinion(e.target.value)}
+                placeholder="Contá cómo fue: la prueba o el entrenamiento, el trato, las instalaciones."
+                maxLength={500}
+                rows={4}
+                required
+              />
+              <small className={textoopinion.trim().length < 10 ? 'is-corto' : ''}>
+                {textoopinion.length}/500{textoopinion.trim().length < 10 && ' · mínimo 10 caracteres'}
+              </small>
+            </label>
           </div>
 
-          {/* Acciones */}
-          <div className="modal-calificar-actions">
-            <button
-              type="button"
-              className="btn-modal-calificar-cancelar"
-              onClick={handleCerrar}
-              disabled={cargando}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="btn-modal-calificar-publicar"
-              disabled={botonDeshabilitado}
-            >
-              {cargando ? 'Publicando...' : 'Publicar Reseña'}
-            </button>
+          <div className="pr-modal-foot">
+            <button type="button" className="pr-btn pr-btn--ghost" onClick={handleCerrar} disabled={cargando}>Cancelar</button>
+            <button type="submit" className="pr-btn" disabled={botonDeshabilitado}>{cargando ? 'Publicando…' : 'Publicar reseña'}</button>
           </div>
         </form>
       </div>

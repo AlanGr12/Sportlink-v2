@@ -1,0 +1,15 @@
+.slk-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  background: var(--slk-text);
+  color: var(--slk-accent);
+  font-family: var(--slk-font);
+  font-weight: 800;
+  font-variation-settings: 'wdth' 112;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.slk-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+:root[data-tema='oscuro'] .slk-avatar { background: var(--slk-on-ink); color: #0e1011; }

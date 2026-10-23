@@ -4,6 +4,7 @@ import api from '../axiosConfig.js'
 import SidebarConversaciones from './SidebarConversaciones.jsx'
 import PanelChat from './PanelChat.jsx'
 import { parsearFechaUtc } from './utilsFecha.js'
+import '../pruebas/PruebasView.css'
 import './mensajes.css'
 import { createClient } from '@supabase/supabase-js'
 
@@ -111,7 +112,8 @@ export default function MensajesView({ usuario }) {
   }, [])
 
   return (
-    <div className="mensajes-container">
+    <div className={`pr ms${conversacionActiva ? ' ms--chat' : ''}`}>
+      <div className="pr-wrap ms-layout">
       <SidebarConversaciones
         usuario={usuario}
         onlineUsers={onlineUsers}
@@ -126,7 +128,9 @@ export default function MensajesView({ usuario }) {
         conversacionActiva={conversacionActiva}
         actualizarUltimoMensaje={actualizarUltimoMensaje}
         marcarComoLeida={marcarComoLeida}
+        onVolver={() => setConversacionActiva(null)}
       />
+      </div>
     </div>
   )
 }

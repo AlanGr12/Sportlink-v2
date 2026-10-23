@@ -1,1046 +1,258 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Space+Grotesk:wght@300..700&display=swap');
+/* ============================================================
+   Calendario — sistema SportLink (reutiliza PruebasView.css .pr-*)
+   Grilla del mes a la izquierda, día elegido y próximos a la derecha.
+   Las celdas se separan por tono (2px de fondo); prefijo cal-.
+   ============================================================ */
 
-/* ── ROOT ── */
-.cal-root {
-  background: #0f0f0f;
-  min-height: 100vh;
-  padding-top: 80px; /* espacio para header fijo */
-  color: #e8e8e8;
-  font-family: 'Manrope', sans-serif;
+/* Marcador de color por tipo (barra a la izquierda de chips y tarjetas) */
+.cal-tipo--prueba { --cal-color: var(--slk-accent); }
+.cal-tipo--entrenamiento { --cal-color: var(--slk-text); }
+.cal-tipo--entrevista,
+.cal-tipo--empleo { --cal-color: #e0a400; }
+.cal-tipo--personalizado { --cal-color: var(--slk-text-2); }
+:root[data-tema='oscuro'] :is(.cal-tipo--entrevista, .cal-tipo--empleo) { --cal-color: #ffd25a; }
+
+:root[data-tema='oscuro'] .cal .pr-link--danger { color: #ff8a8a; }
+
+/* Toda la vista entra en una pantalla: header fijo + mes + grilla.
+   El único scroll es el de la columna derecha (día elegido y próximos). */
+.cal {
+  height: 100vh;
+  height: 100dvh;
+  padding-top: var(--slk-header-h);
+  overflow: hidden;
 }
 
 .cal-layout {
   display: grid;
-  grid-template-columns: 3fr 1fr;
-  gap: 32px;
-  max-width: 1500px;
-  margin: 0 auto;
-  padding: 40px 32px 60px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 28px;
+  height: 100%;
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 
-.cal-left-block {
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 0;
-  align-items: start;
-}
+.cal-main { display: flex; flex-direction: column; min-height: 0; }
 
-@media (min-width: 1101px) {
-  .cal-root {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding-top: 80px; /* espacio para header fijo */
-    height: 100vh;
-    box-sizing: border-box;
-    overflow: hidden;
-  }
-  .cal-layout {
-    height: 100%;
-    grid-template-columns: 3fr 1fr;
-    align-items: stretch;
-    padding: 20px 32px;
-    box-sizing: border-box;
-    overflow: hidden;
-  }
-  .cal-left-block {
-    position: static;
-    height: 100%;
-    overflow: hidden;
-  }
-  .cal-sidebar-right {
-    height: 100%;
-    overflow-y: auto;
-    padding-top: 0;
-    padding-bottom: 40px;
-    box-sizing: border-box;
-    scrollbar-width: thin;
-    scrollbar-color: #2a2a2a transparent;
-  }
-  .cal-sidebar-right::-webkit-scrollbar {
-    width: 6px;
-  }
-  .cal-sidebar-right::-webkit-scrollbar-thumb {
-    background-color: #2a2a2a;
-    border-radius: 3px;
-  }
-}
-
-.cal-sidebar-right {
+/* ── Barra del mes ── */
+.cal-toolbar {
   display: flex;
-  flex-direction: column;
-  gap: 12px; /* espacio muy chico entre cuadros */
-  padding-top: 56px;
-  transition: gap 0.3s ease;
-}
-
-/* ── SIDEBAR ── */
-.cal-sidebar {
-  padding-top: 56px;
-  padding-right: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  position: static;
-}
-
-.cal-sidebar-label {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.65rem;
-  letter-spacing: 2px;
-  color: #555;
-  margin: 0 0 6px 0;
-  text-transform: uppercase;
-}
-
-.cal-cat-item {
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  background: #1a1a1a;
-  border-radius: 6px;
-  padding: 9px 12px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.cal-cat-item:hover {
-  background: #222222;
-}
-
-.cal-cat-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.cal-cat-text {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 1.2px;
-  color: #ccc;
-}
-
-.cal-sidebar-divider {
-  height: 1px;
-  background: #2a2a2a;
-  margin: 6px 0;
-}
-
-.cal-agregar-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  border: 1px solid #2a2a2a;
-  border-radius: 6px;
-  padding: 9px 12px;
-  color: #23e7f5;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.cal-agregar-btn:hover {
-  background: rgba(35, 231, 245, 0.06);
-  border-color: #23e7f5;
-}
-
-.cal-agregar-plus {
-  font-size: 1.1rem;
-  line-height: 1;
-  color: #23e7f5;
-}
-
-/* ── MAIN ── */
-.cal-main {
-  min-width: 0;
-}
-
-/* Cabecera mes */
-.cal-header-mes {
-  display: flex;
-  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 28px;
+  gap: 12px 24px;
+  margin-bottom: 14px;
 }
-
-.cal-programacion-label {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.65rem;
-  letter-spacing: 2.5px;
-  color: #555;
-  margin: 0 0 4px 0;
-}
-
-.cal-mes-titulo {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 2.8rem;
-  font-weight: 700;
-  letter-spacing: -1px;
+.cal-mes {
   margin: 0;
+  font-size: clamp(36px, 3.8vw, 60px);
+  font-weight: 800;
+  font-variation-settings: 'wdth' 112;
+  letter-spacing: -0.035em;
   line-height: 1;
 }
+.cal-mes span { color: var(--slk-text-2); }
 
-.cal-mes-nombre {
-  color: #23e7f5;
-}
+.cal-toolbar-ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cal-select { min-width: 0; }
+.pr .cal-select select { height: 44px; }
+.cal-toolbar-ctrl .pr-btn--sm { height: 44px; }
+.cal .cal-arrow { display: grid; }
 
-.cal-mes-anio {
-  color: #e8e8e8;
-}
-
-.cal-nav-btns {
+.cal-leyenda {
   display: flex;
-  gap: 6px;
-  padding-bottom: 6px;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  color: var(--slk-text-2);
 }
+.cal-leyenda li { display: flex; align-items: center; gap: 8px; }
+.cal-leyenda li::before { content: ''; width: 14px; height: 14px; background: var(--cal-color); }
 
-.cal-nav-btn {
-  background: #1a1a1b;
-  border: 1px solid #2a2a2c;
-  border-radius: 6px;
-  color: #ccc;
-  width: 34px;
-  height: 34px;
-  font-size: 1.2rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  line-height: 1;
-}
-
-.cal-nav-btn:hover {
-  background: #222224;
-  color: #23e7f5;
-  border-color: #23e7f5;
-}
-
-.cal-nav-btn-hoy {
-  width: auto;
-  padding: 0 12px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  font-family: 'Space Grotesk', sans-serif;
-  text-transform: uppercase;
-}
-
-
-/* ── GRILLA ── */
-.cal-grid-wrapper {
-  border: 1px solid #1e1e20;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.cal-grid-header {
+/* ── Grilla ── */
+.cal-grid {
+  flex: 1;
+  min-height: 0;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  background: #141415;
-  border-bottom: 1px solid #1e1e20;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: auto;
+  grid-auto-rows: minmax(0, 1fr); /* las semanas se reparten el alto disponible */
+  gap: 2px;
 }
 
 .cal-dia-semana {
-  padding: 10px 0;
-  text-align: center;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  color: #444;
-}
-
-.cal-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  padding: 0 0 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--slk-text-2);
 }
 
 .cal-celda {
-  /* Altura fija: la celda nunca crece aunque haya muchos chips */
-  height: 105px;
-  overflow: hidden;
-  border-right: 1px solid #1e1e20;
-  border-bottom: 1px solid #1e1e20;
-  padding: 8px 10px 6px;
-  cursor: pointer;
-  transition: background 0.12s;
-  position: relative;
-  /* Flex en columna para que el bloque de chips quede bajo el número */
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-}
-
-.cal-celda:nth-child(7n) {
-  border-right: none;
-}
-
-/* Últimas filas sin borde inferior */
-.cal-celda:nth-last-child(-n+7) {
-  border-bottom: none;
-}
-
-.cal-celda:hover:not(.cal-celda--vacia) {
-  background: #1a1a1b;
-}
-
-.cal-celda--vacia {
-  background: #0d0d0e;
-  cursor: default;
-}
-
-.cal-celda--hoy {
-  background: #1a1a1b;
-  outline: 1px solid #333;
-  outline-offset: -1px;
-}
-
-.cal-celda--seleccionada {
-  background: rgba(35, 231, 245, 0.04) !important;
-  border: 1px solid #23e7f5 !important;
-  outline: none !important;
-}
-
-.cal-celda-num {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #666;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
-.cal-celda-num--hoy {
-  color: #888;
-  font-weight: 600;
-}
-
-.cal-celda-num--seleccionada {
-  color: #23e7f5;
-  font-weight: 700;
-}
-
-/* ── PANEL DÍA ── */
-.cal-panel-dia {
-  margin-top: 0;
-  background: #141415;
-  border: 1px solid #222224;
-  border-radius: 10px;
-  padding: 24px 28px;
-  animation: panelSlide 0.18s ease;
-  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s;
-}
-
-.cal-panel-dia.cal-panel--closed {
-  padding-bottom: 20px;
-}
-
-@keyframes panelSlide {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.cal-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-  transition: margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.cal-panel--closed .cal-panel-header {
-  margin-bottom: 0;
-}
-
-.cal-panel-header-clickable {
-  user-select: none;
-}
-
-.cal-panel-fecha-label {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.65rem;
-  letter-spacing: 2px;
-  color: #555;
-  text-transform: uppercase;
-  margin: 0 0 4px 0;
-}
-
-.cal-panel-titulo {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #e8e8e8;
-  margin: 0;
-  letter-spacing: -0.3px;
-}
-
-.cal-panel-agregar {
-  background: transparent;
-  border: 1px solid #2a2a2c;
-  border-radius: 6px;
-  color: #23e7f5;
-  width: 30px;
-  height: 30px;
-  font-size: 1.2rem;
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.cal-panel-agregar:hover {
-  background: rgba(35, 231, 245, 0.06);
-  border-color: #23e7f5;
-}
-
-/* ── DROPDOWNS MES / AÑO ── */
-.cal-dropdown-wrap {
-  position: relative;
-  display: inline-block;
-}
-
-.cal-mes-btn {
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
+  align-items: stretch;
   gap: 6px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: inherit;
-  font-weight: inherit;
-  letter-spacing: inherit;
-  line-height: inherit;
-}
-
-.cal-dropdown-arrow {
-  width: 12px;
-  height: 8px;
-  color: #555;
-  transition: transform 0.15s, color 0.15s;
-  flex-shrink: 0;
-  margin-bottom: -2px;
-}
-
-.cal-dropdown-arrow.open {
-  transform: rotate(180deg);
-  color: #23e7f5;
-}
-
-.cal-mes-btn:hover .cal-dropdown-arrow {
-  color: #23e7f5;
-}
-
-.cal-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  background: #141415;
-  border: 1px solid #2a2a2c;
-  border-radius: 8px;
-  padding: 6px;
-  z-index: 100;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.6);
-  animation: panelSlide 0.15s ease;
-}
-
-.cal-dropdown-menu--mes {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px;
-  min-width: 200px;
-}
-
-.cal-dropdown-menu--anio {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 90px;
-  max-height: 260px;
-  overflow-y: auto;
-}
-
-.cal-dropdown-item {
-  background: transparent;
-  border: none;
-  border-radius: 5px;
-  color: #aaa;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 500;
-  padding: 7px 12px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 8px 10px;
+  border: 0;
+  background: var(--slk-surface);
+  color: var(--slk-text);
   text-align: left;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-  letter-spacing: 0.3px;
+  transition: background-color 0.2s, box-shadow 0.2s;
 }
+:root[data-tema='oscuro'] .cal-celda { background: var(--slk-step); }
+.cal-celda:hover { background: var(--slk-step); }
+:root[data-tema='oscuro'] .cal-celda:hover { background: var(--slk-step-hover); }
+.cal-celda--vacia { background: transparent !important; cursor: default; }
+.cal-celda.is-sel { box-shadow: inset 0 0 0 3px var(--slk-text); }
+.cal-celda:focus-visible { outline: 3px solid var(--slk-text); outline-offset: -3px; }
 
-.cal-dropdown-item:hover {
-  background: #1e1e20;
-  color: #e8e8e8;
-}
-
-.cal-dropdown-item--activo {
-  color: #23e7f5;
-  background: rgba(35, 231, 245, 0.06);
-}
-
-.cal-panel-vacio {
-  padding: 20px 0 4px;
-  color: #444;
-  font-size: 0.9rem;
-  font-family: 'Manrope', sans-serif;
-}
-
-/* ── PRÓXIMOS EVENTOS ── */
-.cal-proximos {
-  margin-top: 0;
-  background: #141415;
-  border: 1px solid #222224;
-  border-radius: 10px;
-  padding: 24px 28px;
-  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s;
-}
-
-.cal-proximos.cal-panel--closed {
-  padding-bottom: 20px;
-}
-
-.cal-proximos-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-  margin-bottom: 20px;
-  transition: margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.cal-panel--closed .cal-proximos-header {
-  margin-bottom: 0;
-}
-
-.cal-proximos-titulo {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.3rem;
+.cal-num {
+  display: inline-grid;
+  place-items: center;
+  align-self: flex-start;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 4px;
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: -0.3px;
-  color: #e8e8e8;
-  margin: 0;
+  font-variant-numeric: tabular-nums;
 }
+.cal-celda.is-hoy .cal-num { background: var(--slk-accent); color: var(--slk-on-accent); font-weight: 800; }
 
-.cal-proximos-header:hover .cal-proximos-titulo {
-  color: #23e7f5;
-}
-
-.cal-proximos-vacio {
-  color: #555;
-  font-size: 0.95rem;
-  padding: 32px 0;
-  text-align: center;
-  border: 1px dashed #1e1e20;
-  border-radius: 10px;
-}
-
-/* ── CHIPS DE EVENTOS EN CELDA ── */
-.cal-celda-eventos {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: 4px;
-  /* Limita el bloque de chips para que no desborde la celda */
-  max-height: 72px;
-  overflow: hidden;
-  width: 100%;
-}
-
-.cal-celda-evento-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 100%;
-  margin-bottom: 2px;
-}
-
-.cal-celda-evento-chip {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 4px;
-  /* Altura fija: pastilla de una sola línea, nunca crece */
-  height: 16px;
-  padding: 0 5px 0 4px;
-  max-width: 100%;
-  width: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.cal-celda-evento-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 2px;
-  background: #23e7f5;
-  flex-shrink: 0;
-}
-
-.cal-celda-evento-nombre {
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.62rem;
+.cal-chips { display: grid; gap: 4px; min-width: 0; }
+.cal-chip {
+  display: block;
+  min-width: 0;
+  padding: 3px 6px 3px 8px;
+  background: var(--slk-step);
+  box-shadow: inset 3px 0 0 var(--cal-color);
+  font-size: 13px;
   font-weight: 600;
-  color: #ffffff;
-  white-space: nowrap;
+  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 100%;
+  white-space: nowrap;
+}
+:root[data-tema='oscuro'] .cal-chip { background: var(--slk-ink-step); }
+.cal-celda:hover .cal-chip { background: var(--slk-ground); }
+.cal-chip b { margin-right: 5px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.cal-chip.is-pasado { opacity: 0.55; }
+.cal-chip--skeleton { height: 22px; animation: pr-pulse 1.4s ease-in-out infinite; }
+.cal-mas { padding-left: 8px; font-size: 13px; font-weight: 700; color: var(--slk-text-2); }
+
+/* ── Columna derecha ── */
+.cal-lado { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.cal-agregar { flex: none; }
+.cal-lado-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  scrollbar-width: thin;
 }
 
-.cal-celda-evento-hora {
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.58rem;
-  color: #888;
-  margin-top: 1px;
-  line-height: 1;
-  padding-left: 2px;
-}
-
-.cal-celda-mas {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.6rem;
-  color: #666;
-  letter-spacing: 0.3px;
-  padding-left: 2px;
-}
-
-/* ── PANEL EVENTOS DEL DÍA ── */
-.cal-panel-eventos {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding-top: 4px;
-}
-
-.cal-panel-evento {
-  background: #0f1012;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  overflow: hidden;
-  transition: border-color 0.2s;
-}
-
-.cal-panel-evento:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.cal-panel-evento-img-wrap {
-  width: 100%;
-  max-height: 160px;
-  overflow: hidden;
-}
-
-.cal-panel-evento-img {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-  display: block;
-}
-
-.cal-panel-evento-body {
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.cal-panel-evento-titulo-row {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.cal-panel-evento-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
-  background: #23e7f5;
-  flex-shrink: 0;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-}
-
-.cal-panel-evento-nombre {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #e8e8e8;
-  margin: 0;
-  letter-spacing: -0.2px;
-}
-
-.cal-panel-evento-meta {
+.cal-bloque { padding: 22px; background: var(--slk-step); }
+.cal-bloque-head {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 16px;
+  margin-bottom: 16px;
 }
-
-.cal-panel-evento-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.72rem;
-  color: #666;
-}
-
-.cal-panel-evento-meta-item svg {
-  color: #23e7f5;
-  opacity: 0.7;
-  flex-shrink: 0;
-}
-
-.cal-panel-evento-desc {
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.8rem;
-  color: #888;
-  line-height: 1.5;
+.cal-bloque-titulo {
   margin: 0;
-  padding-top: 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 26px;
+  font-weight: 800;
+  font-variation-settings: 'wdth' 106;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
+.cal-bloque-head .pr-link { font-size: 15px; }
+.cal-bloque .pr-muted { font-size: 15px; }
 
-.cal-panel-evento-btn {
-  background: #23e7f5;
-  border: none;
-  border-radius: 6px;
-  color: #000;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  padding: 6px 14px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: background 0.15s, transform 0.15s;
+.cal-lista { display: grid; gap: 2px; }
+.cal-paginar { display: flex; gap: 20px; margin-top: 14px; }
+.cal-paginar .pr-link { font-size: 15px; }
+
+/* Tarjeta de evento */
+.cal-evento {
+  background: var(--slk-surface);
+  box-shadow: inset 4px 0 0 var(--cal-color);
 }
+:root[data-tema='oscuro'] .cal-evento { background: var(--slk-ink-step); }
+.cal-evento.is-pasado { opacity: 0.65; }
+.cal-evento--skeleton { height: 120px; margin-bottom: 2px; box-shadow: none; animation: pr-pulse 1.4s ease-in-out infinite; }
 
-.cal-panel-evento-btn:hover {
-  background: #1bd4d7;
-  transform: translateY(-1px);
+.cal-evento-img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.cal-evento-body { display: grid; gap: 8px; padding: 16px 16px 16px 20px; }
+.cal-evento-tipo { font-size: 13px; font-weight: 700; color: var(--slk-text-2); }
+.cal-evento h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  font-variation-settings: 'wdth' 106;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
-
-/* Variante violeta (Editar) */
-.cal-panel-evento-btn--editar {
-  background: #23e7f5 !important;
-  color: #000000 !important;
-}
-
-.cal-panel-evento-btn--editar:hover {
-  background: #23e7f5 !important;
-  transform: translateY(-1px);
-}
-
-/* Variante roja (Eliminar) */
-.cal-panel-evento-btn--eliminar {
-  background: transparent !important;
-  color: #ef4444 !important;
-  border: 1px solid rgba(239, 68, 68, 0.35) !important;
-}
-
-.cal-panel-evento-btn--eliminar:hover {
-  background: rgba(239, 68, 68, 0.08) !important;
-  transform: translateY(-1px);
-}
-
-.cal-panel-evento-btn--eliminar:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* ── PRÓXIMOS EVENTOS — lista ── */
-.cal-proximos-lista {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.cal-proximos-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #141415;
-  border: 1px solid #1e1e20;
-  border-radius: 8px;
-  padding: 12px 16px;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.cal-proximos-item:hover {
-  background: #1a1a1c;
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.cal-proximos-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 2px;
-  background: #23e7f5;
-  flex-shrink: 0;
-}
-
-.cal-proximos-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.cal-proximos-nombre {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #d0d0d0;
-}
-
-.cal-proximos-fecha {
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.7rem;
-  color: #555;
-  letter-spacing: 0.2px;
-}
-
-.cal-pagination-container {
-  display: flex;
-  gap: 10px;
-  width: 100%;
-  margin-top: 14px;
-}
-
-.cal-btn-ver-mas,
-.cal-btn-ver-menos {
-  flex: 1;
-  background: transparent;
-  border: 1px solid #2a2a2c;
-  color: #23e7f5;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.cal-btn-ver-mas:hover,
-.cal-btn-ver-menos:hover {
-  background: rgba(35, 231, 245, 0.05);
-  border-color: #23e7f5;
-}
-
-.cal-btn-ver-menos {
-  color: #a0aec0;
-  border-color: #2a2a2c;
-}
-
-.cal-btn-ver-menos:hover {
-  color: #e2e8f0;
-  background: rgba(255, 255, 255, 0.03);
-  border-color: #4a5568;
-}
-
-/* Collapsible sections */
-.cal-section-arrow {
-  width: 10px;
-  height: 6px;
-  color: #555;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
-  margin-left: 8px;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.cal-section-arrow.open {
-  transform: rotate(180deg);
-  color: #23e7f5;
-}
-
-.cal-panel-header-clickable:hover .cal-section-arrow {
-  color: #23e7f5;
-}
-
-.cal-collapsible-wrapper {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.cal-evento-datos { display: grid; gap: 4px; margin: 0; }
+.cal-evento-datos div { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px; }
+.cal-evento-datos dt { font-size: 14px; color: var(--slk-text-2); }
+.cal-evento-datos dd { margin: 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.cal-evento-desc {
+  margin: 0;
+  font-size: 15px;
+  color: var(--slk-text-2);
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
 }
+.cal-evento-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin-top: 4px; }
+.cal-evento-acciones .pr-link { font-size: 15px; }
+.cal-evento-acciones:empty { display: none; }
 
-.cal-collapsible-wrapper.open {
-  grid-template-rows: 1fr;
-}
+/* Modales */
+.cal-modal-head { grid-template-columns: minmax(0, 1fr) auto; }
+.cal-empleo { color: var(--slk-text); }
+.cal-empleo :is(h1, h2, h3, h4, p, span, li, strong, label) { color: inherit !important; font-family: inherit !important; }
 
-.cal-collapsible-content {
-  min-height: 0;
-}
-
-.cal-panel-evento {
-  background: #0f1012;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  overflow: hidden;
-  transition: border-color 0.2s, transform 0.2s, opacity 0.2s;
-  animation: cardFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes cardFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Past events visual indicator */
-.cal-panel-evento--pasado {
-  opacity: 0.55;
-  filter: grayscale(45%);
-  transition: opacity 0.25s ease, filter 0.25s ease;
-}
-
-.cal-panel-evento--pasado:hover {
-  opacity: 0.85;
-  filter: grayscale(10%);
-}
-
-.cal-celda-evento-chip--pasado {
-  opacity: 0.5;
-  filter: grayscale(40%);
-  transition: opacity 0.2s ease, filter 0.2s ease;
-}
-
-.cal-celda-evento-chip--pasado:hover {
-  opacity: 0.9;
-  filter: grayscale(0%);
-}
-
-/* ── RESPONSIVE ── */
+/* ── Responsive ── */
+/* Pantallas angostas: la grilla arriba y las listas abajo, con scroll normal de página */
 @media (max-width: 1100px) {
-  .cal-layout {
-    grid-template-columns: 1fr;
-    padding: 24px 16px 48px;
-  }
-
-  .cal-left-block {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-
-  .cal-sidebar {
-    position: static;
-    padding-top: 0;
-    padding-right: 0;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 0;
-  }
-
-  .cal-sidebar-label,
-  .cal-sidebar-divider {
-    display: none;
-  }
-
-  .cal-celda {
-    height: 72px;
-    padding: 5px 6px;
-  }
-
-  .cal-celda-evento-hora {
-    display: none;
-  }
-
-  .cal-mes-titulo {
-    font-size: 2rem;
-  }
+  .cal { height: auto; overflow: visible; }
+  .cal-layout { grid-template-columns: 1fr; height: auto; padding-bottom: 64px; }
+  .cal-grid { grid-auto-rows: minmax(96px, auto); }
+  .cal-lado-scroll { overflow: visible; }
 }
 
-/* ── SKELETON LOADING UI ── */
-@keyframes calPulse {
-  0% { opacity: 0.25; }
-  50% { opacity: 0.65; }
-  100% { opacity: 0.25; }
+@media (max-width: 700px) {
+  .cal-celda { min-height: 64px; padding: 6px 4px; align-items: center; gap: 4px; }
+  .cal-num { align-self: center; min-width: 28px; height: 28px; font-size: 15px; }
+  .cal-dia-semana { padding-left: 0; text-align: center; font-size: 13px; }
+  /* En el celular cada evento es una barrita de color; el detalle va en "Elegí un día" */
+  .cal-chips { display: flex; justify-content: center; gap: 3px; }
+  .cal-chip { width: 8px; height: 8px; padding: 0; font-size: 0; background: var(--cal-color); box-shadow: none; }
+  .cal-chip b { display: none; }
+  .cal-mas { display: none; }
+  .cal-toolbar { align-items: flex-start; flex-direction: column; }
+  .cal-grid { grid-auto-rows: minmax(60px, auto); }
+  .cal-toolbar-ctrl { width: 100%; }
+  .cal-toolbar-ctrl .cal-select { flex: 1; }
+  .pr .cal-select select { width: 100%; }
 }
 
-.cal-skeleton-chip {
-  height: 14px;
-  width: 85%;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  margin-top: 4px;
-  animation: calPulse 1.2s infinite ease-in-out;
-}
-
-.cal-skeleton-card {
-  height: 56px;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  animation: calPulse 1.2s infinite ease-in-out;
-  margin-bottom: 8px;
-}
-
-.cal-loading-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 1px;
-  color: #23e7f5;
-  background: rgba(35, 231, 245, 0.08);
-  border: 1px solid rgba(35, 231, 245, 0.2);
-  padding: 3px 10px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  margin-left: 12px;
-}
-
-.cal-loading-spinner {
-  width: 8px;
-  height: 8px;
-  border: 2px solid rgba(35, 231, 245, 0.3);
-  border-top-color: #23e7f5;
-  border-radius: 50%;
-  animation: calSpin 0.8s linear infinite;
-  flex-shrink: 0;
-}
-
-@keyframes calSpin {
-  to { transform: rotate(360deg); }
+@media (prefers-reduced-motion: reduce) {
+  .cal-chip--skeleton, .cal-evento--skeleton { animation: none; }
 }

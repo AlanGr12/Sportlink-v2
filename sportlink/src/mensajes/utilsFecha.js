@@ -99,8 +99,8 @@ export function etiquetaFecha(fechaString) {
   const ayer = new Date(ahora.getTime() - 24 * 60 * 60 * 1000)
   const claveAyer = obtenerClaveDia(ayer)
 
-  if (claveMensaje === claveHoy) return 'HOY'
-  if (claveMensaje === claveAyer) return 'AYER'
+  if (claveMensaje === claveHoy) return 'Hoy'
+  if (claveMensaje === claveAyer) return 'Ayer'
 
   // Para otras fechas, mostrar 'D DE MES' o 'D DE MES DE YYYY'
   const partesMsg = new Intl.DateTimeFormat('es-AR', {
@@ -117,9 +117,9 @@ export function etiquetaFecha(fechaString) {
   const anioActual = new Intl.DateTimeFormat('es-AR', { timeZone: tz, year: 'numeric' }).format(ahora)
 
   if (anio === anioActual) {
-    return `${dia} DE ${mes}`.toUpperCase()
+    return `${dia} de ${mes}`
   }
-  return `${dia} DE ${mes} DE ${anio}`.toUpperCase()
+  return `${dia} de ${mes} de ${anio}`
 }
 
 /**

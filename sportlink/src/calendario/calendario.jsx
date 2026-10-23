@@ -1,27 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import api from '../axiosConfig.js';
 import ModalEvento from './ModalEvento.jsx';
-import ModalConfirmacionEliminar from './ModalConfirmacionEliminar.jsx';
-import ModalDetallePrueba from './ModalDetallePrueba.jsx';
-import DetalleEntrenamiento from '../entrenamientos/DetalleEntrenamiento.jsx';
 import DetalleEmpleo from '../empleos/DetalleEmpleo.jsx';
-import '../entrenamientos/PaginaEntrenamientos.css';
-import { IconoFecha } from '../iconos/IconoFecha.jsx';
-import { IconoUbicacion } from '../iconos/IconoUbicacion.jsx';
-import { IconoMedalla } from '../iconos/IconoMedalla.jsx';
-import { IconoEntrenamientos } from '../iconos/IconoEntrenamientos.jsx';
-import { IconoMensajes } from '../iconos/IconoMensajes.jsx';
+import '../pruebas/PruebasView.css';
 import './calendario.css';
-import Footer from '../footer/footer.jsx';
 
 const API = '/api';
 
+// Referencias de color (el marcador de cada tipo está en calendario.css)
 const CATEGORIAS = [
-  { id: 'pruebas',        label: 'PRUEBAS DEPORTIVAS', color: '#23e7f5' },
-  { id: 'entrenamientos', label: 'ENTRENAMIENTOS',     color: '#3b82f6' },
-  { id: 'entrevistas',    label: 'ENTREVISTAS',        color: '#f59e0b' },
-  { id: 'personalizado',  label: 'PERSONALIZADO',      color: '#ffffff' },
+  { id: 'pruebas',        label: 'Pruebas',        tipo: 'prueba' },
+  { id: 'entrenamientos', label: 'Entrenamientos', tipo: 'entrenamiento' },
+  { id: 'entrevistas',    label: 'Entrevistas',    tipo: 'entrevista' },
+  { id: 'personalizado',  label: 'Tuyos',          tipo: 'personalizado' },
 ];
 
 const MESES = [
@@ -29,7 +22,7 @@ const MESES = [
   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
 ];
 
-const DIAS_SEMANA = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+const DIAS_SEMANA = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
 const ANIOS = Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i);
 
@@ -48,54 +41,8 @@ function parsearFecha(fechaStr) {
   return { anio: a, mes: m - 1, dia: d };
 }
 
-function formatHora(hora) {
-  return hora ? `${hora} hs` : '';
-}
-
 function padNum(n) {
   return String(n).padStart(2, '0');
-}
-
-const COLOR_POR_TIPO = {
-  PRUEBA:        '#23e7f5',
-  ENTRENAMIENTO: '#3b82f6',
-  ENTREVISTA:    '#f59e0b',
-  PERSONALIZADO: '#ffffff',
-};
-
-const CHIP_BG_POR_TIPO = {
-  PRUEBA:        'rgba(35,231,245,0.10)',
-  ENTRENAMIENTO: 'rgba(59,130,246,0.10)',
-  ENTREVISTA:    'rgba(245,158,11,0.10)',
-  PERSONALIZADO: 'rgba(255,255,255,0.12)',
-};
-
-const CHIP_BORDER_POR_TIPO = {
-  PRUEBA:        'rgba(35,231,245,0.25)',
-  ENTRENAMIENTO: 'rgba(59,130,246,0.25)',
-  ENTREVISTA:    'rgba(245,158,11,0.25)',
-  PERSONALIZADO: 'rgba(255,255,255,0.25)',
-};
-
-function obtenerColorPorTipo(tipo) {
-  return COLOR_POR_TIPO[tipo?.toUpperCase()] || '#ffffff';
-}
-
-function obtenerColorEvento(ev) {
-  if (ev?.color) return ev.color;
-  return obtenerColorPorTipo(ev?.tipo);
-}
-
-function obtenerChipBgEvento(ev) {
-  if (ev?.color) return `${ev.color}1e`;
-  const tipoKey = ev?.tipo?.toUpperCase() || 'PERSONALIZADO';
-  return CHIP_BG_POR_TIPO[tipoKey] || CHIP_BG_POR_TIPO.PERSONALIZADO;
-}
-
-function obtenerChipBorderEvento(ev) {
-  if (ev?.color) return `${ev.color}40`;
-  const tipoKey = ev?.tipo?.toUpperCase() || 'PERSONALIZADO';
-  return CHIP_BORDER_POR_TIPO[tipoKey] || CHIP_BORDER_POR_TIPO.PERSONALIZADO;
 }
 
 function esEventoPasado(fechaStr, horaStr) {
@@ -188,135 +135,63 @@ function resolverUserId(usuarioObj) {
   }
 }
 
+// Color del marcador: el que eligió el usuario (personalizados) o el del tipo.
+// El blanco del selector viejo no se ve en modo claro: se usa la tinta del tema.
+function colorMarcador(ev) {
+  if (ev?.color && ev.color.toLowerCase() !== '#ffffff') return ev.color;
+  return null;
+}
+
+const ETIQUETA_TIPO = { PRUEBA: 'Prueba', ENTRENAMIENTO: 'Entrenamiento', ENTREVISTA: 'Entrevista', EMPLEO: 'Empleo', PERSONALIZADO: 'Tuyo' };
+
+// Eventos de un día ordenados por hora (los sin hora, al final)
+const porHora = (lista = []) => [...lista].sort((a, b) => (a.hora || '99').localeCompare(b.hora || '99'));
+
 function EventoCard({ ev, eliminando, onVerPrueba, onVerEntrenamiento, onVerEmpleo, onEditar, onEliminar }) {
-  const esPersonalizado = ev.tipo?.toUpperCase() === 'PERSONALIZADO';
-  const esPrueba        = ev.tipo?.toUpperCase() === 'PRUEBA';
-  const esEntrenamiento = ev.tipo?.toUpperCase() === 'ENTRENAMIENTO';
-  const esEmpleo        = ev.tipo?.toUpperCase() === 'EMPLEO';
+  const tipo = ev.tipo?.toUpperCase() || 'PERSONALIZADO';
+  const f = parsearFecha(ev.fecha);
+  const color = colorMarcador(ev);
 
   return (
-    <div className="cal-panel-evento">
-      {/* Imagen si tiene */}
-      {ev.imagenPreview && (
-        <div className="cal-panel-evento-img-wrap">
-          <img
-            src={ev.imagenPreview}
-            alt={ev.nombre}
-            className="cal-panel-evento-img"
-          />
-        </div>
-      )}
-      <div className="cal-panel-evento-body">
-        {/* Nombre + dot */}
-        <div className="cal-panel-evento-titulo-row">
-          <span
-            className="cal-panel-evento-dot"
-            style={{
-              background: obtenerColorEvento(ev),
-              boxShadow:  `0 0 8px ${obtenerColorEvento(ev)}66`,
-            }}
-          />
-          <h3 className="cal-panel-evento-nombre">{ev.nombre}</h3>
-        </div>
+    <article className={`cal-evento cal-tipo--${tipo.toLowerCase()}${esEventoPasado(ev.fecha, ev.hora) ? ' is-pasado' : ''}`} style={color ? { '--cal-color': color } : undefined}>
+      {ev.imagenPreview && <img src={ev.imagenPreview} alt="" className="cal-evento-img" loading="lazy" />}
+      <div className="cal-evento-body">
+        <span className="cal-evento-tipo">{ETIQUETA_TIPO[tipo] || 'Evento'}</span>
+        <h3>{limpiarTitulo(ev.nombre)}</h3>
+        <dl className="cal-evento-datos">
+          <div><dt>Cuándo</dt><dd>{`${f.dia} de ${MESES[f.mes].toLowerCase()}`}{ev.hora ? `, ${ev.hora} h` : ''}</dd></div>
+          {ev.creador && <div><dt>Organiza</dt><dd>{ev.creador}</dd></div>}
+          {ev.ubicacion && <div><dt>Dónde</dt><dd>{ev.ubicacion}</dd></div>}
+        </dl>
+        {ev.descripcion && <p className="cal-evento-desc">{ev.descripcion}</p>}
 
-        {/* Meta: fecha + hora */}
-        <div className="cal-panel-evento-meta">
-          <span className="cal-panel-evento-meta-item">
-            <IconoFecha size={12} />
-            {(() => { const f = parsearFecha(ev.fecha); return `${f.dia} de ${MESES[f.mes]} de ${f.anio}`; })()}
-          </span>
-          {ev.hora && (
-            <span className="cal-panel-evento-meta-item">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-              </svg>
-              {formatHora(ev.hora)}
-            </span>
+        <div className="cal-evento-acciones">
+          {tipo === 'PRUEBA' && (ev.datosPrueba || ev.idPrueba) && (
+            <button type="button" className="pr-btn pr-btn--ink pr-btn--sm" onClick={() => onVerPrueba(ev)}>Ver prueba</button>
           )}
-          {/* Creador / Club */}
-          {ev.creador && (
-            <span className="cal-panel-evento-meta-item">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
-              {ev.creador}
-            </span>
+          {tipo === 'ENTRENAMIENTO' && (ev.datosEntrenamiento || ev.idEntrenamiento) && (
+            <button type="button" className="pr-btn pr-btn--ink pr-btn--sm" onClick={() => onVerEntrenamiento(ev)}>Ver entrenamiento</button>
           )}
-          {/* Ubicación */}
-          {ev.ubicacion && (
-            <span className="cal-panel-evento-meta-item">
-              <IconoUbicacion size={12} />
-              {ev.ubicacion}
-            </span>
+          {tipo === 'EMPLEO' && ev.datosEmpleo && (
+            <button type="button" className="pr-btn pr-btn--ink pr-btn--sm" onClick={() => onVerEmpleo(ev.datosEmpleo)}>Ver empleo</button>
           )}
-        </div>
-
-        {/* Descripción */}
-        {ev.descripcion && (
-          <p className="cal-panel-evento-desc">{ev.descripcion}</p>
-        )}
-
-        {/* Acciones según tipo */}
-        <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
-          {/* Botón "Ver prueba" — solo eventos de tipo PRUEBA */}
-          {esPrueba && ev.datosPrueba && (
-            <button
-              className="cal-panel-evento-btn"
-              onClick={() => onVerPrueba && onVerPrueba(ev.datosPrueba)}
-            >
-              VER PRUEBA
-            </button>
-          )}
-
-          {/* Botón "Ver entrenamiento" */}
-          {esEntrenamiento && ev.datosEntrenamiento && (
-            <button
-              className="cal-panel-evento-btn"
-              onClick={() => onVerEntrenamiento && onVerEntrenamiento(ev.datosEntrenamiento)}
-            >
-              VER ENTRENAMIENTO
-            </button>
-          )}
-
-          {/* Botón "Ver empleo" */}
-          {esEmpleo && ev.datosEmpleo && (
-            <button
-              className="cal-panel-evento-btn"
-              onClick={() => onVerEmpleo && onVerEmpleo(ev.datosEmpleo)}
-            >
-              VER EMPLEO
-            </button>
-          )}
-
-          {/* Botones Editar / Eliminar — SOLO eventos personalizados */}
-          {esPersonalizado && ev.id && onEditar && onEliminar && (
+          {tipo === 'PERSONALIZADO' && ev.id && onEditar && onEliminar && (
             <>
-              <button
-                className="cal-panel-evento-btn cal-panel-evento-btn--editar"
-                onClick={() => onEditar(ev)}
-              >
-                EDITAR
-              </button>
-              <button
-                className="cal-panel-evento-btn cal-panel-evento-btn--eliminar"
-                onClick={() => onEliminar(ev)}
-                disabled={eliminando}
-              >
-                {eliminando ? 'ELIMINANDO…' : 'ELIMINAR'}
+              <button type="button" className="pr-link" onClick={() => onEditar(ev)}>Editar</button>
+              <button type="button" className="pr-link pr-link--danger" onClick={() => onEliminar(ev)} disabled={eliminando}>
+                {eliminando ? 'Eliminando…' : 'Eliminar'}
               </button>
             </>
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
 export default function Calendario({ usuario }) {
   const navigate = useNavigate();
 
-  /** Wrapper que usa la función pura con el usuario actual del componente */
-  const obtenerUserId = () => resolverUserId(usuario);
 
   useEffect(() => {
     if (!usuario) navigate('/login');
@@ -326,24 +201,26 @@ export default function Calendario({ usuario }) {
   const [mesActual,       setMesActual]       = useState(hoy.getMonth());
   const [anioActual,      setAnioActual]       = useState(hoy.getFullYear());
   const [diaSeleccionado, setDiaSeleccionado] = useState(null);
-  const [dropdownMes,     setDropdownMes]     = useState(false);
-  const [dropdownAnio,    setDropdownAnio]    = useState(false);
 
   // ── Estado de eventos ────────────────────────────────────────────────────
   const [eventos,         setEventos]         = useState({});   // { 'YYYY-MM-DD': [ev, ...] }
   const [cargandoEventos, setCargandoEventos] = useState(true);
-  const [proximosVisibles, setProximosVisibles] = useState(3);
+  const [proximosVisibles, setProximosVisibles] = useState(8);
   const [infoVisibles, setInfoVisibles] = useState(3);
-  const [infoAbierto, setInfoAbierto] = useState(true);
-  const [proximosAbierto, setProximosAbierto] = useState(true);
+
+  // La grilla ocupa el alto de la pantalla: en pantallas bajas entra un solo evento por celda
+  const [chipsPorCelda, setChipsPorCelda] = useState(() => (window.innerHeight < 820 ? 1 : 2));
+  useEffect(() => {
+    const medir = () => setChipsPorCelda(window.innerHeight < 820 ? 1 : 2);
+    window.addEventListener('resize', medir);
+    return () => window.removeEventListener('resize', medir);
+  }, []);
 
   // ── Estado de modales ────────────────────────────────────────────────────
   // 'libre' | 'diaBloqueado' | 'editar' | null
   const [modalTipo,             setModalTipo]             = useState(null);
   const [eventoEditando,        setEventoEditando]        = useState(null);
   const [eventoAEliminar,       setEventoAEliminar]       = useState(null);
-  const [pruebaDetalle,         setPruebaDetalle]         = useState(null);
-  const [entrenamientoDetalle,  setEntrenamientoDetalle]  = useState(null);
   const [empleoDetalle,         setEmpleoDetalle]         = useState(null);
   const [eliminandoId,          setEliminandoId]          = useState(null);
 
@@ -631,13 +508,11 @@ export default function Calendario({ usuario }) {
   const cambiarMes = (nuevoMes) => {
     setMesActual(nuevoMes);
     setDiaSeleccionado(null);
-    setDropdownMes(false);
   };
 
   const cambiarAnio = (nuevoAnio) => {
     setAnioActual(nuevoAnio);
     setDiaSeleccionado(null);
-    setDropdownAnio(false);
   };
 
   const irMesAnterior = () => {
@@ -655,9 +530,6 @@ export default function Calendario({ usuario }) {
   const handleDiaClick = (dia) => {
     setDiaSeleccionado(dia);
     setInfoVisibles(3);
-    setInfoAbierto(true);
-    if (dropdownMes) setDropdownMes(false);
-    if (dropdownAnio) setDropdownAnio(false);
   };
 
   const irAHoy = () => {
@@ -666,9 +538,6 @@ export default function Calendario({ usuario }) {
     setAnioActual(today.getFullYear());
     setDiaSeleccionado(today.getDate());
     setInfoVisibles(3);
-    setInfoAbierto(true);
-    if (dropdownMes) setDropdownMes(false);
-    if (dropdownAnio) setDropdownAnio(false);
   };
 
 
@@ -686,444 +555,209 @@ export default function Calendario({ usuario }) {
   const claveDelDia = (dia) =>
     `${anioActual}-${padNum(mesActual + 1)}-${padNum(dia)}`;
 
-  const eventosDelDia = diaSeleccionado ? (eventos[claveDelDia(diaSeleccionado)] || []) : [];
+  const eventosDelDia = diaSeleccionado ? porHora(eventos[claveDelDia(diaSeleccionado)]) : [];
 
-  const clasesCelda = (dia) => [
-    'cal-celda',
-    dia === null ? 'cal-celda--vacia' : '',
-    dia && diaSeleccionado === dia ? 'cal-celda--seleccionada' : '',
-    dia && esHoy(dia) && diaSeleccionado !== dia ? 'cal-celda--hoy' : '',
-  ].filter(Boolean).join(' ');
-
-  const clasesNum = (dia) => [
-    'cal-celda-num',
-    diaSeleccionado === dia ? 'cal-celda-num--seleccionada' : '',
-    esHoy(dia) && diaSeleccionado !== dia ? 'cal-celda-num--hoy' : '',
-  ].filter(Boolean).join(' ');
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  return (
-    <div className="cal-root" onClick={() => { setDropdownMes(false); setDropdownAnio(false); }}>
-      <div className="cal-layout">
-        <div className="cal-left-block">
-          {/* ── SIDEBAR ── */}
-          <aside className="cal-sidebar">
-          <p className="cal-sidebar-label">CATEGORÍAS</p>
-          {CATEGORIAS.map(cat => (
-            <div key={cat.id} className="cal-cat-item">
-              <span className="cal-cat-dot" style={{ background: cat.color }} />
-              <span className="cal-cat-text">{cat.label}</span>
-            </div>
-          ))}
-          <div className="cal-sidebar-divider" />
-          <button className="cal-agregar-btn" onClick={abrirModalLibre}>
-            <span className="cal-agregar-plus">+</span>
-            AGREGAR EVENTO
-          </button>
-        </aside>
+  const hoyStr = `${hoy.getFullYear()}-${padNum(hoy.getMonth() + 1)}-${padNum(hoy.getDate())}`;
+  const proximos = Object.entries(eventos)
+    .filter(([fecha]) => fecha >= hoyStr)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .flatMap(([, evs]) => porHora(evs));
 
-        {/* ── MAIN ── */}
-        <main className="cal-main">
+  // Ver prueba / entrenamiento: abren su detalle en las vistas nuevas (deep link)
+  const verPrueba = (ev) => navigate(`/pruebas/${ev.idPrueba || ev.datosPrueba?.idprueba}`);
+  const verEntrenamiento = (ev) => navigate(`/entrenamientos/${ev.idEntrenamiento || ev.datosEntrenamiento?.identrenamiento}`);
 
-          {/* Cabecera mes */}
-          <div className="cal-header-mes">
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <p className="cal-programacion-label" style={{ margin: 0 }}>PROGRAMACIÓN ACTUAL</p>
-                {cargandoEventos && (
-                  <span className="cal-loading-badge">
-                    <span className="cal-loading-spinner" />
-                    Cargando eventos...
-                  </span>
-                )}
-              </div>
-              <h1 className="cal-mes-titulo">
-                <span className="cal-dropdown-wrap" onClick={e => e.stopPropagation()}>
-                  <button
-                    className="cal-mes-btn"
-                    onClick={() => { setDropdownMes(v => !v); setDropdownAnio(false); }}
-                  >
-                    <span className="cal-mes-nombre">{MESES[mesActual].toUpperCase()}</span>
-                    <svg className={`cal-dropdown-arrow ${dropdownMes ? 'open' : ''}`} viewBox="0 0 10 6" fill="none">
-                      <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                  {dropdownMes && (
-                    <div className="cal-dropdown-menu cal-dropdown-menu--mes">
-                      {MESES.map((m, i) => (
-                        <button
-                          key={i}
-                          className={`cal-dropdown-item ${i === mesActual ? 'cal-dropdown-item--activo' : ''}`}
-                          onClick={() => cambiarMes(i)}
-                        >
-                          {m}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </span>
+  const accionesCard = {
+    onVerPrueba: verPrueba,
+    onVerEntrenamiento: verEntrenamiento,
+    onVerEmpleo: setEmpleoDetalle,
+    onEditar: abrirEdicion,
+    onEliminar: abrirConfirmacionEliminar,
+  };
 
-                {' '}
-
-                <span className="cal-dropdown-wrap" onClick={e => e.stopPropagation()}>
-                  <button
-                    className="cal-mes-btn"
-                    onClick={() => { setDropdownAnio(v => !v); setDropdownMes(false); }}
-                  >
-                    <span className="cal-mes-anio">{anioActual}</span>
-                    <svg className={`cal-dropdown-arrow ${dropdownAnio ? 'open' : ''}`} viewBox="0 0 10 6" fill="none">
-                      <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                  {dropdownAnio && (
-                    <div className="cal-dropdown-menu cal-dropdown-menu--anio">
-                      {ANIOS.map(a => (
-                        <button
-                          key={a}
-                          className={`cal-dropdown-item ${a === anioActual ? 'cal-dropdown-item--activo' : ''}`}
-                          onClick={() => cambiarAnio(a)}
-                        >
-                          {a}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </span>
-              </h1>
-            </div>
-
-            <div className="cal-nav-btns">
-              <button className="cal-nav-btn cal-nav-btn-hoy" onClick={irAHoy} type="button">HOY</button>
-              <button className="cal-nav-btn" onClick={irMesAnterior}>‹</button>
-              <button className="cal-nav-btn" onClick={irMesSiguiente}>›</button>
-            </div>
-          </div>
-
-          {/* Grilla */}
-          <div className="cal-grid-wrapper">
-            <div className="cal-grid-header">
-              {DIAS_SEMANA.map(d => (
-                <div key={d} className="cal-dia-semana">{d}</div>
-              ))}
-            </div>
-            <div className="cal-grid">
-              {celdas.map((dia, i) => {
-                const clave   = dia ? claveDelDia(dia) : null;
-                const evsDia  = clave ? (eventos[clave] || []) : [];
-                return (
-                  <div
-                    key={i}
-                    className={clasesCelda(dia)}
-                    onClick={() => dia && handleDiaClick(dia)}
-                  >
-                    {dia && (
-                      <>
-                        <span className={clasesNum(dia)}>
-                          {String(dia).padStart(2, '0')}
-                        </span>
-                        {/* Chips de eventos / Skeletons */}
-                        {cargandoEventos ? (
-                          <div className="cal-celda-eventos">
-                            <div className="cal-skeleton-chip" />
-                            {i % 3 === 0 && <div className="cal-skeleton-chip" style={{ width: '55%' }} />}
-                          </div>
-                        ) : evsDia.length > 0 ? (
-                          <div className="cal-celda-eventos">
-                            {evsDia.slice(0, 2).map((ev, idx) => {
-                              const tipoKey = ev.tipo?.toUpperCase() || 'PERSONALIZADO';
-                              const esPasado = esEventoPasado(ev.fecha, ev.hora);
-                              return (
-                                <div key={ev.id ?? `${clave}-${idx}`} className="cal-celda-evento-wrapper">
-                                  <div
-                                    className={`cal-celda-evento-chip ${esPasado ? 'cal-celda-evento-chip--pasado' : ''}`}
-                                    style={{
-                                      background:   obtenerChipBgEvento(ev),
-                                      borderColor:  obtenerChipBorderEvento(ev),
-                                    }}
-                                  >
-                                    <span
-                                      className="cal-celda-evento-dot"
-                                      style={{ background: obtenerColorEvento(ev) }}
-                                    />
-                                    <span
-                                      className="cal-celda-evento-nombre"
-                                      style={{ color: obtenerColorEvento(ev) }}
-                                    >
-                                      {limpiarTitulo(ev.nombre)}
-                                    </span>
-                                  </div>
-                                  {ev.hora && (
-                                    <span className="cal-celda-evento-hora">
-                                      {ev.hora}
-                                    </span>
-                                  )}
-                                </div>
-                              );
-                            })}
-                            {evsDia.length > 2 && (
-                              <div className="cal-celda-mas">+{evsDia.length - 2} más</div>
-                            )}
-                          </div>
-                        ) : null}
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </main>
+  const listaPaginada = (lista, visibles, setVisibles, inicial = 3) => (
+    <>
+      <div className="cal-lista">
+        {lista.slice(0, visibles).map((ev, idx) => (
+          <EventoCard key={ev.id ?? `${ev.fecha}-${idx}`} ev={ev} eliminando={eliminandoId === ev.id} {...accionesCard} />
+        ))}
       </div>
+      {(lista.length > visibles || visibles > inicial) && (
+        <div className="cal-paginar">
+          {lista.length > visibles && <button type="button" className="pr-link" onClick={() => setVisibles(v => v + 5)}>Ver más</button>}
+          {visibles > inicial && <button type="button" className="pr-link" onClick={() => setVisibles(inicial)}>Mostrar menos</button>}
+        </div>
+      )}
+    </>
+  );
 
-      {/* ── SIDEBAR DERECHA ── */}
-      <aside className="cal-sidebar-right">
-        {/* Panel día seleccionado */}
-        <div className={`cal-panel-dia ${infoAbierto ? 'cal-panel--open' : 'cal-panel--closed'}`}>
-          <div className="cal-panel-header">
-            <div 
-              className="cal-panel-header-clickable" 
-              onClick={() => diaSeleccionado && setInfoAbierto(!infoAbierto)}
-              style={{ cursor: diaSeleccionado ? 'pointer' : 'default' }}
-            >
-              <p className="cal-panel-fecha-label">
-                {diaSeleccionado 
-                  ? `${nombreDiaSemana(diaSeleccionado)}, ${diaSeleccionado} de ${MESES[mesActual]} de ${anioActual}`
-                  : "Selecciona un día"}
-              </p>
-              <h2 className="cal-panel-titulo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                INFO DEL DÍA
-                {diaSeleccionado && (
-                  <svg className={`cal-section-arrow ${infoAbierto ? 'open' : ''}`} viewBox="0 0 10 6" fill="none">
-                    <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                )}
-              </h2>
+  return (
+    <div className="pr cal">
+      <h1 className="pr-sr">Calendario</h1>
+      <section className="pr-wrap cal-layout">
+        <div className="cal-main">
+          <div className="cal-toolbar">
+            <h2 className="pr-display cal-mes">{MESES[mesActual]} <span>{anioActual}</span></h2>
+
+            <div className="cal-toolbar-ctrl">
+              <label className="pr-field cal-select">
+                <span className="pr-sr">Mes</span>
+                <select value={mesActual} onChange={(e) => cambiarMes(Number(e.target.value))}>
+                  {MESES.map((m, i) => <option key={m} value={i}>{m}</option>)}
+                </select>
+              </label>
+              <label className="pr-field cal-select">
+                <span className="pr-sr">Año</span>
+                <select value={anioActual} onChange={(e) => cambiarAnio(Number(e.target.value))}>
+                  {ANIOS.map((a) => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </label>
+              <button type="button" className="pr-btn pr-btn--ghost pr-btn--sm" onClick={irAHoy}>Hoy</button>
+              <button type="button" className="pr-arrow cal-arrow" onClick={irMesAnterior} aria-label="Mes anterior">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+              </button>
+              <button type="button" className="pr-arrow cal-arrow" onClick={irMesSiguiente} aria-label="Mes siguiente">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>
+              </button>
             </div>
-            <button 
-              className="cal-panel-agregar" 
-              onClick={abrirModalDia}
-              disabled={!diaSeleccionado}
-              style={{ opacity: !diaSeleccionado ? 0.5 : 1, cursor: !diaSeleccionado ? 'not-allowed' : 'pointer' }}
-            >
-              +
-            </button>
           </div>
 
-          <div className={`cal-collapsible-wrapper ${infoAbierto ? 'open' : ''}`}>
-            <div className="cal-collapsible-content">
-              {!diaSeleccionado ? (
-                <div className="cal-panel-vacio">
-                  <p>Selecciona un día en el calendario para ver sus detalles.</p>
-                </div>
-              ) : cargandoEventos ? (
-                <div style={{ padding: '24px 0', textAlign: 'center', color: '#666', fontSize: '13px' }}>
-                  Cargando eventos…
-                </div>
-              ) : eventosDelDia.length === 0 ? (
-                <div className="cal-panel-vacio">
-                  <p>No hay eventos para este día.</p>
-                </div>
-              ) : (
-                <div className="cal-panel-eventos">
-                  {eventosDelDia.slice(0, infoVisibles).map((ev, idx) => (
-                    <EventoCard
-                      key={ev.id ?? idx}
-                      ev={ev}
-                      eliminando={eliminandoId === ev.id}
-                      onVerPrueba={setPruebaDetalle}
-                      onVerEntrenamiento={setEntrenamientoDetalle}
-                      onVerEmpleo={setEmpleoDetalle}
-                      onEditar={abrirEdicion}
-                      onEliminar={abrirConfirmacionEliminar}
-                    />
-                  ))}
-                  {(eventosDelDia.length > 3 || infoVisibles > 3) && (
-                    <div className="cal-pagination-container">
-                      {eventosDelDia.length > infoVisibles && (
-                        <button 
-                          className="cal-btn-ver-mas"
-                          onClick={() => setInfoVisibles(v => v + 5)}
-                        >
-                          Ver más
-                        </button>
-                      )}
-                      {infoVisibles > 3 && (
-                        <button 
-                          className="cal-btn-ver-menos"
-                          onClick={() => setInfoVisibles(3)}
-                        >
-                          Mostrar menos
-                        </button>
-                      )}
-                    </div>
+          <ul className="cal-leyenda" aria-label="Referencias">
+            {CATEGORIAS.map((cat) => <li key={cat.id} className={`cal-tipo--${cat.tipo}`}>{cat.label}</li>)}
+          </ul>
+
+          <div className="cal-grid" role="grid" aria-label={`${MESES[mesActual]} ${anioActual}`} aria-busy={cargandoEventos}>
+            {DIAS_SEMANA.map((d) => <div key={d} className="cal-dia-semana" role="columnheader">{d}</div>)}
+            {celdas.map((dia, i) => {
+              if (!dia) return <div key={i} className="cal-celda cal-celda--vacia" aria-hidden="true" />;
+              const clave = claveDelDia(dia);
+              const evsDia = porHora(eventos[clave]);
+              const seleccionada = diaSeleccionado === dia;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  role="gridcell"
+                  aria-selected={seleccionada}
+                  aria-label={`${nombreDiaSemana(dia)} ${dia}${evsDia.length ? `, ${evsDia.length} ${evsDia.length === 1 ? 'evento' : 'eventos'}` : ''}`}
+                  className={`cal-celda${seleccionada ? ' is-sel' : ''}${esHoy(dia) ? ' is-hoy' : ''}`}
+                  onClick={() => handleDiaClick(dia)}
+                >
+                  <span className="cal-num">{dia}</span>
+                  {cargandoEventos ? (
+                    <span className="cal-chip cal-chip--skeleton" />
+                  ) : evsDia.length > 0 && (
+                    <span className="cal-chips">
+                      {evsDia.slice(0, chipsPorCelda).map((ev, idx) => {
+                        const color = colorMarcador(ev);
+                        return (
+                          <span
+                            key={ev.id ?? `${clave}-${idx}`}
+                            className={`cal-chip cal-tipo--${(ev.tipo || 'PERSONALIZADO').toLowerCase()}${esEventoPasado(ev.fecha, ev.hora) ? ' is-pasado' : ''}`}
+                            style={color ? { '--cal-color': color } : undefined}
+                          >
+                            {ev.hora && <b>{ev.hora}</b>}
+                            {limpiarTitulo(ev.nombre)}
+                          </span>
+                        );
+                      })}
+                      {evsDia.length > chipsPorCelda && <span className="cal-mas">+{evsDia.length - chipsPorCelda} más</span>}
+                    </span>
                   )}
-                </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <aside className="cal-lado">
+          <button type="button" className="pr-btn pr-btn--block cal-agregar" onClick={abrirModalLibre}>
+            Agregar evento
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+          </button>
+
+          {/* Única zona con scroll de la vista: el día elegido y los próximos */}
+          <div className="cal-lado-scroll">
+          <section className="cal-bloque" aria-live="polite">
+            <div className="cal-bloque-head">
+              <h2 className="cal-bloque-titulo">
+                {diaSeleccionado ? `${nombreDiaSemana(diaSeleccionado)} ${diaSeleccionado}` : 'Elegí un día'}
+              </h2>
+              {diaSeleccionado && (
+                <button type="button" className="pr-link" onClick={abrirModalDia}>Agregar a este día</button>
               )}
             </div>
-          </div>
-        </div>
+            {!diaSeleccionado ? (
+              <p className="pr-muted">Tocá un día del calendario para ver lo que tenés.</p>
+            ) : cargandoEventos ? (
+              <div className="cal-evento cal-evento--skeleton" />
+            ) : eventosDelDia.length === 0 ? (
+              <p className="pr-muted">No tenés nada agendado este día.</p>
+            ) : listaPaginada(eventosDelDia, infoVisibles, setInfoVisibles)}
+          </section>
 
-        {/* Próximos eventos */}
-        <section className={`cal-proximos ${proximosAbierto ? 'cal-panel--open' : 'cal-panel--closed'}`}>
-          <div className="cal-proximos-header" onClick={() => setProximosAbierto(!proximosAbierto)}>
-            <h2 className="cal-proximos-titulo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              PRÓXIMOS EVENTOS
-              <svg className={`cal-section-arrow ${proximosAbierto ? 'open' : ''}`} viewBox="0 0 10 6" fill="none">
-                <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </h2>
-          </div>
-          
-          <div className={`cal-collapsible-wrapper ${proximosAbierto ? 'open' : ''}`}>
-            <div className="cal-collapsible-content">
-              {(() => {
-                const hoyStr = `${hoy.getFullYear()}-${padNum(hoy.getMonth()+1)}-${padNum(hoy.getDate())}`;
-                const proximos = Object.entries(eventos)
-                  .filter(([fecha]) => fecha >= hoyStr)
-                  .sort(([a],[b]) => a.localeCompare(b))
-                  .flatMap(([, evs]) => evs);
-
-                if (cargandoEventos) {
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <div className="cal-skeleton-card" />
-                      <div className="cal-skeleton-card" />
-                      <div className="cal-skeleton-card" />
-                    </div>
-                  );
-                }
-
-                return proximos.length === 0 ? (
-                  <div className="cal-proximos-vacio">
-                    <p>No hay próximos eventos programados actualmente.</p>
-                  </div>
-                ) : (
-                  <div className="cal-proximos-lista" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {proximos.slice(0, proximosVisibles).map((ev, idx) => (
-                      <EventoCard
-                        key={ev.id ?? idx}
-                        ev={ev}
-                        eliminando={eliminandoId === ev.id}
-                        onVerPrueba={setPruebaDetalle}
-                        onVerEntrenamiento={setEntrenamientoDetalle}
-                        onVerEmpleo={setEmpleoDetalle}
-                        onEditar={abrirEdicion}
-                        onEliminar={abrirConfirmacionEliminar}
-                      />
-                    ))}
-                    {(proximos.length > 3 || proximosVisibles > 3) && (
-                      <div className="cal-pagination-container">
-                        {proximos.length > proximosVisibles && (
-                          <button 
-                            className="cal-btn-ver-mas"
-                            onClick={() => setProximosVisibles(v => v + 5)}
-                          >
-                            Ver más
-                          </button>
-                        )}
-                        {proximosVisibles > 3 && (
-                          <button 
-                            className="cal-btn-ver-menos"
-                            onClick={() => setProximosVisibles(3)}
-                          >
-                            Mostrar menos
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
+          <section className="cal-bloque">
+            <div className="cal-bloque-head">
+              <h2 className="cal-bloque-titulo">Próximos</h2>
             </div>
+            {cargandoEventos ? (
+              <><div className="cal-evento cal-evento--skeleton" /><div className="cal-evento cal-evento--skeleton" /></>
+            ) : proximos.length === 0 ? (
+              <p className="pr-muted">No tenés eventos próximos. Inscribite a una prueba o agendá algo propio.</p>
+            ) : listaPaginada(proximos, proximosVisibles, setProximosVisibles, 8)}
+          </section>
           </div>
-        </section>
-      </aside>
-      </div>
+        </aside>
+      </section>
 
-            <Footer />
-
-      {/* ── Modales de creación / edición ── */}
+      {/* ── Crear / editar evento propio ── */}
       {modalTipo === 'libre' && (
-        <ModalEvento
-          onGuardar={guardarEvento}
-          onCerrar={cerrarModal}
-          fechaBloqueada={false}
-        />
+        <ModalEvento onGuardar={guardarEvento} onCerrar={cerrarModal} fechaBloqueada={false} />
       )}
       {modalTipo === 'diaBloqueado' && (
-        <ModalEvento
-          onGuardar={guardarEvento}
-          onCerrar={cerrarModal}
-          fechaInicial={fechaInicialDia}
-          fechaBloqueada={true}
-        />
+        <ModalEvento onGuardar={guardarEvento} onCerrar={cerrarModal} fechaInicial={fechaInicialDia} fechaBloqueada={true} />
       )}
       {modalTipo === 'editar' && eventoEditando && (
-        <ModalEvento
-          onGuardar={guardarEvento}
-          onCerrar={cerrarModal}
-          eventoEditar={eventoEditando}
-          fechaBloqueada={false}
-        />
+        <ModalEvento onGuardar={guardarEvento} onCerrar={cerrarModal} eventoEditar={eventoEditando} fechaBloqueada={false} />
       )}
 
-      {/* Modal Detalle de Prueba */}
-      {pruebaDetalle && (
-        <ModalDetallePrueba
-          prueba={pruebaDetalle}
-          loading={false}
-          onCerrar={() => setPruebaDetalle(null)}
-          usuario={usuario}
-        />
-      )}
-
-      {/* Modal Detalle de Entrenamiento */}
-      {entrenamientoDetalle && (
-        <div className="modal-overlay" onClick={() => setEntrenamientoDetalle(null)}>
-          <div className="modal-contenedor" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-titulo">Detalles del Entrenamiento</h3>
-              <button className="btn-cerrar-modal" onClick={() => setEntrenamientoDetalle(null)}>×</button>
+      {/* ── Detalle de empleo (la vista de empleos todavía no está migrada) ── */}
+      {empleoDetalle && createPortal(
+        <div className="pr-overlay" onClick={() => setEmpleoDetalle(null)}>
+          <div className="pr-modal pr-modal--form" role="dialog" aria-modal="true" aria-labelledby="cal-empleo-titulo" onClick={(e) => e.stopPropagation()}>
+            <div className="pr-modal-head">
+              <h2 id="cal-empleo-titulo" className="pr-modal-title">Oferta laboral</h2>
+              <button type="button" className="pr-close" onClick={() => setEmpleoDetalle(null)} aria-label="Cerrar">×</button>
             </div>
-            <div className="modal-cuerpo">
-              <DetalleEntrenamiento
-                entrenamiento={entrenamientoDetalle}
-                usuario={usuario}
-                idjugador={obtenerUserId()}
-                onCerrar={() => setEntrenamientoDetalle(null)}
-              />
+            <div className="pr-modal-body cal-empleo">
+              <DetalleEmpleo empleo={empleoDetalle} usuario={usuario} />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Modal Detalle de Empleo */}
-      {empleoDetalle && (
-        <div className="modal-overlay" onClick={() => setEmpleoDetalle(null)}>
-          <div className="modal-contenedor" onClick={(e) => e.stopPropagation()} style={{ padding: 0 }}>
-            <div className="modal-header" style={{ padding: '20px 24px', borderBottom: '1px solid #333' }}>
-              <h3 className="modal-titulo">Detalles de la Oferta Laboral</h3>
-              <button className="btn-cerrar-modal" onClick={() => setEmpleoDetalle(null)}>×</button>
+      {/* ── Confirmar eliminación ── */}
+      {eventoAEliminar && createPortal(
+        <div className="pr-overlay" onClick={() => { if (!eliminandoId) setEventoAEliminar(null); }}>
+          <div className="pr-modal pr-modal--sm" role="dialog" aria-modal="true" aria-labelledby="cal-borrar-titulo" onClick={(e) => e.stopPropagation()}>
+            <div className="pr-modal-head cal-modal-head">
+              <h2 id="cal-borrar-titulo" className="pr-modal-title">¿Eliminar «{limpiarTitulo(eventoAEliminar.nombre)}»?</h2>
+              <button type="button" className="pr-close" onClick={() => setEventoAEliminar(null)} aria-label="Cerrar" disabled={!!eliminandoId}>×</button>
             </div>
-            <div className="modal-cuerpo" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-              <DetalleEmpleo
-                empleo={empleoDetalle}
-                usuario={usuario}
-              />
+            <div className="pr-modal-body"><p className="pr-muted">Se borra de tu calendario. No se puede deshacer.</p></div>
+            <div className="pr-modal-foot">
+              <button type="button" className="pr-btn pr-btn--ghost" onClick={() => setEventoAEliminar(null)} disabled={!!eliminandoId}>Cancelar</button>
+              <button type="button" className="pr-btn pr-btn--danger" onClick={confirmarEliminacion} disabled={!!eliminandoId}>
+                {eliminandoId ? 'Eliminando…' : 'Eliminar'}
+              </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Modal Confirmación de Eliminación */}
-      {eventoAEliminar && (
-        <ModalConfirmacionEliminar
-          evento={eventoAEliminar}
-          onConfirmar={confirmarEliminacion}
-          onCerrar={() => setEventoAEliminar(null)}
-          eliminando={eliminandoId === eventoAEliminar.id}
-        />
+        </div>,
+        document.body
       )}
     </div>
   );

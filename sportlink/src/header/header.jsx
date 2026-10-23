@@ -11,6 +11,8 @@ import { IconoEmpleos } from '../iconos/IconoEmpleos.jsx';
 import { IconoEntrenamientos } from '../iconos/IconoEntrenamientos.jsx';
 import { IconoMedalla } from '../iconos/IconoMedalla.jsx';
 
+const ROLES_USUARIO = { jugador: 'Jugador', entrenador: 'Entrenador', club: 'Club' };
+
 const TIPOS_NOTIF = {
   LISTA_ESPERA: { label: 'Lista de espera', color: '#f59e0b' },
   PRUEBA: { label: 'Prueba', color: '#2DEFF2' },
@@ -106,17 +108,12 @@ function renderTipoIcono(tipo) {
 }
 
 function getTipoPillLabel(tipo) {
-  if (!tipo) return 'SISTEMA';
+  if (!tipo) return 'Sistema';
   const t = tipo.toUpperCase();
-  const map = {
-    PRUEBA: 'PRUEBAS',
-    CHAT: 'MENSAJES',
-    CURSO: 'CURSOS',
-    CLUB: 'CLUBES',
-    SEGUIDOR: 'CLUBES',
-    RECORDATORIO: 'SISTEMA'
-  };
-  return map[t] || t;
+  const map = { CHAT: 'Mensajes', CURSO: 'Cursos', CLUB: 'Clubes' };
+  if (map[t]) return map[t];
+  if (TIPOS_NOTIF[t]) return TIPOS_NOTIF[t].label;
+  return t.charAt(0) + t.slice(1).toLowerCase();
 }
 
 // "Hace 10 min", "Hace 1 h", "Ayer"
@@ -159,10 +156,11 @@ const Header = ({ usuario, onLogout }) => {
   // Vistas ya migradas al nuevo diseño: admiten modo claro y oscuro.
   // El resto sigue con el diseño oscuro anterior hasta que se migre.
   const vistaMigrada =
-    ['/info', '/landing', '/pruebas', '/entrenamientos', '/clubes', '/entrenadores'].includes(location.pathname) ||
+    ['/info', '/landing', '/pruebas', '/entrenamientos', '/clubes', '/entrenadores', '/feed', '/mensajes', '/calendario', '/notificaciones', '/perfil', '/ajustes'].includes(location.pathname) ||
+    location.pathname.startsWith('/perfil/') ||
     location.pathname.startsWith('/pruebas/') ||
     location.pathname.startsWith('/entrenamientos/') ||
-    (location.pathname === '/' && !estaLogueado);
+    location.pathname === '/';
 
   const [tema, setTema] = useState(() => {
     try { return localStorage.getItem('slk-tema') === 'oscuro' ? 'oscuro' : 'claro'; } catch { return 'claro'; }
@@ -173,6 +171,15 @@ const Header = ({ usuario, onLogout }) => {
     document.documentElement.dataset.tema = tema;
     try { localStorage.setItem('slk-tema', tema); } catch { /* sin storage: solo esta sesión */ }
   }, [tema]);
+
+  // Ajustes > Apariencia cambia el tema desde afuera: se sincroniza el botón sol/luna
+  useEffect(() => {
+    const sincronizar = () => {
+      try { setTema(localStorage.getItem('slk-tema') === 'oscuro' ? 'oscuro' : 'claro'); } catch { /* sin storage */ }
+    };
+    window.addEventListener('slk-tema', sincronizar);
+    return () => window.removeEventListener('slk-tema', sincronizar);
+  }, []);
 
   const temaClaro = vistaMigrada && tema === 'claro';
   const temaOscuroNuevo = vistaMigrada && tema === 'oscuro';
@@ -336,7 +343,12 @@ const Header = ({ usuario, onLogout }) => {
     }
     fetchContadorNotificaciones();
     const intervalo = setInterval(fetchContadorNotificaciones, 60000);
-    return () => clearInterval(intervalo);
+    // La vista /notificaciones avisa cuando marca o borra, para actualizar la campana
+    window.addEventListener('slk-notificaciones', fetchContadorNotificaciones);
+    return () => {
+      clearInterval(intervalo);
+      window.removeEventListener('slk-notificaciones', fetchContadorNotificaciones);
+    };
   }, [estaLogueado, location.pathname]);
 
 const IcoInfo = () => (
@@ -516,25 +528,10 @@ const IcoInfo = () => (
                 {/* Mensajes */}
                 <button className={`header-action-btn ${location.pathname.startsWith('/mensajes') ? 'active' : ''}`} onClick={() => ir('/mensajes')} style={{ position: 'relative' }}>
                   <IconoMensajes size={22} color="#ffffff" className="header-svg-icon" />
+                  {/* Mismo badge que notificaciones */}
                   {unreadMensajes > 0 && (
-                    <span style={{
-                      position: 'absolute',
-                      bottom: '4px',
-                      right: '2px',
-                      backgroundColor: '#2DEFF2',
-                      color: '#000',
-                      fontSize: '9px',
-                      fontWeight: 'bold',
-                      borderRadius: '50%',
-                      width: '15px',
-                      height: '15px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1.5px solid #0A0B0C',
-                      zIndex: 2
-                    }}>
-                      {unreadMensajes > 9 ? '+9' : unreadMensajes}
+                    <span className="header-notifications-badge">
+                      {unreadMensajes > 9 ? '9+' : unreadMensajes}
                     </span>
                   )}
                 </button>
@@ -560,7 +557,7 @@ const IcoInfo = () => (
                           </div>
                           <div className="header-notifications-header-titles">
                             <h4 className="header-notifications-title">Notificaciones</h4>
-                            <p className="header-notifications-subtitle">Mantente al día con las últimas novedades.</p>
+                            <p className="header-notifications-subtitle">Lo nuevo de tus pruebas, mensajes y seguidores.</p>
                           </div>
                         </div>
 
@@ -671,7 +668,7 @@ const IcoInfo = () => (
                         <button
                           type="button"
                           className="header-notifications-ver-todas"
-                          onClick={() => ir('/feed')}
+                          onClick={() => ir('/notificaciones')}
                         >
                           Ver todas las notificaciones
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -704,9 +701,11 @@ const IcoInfo = () => (
                         {usuario.email && (
                           <span className="header-user-email">{usuario.email}</span>
                         )}
-                        <span className="header-user-role-badge">
-                          {usuario.tipousuario?.toUpperCase()}
-                        </span>
+                        {ROLES_USUARIO[usuario.tipousuario] && (
+                          <span className="header-user-role-badge">
+                            {ROLES_USUARIO[usuario.tipousuario]}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -721,7 +720,7 @@ const IcoInfo = () => (
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                       </svg>
-                      Mi Perfil
+                      Mi perfil
                     </button>
 
                     <button
@@ -749,7 +748,7 @@ const IcoInfo = () => (
                           <rect x="14" y="14" width="7" height="7" />
                           <rect x="3" y="14" width="7" height="7" />
                         </svg>
-                        Consola Admin
+                        Consola admin
                       </button>
                     )}
 
@@ -765,7 +764,7 @@ const IcoInfo = () => (
                         <polyline points="16 17 21 12 16 7"></polyline>
                         <line x1="21" y1="12" x2="9" y2="12"></line>
                       </svg>
-                      Cerrar Sesión
+                      Cerrar sesión
                     </button>
                   </div>
                 )}

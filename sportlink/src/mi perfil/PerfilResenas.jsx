@@ -1,26 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import Avatar from '../components/Avatar.jsx';
+import AvatarCuadrado from '../components/AvatarCuadrado.jsx';
 import ModalCalificar from './ModalCalificar.jsx';
-import './PerfilResenas.css';
-
-// Componente para renderizar estrellas fijas (1 a 5)
-const EstrellasRating = ({ cantidad = 5 }) => {
-  const estrellasVal = Math.max(1, Math.min(5, Math.round(Number(cantidad) || 5)));
-  return (
-    <div className="resena-estrellas-row" aria-label={`${estrellasVal} de 5 estrellas`}>
-      {[1, 2, 3, 4, 5].map((num) => (
-        <svg
-          key={num}
-          className={`resena-estrella-icon ${num <= estrellasVal ? 'llena' : 'vacia'}`}
-          viewBox="0 0 24 24"
-        >
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-        </svg>
-      ))}
-      <span className="resena-puntuacion-num">{estrellasVal}.0</span>
-    </div>
-  );
-};
 
 export default function PerfilResenas({
   perfil,
@@ -90,118 +70,56 @@ export default function PerfilResenas({
 
   return (
     <>
-      <section className="perfil-resenas-card">
-        {/* Cabecera de la sección RESEÑAS */}
-        <div className="resenas-header resenas-card-header">
-          <div className="resenas-title-group resenas-card-header-left">
-            <svg className="resenas-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            <h3>RESEÑAS</h3>
-            {totalOpiniones > 0 && (
-              <span className="resenas-badge resenas-count-badge">{totalOpiniones}</span>
-            )}
-          </div>
-
-          {/* Botón / Badge condicional según reglas de rol flexibilizadas */}
+      <section className="pf-bloque" aria-labelledby="pf-resenas-titulo">
+        <div className="pf-bloque-head">
+          <h2 id="pf-resenas-titulo" className="pf-seccion-titulo">
+            Reseñas{totalOpiniones > 0 && <span className="pf-cuenta">{totalOpiniones}</span>}
+          </h2>
           {mostrarAccionResenar && (
-            <div className="resenas-card-header-actions">
-              {yaCalificoLocal ? (
-                <span className="resena-ya-calificado-badge" title="Ya has calificado a este perfil">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                  </svg>
-                  Ya calificado
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  className="btn-agregar-resena btn-dejar-resena-sutil"
-                  onClick={() => setModalAbierto(true)}
-                  title="Agregar una reseña a este perfil"
-                >
-                  + AGREGAR RESEÑA
-                </button>
-              )}
-            </div>
+            yaCalificoLocal
+              ? <span className="pf-ya-calificado">Ya la calificaste</span>
+              : <button type="button" className="pr-link" onClick={() => setModalAbierto(true)}>Dejar reseña</button>
           )}
         </div>
 
-        {/* Contenido de la tarjeta */}
         {cargando ? (
-          <div className="resenas-loading-indicator">
-            <div className="resenas-mini-spinner"></div>
-            <span>Cargando reseñas...</span>
-          </div>
+          <div className="pf-resena pf-resena--skeleton" aria-label="Cargando reseñas" />
         ) : opiniones.length === 0 ? (
-          <div className="resenas-empty-sobrio">
-            <svg className="resenas-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            <p className="resenas-empty-text">Aún no hay reseñas registradas.</p>
-          </div>
+          <p className="pr-muted">Todavía no tiene reseñas.</p>
         ) : (
-          <div className="resenas-scroll-container">
+          <ul className="pf-resenas">
             {opiniones.map((item, idx) => {
-              const estrellas = Number(
+              const estrellas = Math.max(1, Math.min(5, Math.round(Number(
                 item.estrellitas ?? item.calificacion ?? item.estrellas ?? item.rating ?? item.puntuacion ?? 5
-              );
-              const opinion =
-                item.textoopinion || item.opinion || item.texto || item.comentario || item.descripcion || '';
-
-              // Datos del autor que opinó (sea jugador o entrenador)
+              ) || 5)));
+              const opinion = item.textoopinion || item.opinion || item.texto || item.comentario || item.descripcion || '';
               const autorInfo = item.jugador || item.entrenador || item.usuario || item;
               const nombreAutor = autorInfo
                 ? `${autorInfo.nombre || ''} ${autorInfo.apellido || ''}`.trim() || item.autor || 'Usuario'
                 : (item.autor || 'Usuario');
               const fotoAutor = autorInfo?.fotoperfil || item.fotoperfil || autorInfo?.foto_perfil || null;
-
-              // Rol dinámico del autor: "JUGADOR" o "ENTRENADOR"
               const rolAutorRaw =
-                item.rolAutor ||
-                item.rol_autor ||
-                item.rol ||
-                autorInfo?.tipousuario ||
-                item.tipousuario ||
+                item.rolAutor || item.rol_autor || item.rol || autorInfo?.tipousuario || item.tipousuario ||
                 (item.identrenador_autor || (item.identrenador && item.idclub) ? 'ENTRENADOR' : 'JUGADOR');
-
-              const esEntrenadorAutor =
-                typeof rolAutorRaw === 'string' && rolAutorRaw.toUpperCase().includes('ENTRENADOR');
-
-              const rolBadgeTexto = esEntrenadorAutor ? 'Entrenador' : 'Jugador';
-              const rolBadgeClase = esEntrenadorAutor ? 'badge-entrenador' : 'badge-jugador';
+              const esEntrenadorAutor = typeof rolAutorRaw === 'string' && rolAutorRaw.toUpperCase().includes('ENTRENADOR');
 
               return (
-                <article key={item.idresenia || item.id || idx} className="resena-card-dark resena-card">
-                  {/* Estrellas (1 a 5) */}
-                  <EstrellasRating cantidad={estrellas} />
-
-                  {/* Texto de la opinión entre comillas */}
-                  <p className="resena-opinion-texto">"{opinion}"</p>
-
-                  {/* Avatar circular pequeño, iniciales y nombre del autor con badge dinámico */}
-                  <div className="resena-autor-row">
-                    <Avatar
-                      src={fotoAutor}
-                      nombre={nombreAutor}
-                      size={28}
-                      className="resena-avatar-mini"
-                    />
-                    <div className="resena-autor-info">
-                      <span className="resena-autor-nombre">{nombreAutor}</span>
-                      <span className={`resena-autor-rol-badge ${rolBadgeClase}`}>
-                        {rolBadgeTexto}
-                      </span>
-                    </div>
+                <li key={item.idresenia || item.id || idx} className="pf-resena">
+                  <p className="pf-estrellas" aria-label={`${estrellas} de 5 estrellas`}>
+                    <span aria-hidden="true">{'★'.repeat(estrellas)}<i>{'★'.repeat(5 - estrellas)}</i></span>
+                  </p>
+                  {opinion && <p className="pf-resena-texto">{opinion}</p>}
+                  <div className="pf-resena-autor">
+                    <AvatarCuadrado src={fotoAutor} nombre={nombreAutor} size={32} />
+                    <span><strong>{nombreAutor}</strong> · {esEntrenadorAutor ? 'Entrenador' : 'Jugador'}</span>
                   </div>
-                </article>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
       </section>
 
-      {/* ── MODAL CENTRADO PARA CALIFICAR ── */}
       <ModalCalificar
         abierto={modalAbierto}
         onClose={() => setModalAbierto(false)}

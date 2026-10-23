@@ -1,69 +1,21 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../axiosConfig.js';
-import Avatar from '../components/Avatar.jsx';
+import AvatarCuadrado from '../components/AvatarCuadrado.jsx';
 import Footer from '../footer/footer.jsx';
-import CrearPost from '../feed/CrearPost.jsx';
-import { PostCompleto } from '../feed/PostCard.jsx';
+import Compositor from '../feed/Compositor.jsx';
+import Publicacion from '../feed/Publicacion.jsx';
 import PerfilSidebar from './PerfilSidebar.jsx';
 import PerfilResenas from './PerfilResenas.jsx';
 import PerfilBiografia from './PerfilBiografia.jsx';
-import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
 import BotonSeguir from '../components/BotonSeguir.jsx';
 import BotonVinculacionClub from '../components/BotonVinculacionClub.jsx';
 import PerfilEntrenadoresClub from './PerfilEntrenadoresClub.jsx';
-import '../feed/FeedView.css';
+import { ROLES } from '../feed/feedUtils.js';
+import '../pruebas/PruebasView.css';
+import '../feed/Feed.css';
 import './miperfil.css';
-
-const MESES = [
-  'Enero','Febrero','Marzo','Abril','Mayo','Junio',
-  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
-];
-
-// ── Íconos SVG Inline para diseño premium ───────────────────────────────────────────
-const IconoCheckVerificado = () => (
-  <svg className="sl-badge-verificado" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-  </svg>
-);
-
-const IconoUbicacion = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-    <circle cx="12" cy="10" r="3" />
-  </svg>
-);
-
-const IconoUsuario = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
-
-const IconoCalendario = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-    <line x1="16" y1="2" x2="16" y2="6" />
-    <line x1="8" y1="2" x2="8" y2="6" />
-    <line x1="3" y1="10" x2="21" y2="10" />
-  </svg>
-);
-
-const IconoDeporte = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24" />
-    <circle cx="12" cy="12" r="4" />
-  </svg>
-);
-
-const IconoEditar = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-  </svg>
-);
 
 const MiPerfil = (props) => {
   const navigate = useNavigate();
@@ -463,42 +415,28 @@ const MiPerfil = (props) => {
 
   if (cargando) {
     return (
-      <div className="miPerfil-root">
-        <div className="miPerfil-container">
-          <div className="profile-skeleton-wrapper">
-            <div className="skeleton-banner" />
-            <div className="skeleton-avatar" />
-            <div className="skeleton-line media" style={{ marginTop: '20px', width: '250px' }} />
-            <div className="skeleton-line" style={{ width: '400px' }} />
-          </div>
+      <div className="pr pf">
+        <div className="pr-wrap pf-head pf-head--skeleton" aria-busy="true" aria-label="Cargando perfil">
+          <span className="pf-avatar pf-skel" />
+          <div className="pf-skel-lineas"><i /><i /><i /></div>
         </div>
       </div>
     );
   }
 
-  if (perfilNoDisponible) {
+  if (perfilNoDisponible || errorMensaje) {
     return (
-      <div className="miPerfil-root">
-        <div className="miPerfil-container">
-          <div className="miPerfil-no-disponible">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2DEFF2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            <p>Este perfil no está disponible o se encuentra en proceso de validación.</p>
-            <button type="button" onClick={() => navigate('/')}>Volver al inicio</button>
+      <div className="pr pf">
+        <div className="pr-wrap pf-estado">
+          <div className="pr-empty">
+            <h1 className="pr-display pr-empty-title">
+              {perfilNoDisponible ? 'Este perfil no está disponible' : 'No pudimos cargar el perfil'}
+            </h1>
+            <p>{perfilNoDisponible ? 'Puede que no exista o que el club todavía esté en revisión.' : 'Revisá tu conexión y probá de nuevo.'}</p>
+            <button type="button" className="pr-btn pr-btn--ink" onClick={() => (perfilNoDisponible ? navigate('/') : window.location.reload())}>
+              {perfilNoDisponible ? 'Volver al inicio' : 'Reintentar'}
+            </button>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (errorMensaje) {
-    return (
-      <div className="miPerfil-root">
-        <div className="miPerfil-container">
-          <div className="miPerfil-error">{errorMensaje}</div>
         </div>
       </div>
     );
@@ -508,396 +446,263 @@ const MiPerfil = (props) => {
   const nombre = perfil?.nombre || perfil?.email || '';
   const apellido = perfil?.apellido || '';
   const nombreCompleto = `${nombre} ${apellido}`.trim();
-  const rol = perfil?.tipousuario || 'Usuario';
+  const rolTexto = ROLES[rolNormalizado] || 'Usuario';
+  const deporteTexto = perfil?.deporte?.deporte
+    || (Array.isArray(perfil?.deportes) ? perfil.deportes.map(d => d.deporte || d).join(', ') : null);
+  const fotoPerfil =
+    perfil?.fotoperfil ||
+    perfil?.entrenador?.fotoperfil ||
+    perfil?.club?.fotoperfil ||
+    perfil?.usuario?.fotoperfil ||
+    perfil?.jugador?.fotoperfil ||
+    perfil?.foto_perfil ||
+    perfil?.foto ||
+    perfil?.imagen;
+
+  const stats = [
+    { n: totalItems, label: totalItems === 1 ? 'publicación' : 'publicaciones' },
+    { n: seguidores, label: seguidores === 1 ? 'seguidor' : 'seguidores' },
+    { n: seguidos, label: 'siguiendo' },
+    { n: totalLikes, label: totalLikes === 1 ? 'me gusta' : 'me gusta' },
+  ];
 
   return (
-    <>
-      <div className="miPerfil-root">
-        {toastMensaje && (
-          <div className="profile-toast-success">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            <span>{toastMensaje}</span>
-          </div>
-        )}
-
-        <div className="miPerfil-container">
-          
-          {/* ── CARD HEADER DEL PERFIL (INTACTO) ── */}
-          <div className="new-profile-header">
-            <div className="profile-cover-image">
-              <div className="profile-cover-gradient" />
-              <div className="profile-glow-point" />
-            </div>
-
-            <div className="profile-header-main">
-              <div className="profile-avatar-area">
-                <div className="profile-avatar-border-svg">
-                  <Avatar 
-                    src={
-                      perfil?.fotoperfil ||
-                      perfil?.entrenador?.fotoperfil ||
-                      perfil?.club?.fotoperfil ||
-                      perfil?.usuario?.fotoperfil ||
-                      perfil?.jugador?.fotoperfil ||
-                      perfil?.foto_perfil ||
-                      perfil?.foto ||
-                      perfil?.imagen
-                    } 
-                    nombre={nombreCompleto || perfil?.email || nombre} 
-                    size="130px" 
-                    className="profile-avatar-img" 
-                    style={{ border: 'none', background: '#333' }}
-                  />
-                </div>
-                <span className="profile-online-badge" />
-              </div>
-
-              <div className="profile-info-area">
-                <div className="profile-title-row">
-                  <h1 className="profile-name">{nombreCompleto}</h1>
-                  <IconoCheckVerificado />
-                </div>
-
-                <div className="profile-meta-row">
-                  <span className="profile-meta-tag tag-rol">
-                    <IconoUsuario />
-                    {rol.toUpperCase()}
-                  </span>
-                  {perfil?.ubicacion && (
-                    <span className="profile-meta-tag">
-                      <IconoUbicacion />
-                      {perfil.ubicacion}
-                    </span>
-                  )}
-                  {perfil?.deporte?.deporte && (
-                    <span className="profile-meta-tag">
-                      <IconoDeporte />
-                      {perfil.deporte.deporte}
-                    </span>
-                  )}
-                </div>
-
-                {(perfil?.biografia || perfil?.descripcion) ? (
-                  <p className="profile-bio-text">"{perfil.biografia || perfil.descripcion}"</p>
-                ) : (
-                  <p className="profile-bio-text empty">
-                    {esPerfilPropio 
-                      ? 'Sin biografía en tu perfil. Hacé clic en "Editar perfil" para agregar una y destacar en SportLink.'
-                      : 'Este usuario aún no ha agregado una biografía.'}
-                  </p>
-                )}
-
-                <div className="profile-social-stats">
-                  <div className="social-stat-item">
-                    <span className="stat-number">{totalItems}</span>
-                    <span className="stat-label-text">publicaciones</span>
-                  </div>
-                  <div className="social-stat-item">
-                    <span className="stat-number">{seguidores}</span>
-                    <span className="stat-label-text">seguidores</span>
-                  </div>
-                  <div className="social-stat-item">
-                    <span className="stat-number">{seguidos}</span>
-                    <span className="stat-label-text">seguidos</span>
-                  </div>
-                  <div className="social-stat-item">
-                    <span className="stat-number">{totalLikes}</span>
-                    <span className="stat-label-text">me gustas</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="profile-actions-area">
-                {esPerfilPropio ? (
-                  <button className="profile-btn-edit" onClick={abrirModalEdicion}>
-                    <IconoEditar />
-                    EDITAR PERFIL
-                  </button>
-                ) : (
-                  <button 
-                    className="profile-btn-edit" 
-                    onClick={() => navigate('/mensajes')}
-                    style={{ background: '#2DEFF2', color: '#090a0c', border: 'none', fontWeight: 700 }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                    MENSAJE
-                  </button>
-                )}
-                {!esPerfilPropio && (
-                  <BotonSeguir
-                    idusuario={idUsuario}
-                    tipousuario={perfil?.tipousuario}
-                    usuario={usuarioEnSesion}
-                    variante="perfil"
-                    siguiendoInicial={siguiendo}
-                    onCambio={(d) => { setSeguidores(d.seguidores); setSiguiendo(d.siguiendo); }}
-                  />
-                )}
-                {!esPerfilPropio && esClub && perfil?.idclub && (
-                  <BotonVinculacionClub idclub={perfil.idclub} usuario={usuarioEnSesion} />
-                )}
-                {puedeEliminarCuenta && (
-                  <button
-                    className="profile-btn-edit"
-                    onClick={() => { setErrorCuenta(null); setConfirmandoCuenta(true); }}
-                    style={{ background: '#ef4444', color: '#fff', border: 'none', fontWeight: 700 }}
-                  >
-                    ELIMINAR CUENTA (ADMIN)
-                  </button>
-                )}
-                <ModalConfirmarEliminar
-                  abierto={confirmandoCuenta}
-                  titulo="¿Eliminar cuenta?"
-                  mensaje={<>Se eliminará la cuenta de <strong style={{ color: '#fff' }}>{perfil?.nombre || perfil?.email || 'este usuario'}</strong> junto con sus publicaciones, inscripciones, mensajes y demás datos. Esta acción no se puede deshacer.</>}
-                  textoConfirmar="ELIMINAR CUENTA"
-                  eliminando={eliminandoCuenta}
-                  error={errorCuenta}
-                  onConfirmar={eliminarCuenta}
-                  onCerrar={() => setConfirmandoCuenta(false)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ── GRID DE CONTENIDO PRINCIPAL ── */}
-          <div className="new-profile-grid">
-            
-            {/* COLUMNA IZQUIERDA/CENTRAL: FLUJO VERTICAL UNIFICADO (BIOGRAFÍA Y PUBLICACIONES) */}
-            <div className="new-profile-main-col">
-              
-              {/* 1. Box de Biografía (Visualización + Edición integrada) */}
-              <PerfilBiografia 
-                biografia={perfil?.biografia}
-                esDuenio={esPerfilPropio}
-                onActualizar={handleBiografiaActualizada}
-                onToast={handleMostrarToast}
-              />
-
-              {/* Gestión de entrenadores vinculados (solo el club dueño del perfil) */}
-              {esClub && esPerfilPropio && <PerfilEntrenadoresClub />}
-
-              {/* 2. Feed de Publicaciones con Scrollbar Dedicado */}
-              <div className="perfil-feed-section">
-                
-                <div className="perfil-feed-header">
-                  <div className="perfil-feed-title-wrap">
-                    <span className="perfil-feed-title-indicator" />
-                    <h3 className="perfil-feed-title">Publicaciones</h3>
-                  </div>
-                  <span className="perfil-feed-counter">
-                    {totalItems} {totalItems === 1 ? 'publicación' : 'publicaciones'}
-                  </span>
-                </div>
-
-                {/* Formulario Crear publicación (si se está viendo el perfil propio) */}
-                {esPerfilPropio && usuarioEnSesion && (
-                  <CrearPost usuario={usuarioEnSesion} onPostCreado={handlePostCreado} />
-                )}
-
-                {/* Contenedor de Publicaciones con Scrollbar Dedicado */}
-                <div className="perfil-publicaciones-scroll-container">
-                  {cargandoPublicaciones ? (
-                    <div className="feed-spinner-wrapper" style={{ padding: '30px 0' }}>
-                      <div className="feed-spinner" />
-                    </div>
-                  ) : publicaciones.length === 0 ? (
-                    <div className="empty-feed-graphic">
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="empty-feed-svg">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                        <circle cx="12" cy="13" r="4" />
-                      </svg>
-                      <h4>Sin publicaciones recientes</h4>
-                      <p>Aún no se han realizado publicaciones en este perfil.</p>
-                    </div>
-                  ) : (
-                    publicaciones.map(post => (
-                      <PostCompleto
-                        key={post.idpublicacion || post.id}
-                        post={post}
-                        usuario={usuarioEnSesion}
-                        onEliminar={handleEliminarPost}
-                      />
-                    ))
-                  )}
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* COLUMNA DERECHA: TARJETA PERFIL, RESEÑAS Y CONTACTO */}
-            <div className="new-profile-side-col">
-              
-              {/* Tarjeta lateral "PERFIL": muestra datos y métrica dinámica RATING */}
-              <PerfilSidebar
-                perfil={perfil}
-                ratingPromedio={esClubOEntrenador ? reseniasData.promedio : null}
-                totalResenas={esClubOEntrenador ? reseniasData.total : null}
-                esPerfilPropio={esPerfilPropio}
-                onUbicacionActualizada={(nuevaLoc) => {
-                  setPerfil(prev => ({
-                    ...prev,
-                    ...nuevaLoc
-                  }));
-                  handleMostrarToast('¡Ubicación de mapa actualizada con éxito!');
-                }}
-              />
-
-              {/* Tarjeta lateral "RESEÑAS": Inmediatamente debajo de la tarjeta "PERFIL" */}
-              {/* REGLA ESTRICTA DE NEGOCIO: SOLO para Clubes y Entrenadores, NUNCA para Jugadores */}
-              {esClubOEntrenador && (
-                <PerfilResenas
-                  perfil={perfil}
-                  usuarioEnSesion={usuarioEnSesion}
-                  reseniasData={reseniasData}
-                  cargando={cargandoResenias}
-                  verificacion={verificacionResenas}
-                  onResenaCreada={handleResenaAgregada}
-                  tipoEntidad={tipoEntidad}
-                  idEntidad={idEntidad}
-                  idJugadorSesion={idJugadorSesion}
-                  idEntrenadorSesion={idEntrenadorSesion}
-                  esPerfilPropio={esPerfilPropio}
-                />
-              )}
-
-            </div>
-
-          </div>
-
+    <div className="pr pf">
+      {toastMensaje && (
+        <div className="pr-toast" role="status">
+          <p className="pr-toast-titulo">{toastMensaje}</p>
         </div>
+      )}
+
+      {/* ── Cabecera ── */}
+      <section className="pf-head">
+        <div className="pr-wrap pf-head-grid">
+          <span className="pf-avatar">
+            <AvatarCuadrado src={fotoPerfil} nombre={nombreCompleto || perfil?.email} size={148} />
+          </span>
+
+          <div className="pf-id">
+            <h1 className="pr-display pf-nombre">{nombreCompleto}</h1>
+            <p className="pf-meta">
+              <span>{rolTexto}</span>
+              {perfil?.ubicacion && <span>{perfil.ubicacion}</span>}
+              {deporteTexto && <span>{deporteTexto}</span>}
+            </p>
+            <ul className="pf-stats">
+              {stats.map((s) => (
+                <li key={s.label}><strong>{s.n}</strong> {s.label}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="pf-acciones">
+            {esPerfilPropio ? (
+              <button type="button" className="pr-btn pr-btn--ink" onClick={abrirModalEdicion}>Editar perfil</button>
+            ) : (
+              <button type="button" className="pr-btn" onClick={() => navigate('/mensajes')}>
+                Mensaje
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
+              </button>
+            )}
+            {!esPerfilPropio && (
+              <BotonSeguir
+                idusuario={idUsuario}
+                tipousuario={perfil?.tipousuario}
+                usuario={usuarioEnSesion}
+                variante="perfil"
+                siguiendoInicial={siguiendo}
+                onCambio={(d) => { setSeguidores(d.seguidores); setSiguiendo(d.siguiendo); }}
+              />
+            )}
+            {puedeEliminarCuenta && (
+              <button type="button" className="pr-link pr-link--danger" onClick={() => { setErrorCuenta(null); setConfirmandoCuenta(true); }}>
+                Eliminar cuenta (admin)
+              </button>
+            )}
+          </div>
+
+          {!esPerfilPropio && esClub && perfil?.idclub && (
+            <div className="pf-vinculo">
+              <BotonVinculacionClub idclub={perfil.idclub} usuario={usuarioEnSesion} />
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Contenido ── */}
+      <div className="pr-wrap pf-grid">
+        <main className="pf-main">
+          <PerfilBiografia
+            biografia={perfil?.biografia || perfil?.descripcion}
+            esDuenio={esPerfilPropio}
+            onActualizar={handleBiografiaActualizada}
+            onToast={handleMostrarToast}
+          />
+
+          {/* Gestión de entrenadores vinculados (solo el club dueño del perfil) */}
+          {esClub && esPerfilPropio && <PerfilEntrenadoresClub />}
+
+          <section className="fd pf-posts" aria-labelledby="pf-posts-titulo">
+            <h2 id="pf-posts-titulo" className="pf-seccion-titulo">Publicaciones</h2>
+            {esPerfilPropio && usuarioEnSesion && (
+              <Compositor usuario={usuarioEnSesion} onPublicado={handlePostCreado} onAviso={handleMostrarToast} />
+            )}
+            {cargandoPublicaciones ? (
+              <div className="fd-post fd-post--skeleton" aria-label="Cargando publicaciones" />
+            ) : publicaciones.length === 0 ? (
+              <div className="pr-empty pf-vacio">
+                <h3 className="pr-display pr-empty-title">Todavía no publicó nada</h3>
+                <p>{esPerfilPropio ? 'Contá en qué andás: entrenamientos, resultados, búsquedas.' : 'Cuando publique, lo vas a ver acá.'}</p>
+              </div>
+            ) : (
+              <div className="fd-lista">
+                {publicaciones.map(post => (
+                  <Publicacion
+                    key={post.idpublicacion || post.id}
+                    post={post}
+                    usuario={usuarioEnSesion}
+                    onEliminar={handleEliminarPost}
+                    onAviso={handleMostrarToast}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </main>
+
+        <aside className="pf-lado">
+          <PerfilSidebar
+            perfil={perfil}
+            ratingPromedio={esClubOEntrenador ? reseniasData.promedio : null}
+            totalResenas={esClubOEntrenador ? reseniasData.total : null}
+            esPerfilPropio={esPerfilPropio}
+            onUbicacionActualizada={(nuevaLoc) => {
+              setPerfil(prev => ({ ...prev, ...nuevaLoc }));
+              handleMostrarToast('Ubicación actualizada');
+            }}
+          />
+
+          {/* Reseñas: solo para clubes y entrenadores */}
+          {esClubOEntrenador && (
+            <PerfilResenas
+              perfil={perfil}
+              usuarioEnSesion={usuarioEnSesion}
+              reseniasData={reseniasData}
+              cargando={cargandoResenias}
+              verificacion={verificacionResenas}
+              onResenaCreada={handleResenaAgregada}
+              tipoEntidad={tipoEntidad}
+              idEntidad={idEntidad}
+              idJugadorSesion={idJugadorSesion}
+              idEntrenadorSesion={idEntrenadorSesion}
+              esPerfilPropio={esPerfilPropio}
+            />
+          )}
+        </aside>
       </div>
+
       <Footer />
 
-      {/* ── MODAL EDITAR PERFIL ── */}
-      {modalAbierto && createPortal(
-        <div className="profile-modal-overlay">
-          <div className="profile-modal-card">
-            <div className="profile-modal-header">
-              <h3>Editar Información de Perfil</h3>
-              <button className="profile-modal-btn-close" onClick={cerrarModal}>×</button>
+      {/* ── Confirmar eliminación de cuenta (admin) ── */}
+      {confirmandoCuenta && createPortal(
+        <div className="pr-overlay" onClick={() => !eliminandoCuenta && setConfirmandoCuenta(false)}>
+          <div className="pr-modal pr-modal--sm" role="dialog" aria-modal="true" aria-labelledby="pf-borrar-titulo" onClick={(e) => e.stopPropagation()}>
+            <div className="pr-modal-head pf-modal-head">
+              <h2 id="pf-borrar-titulo" className="pr-modal-title">¿Eliminar esta cuenta?</h2>
+              <button type="button" className="pr-close" onClick={() => setConfirmandoCuenta(false)} disabled={eliminandoCuenta} aria-label="Cerrar">×</button>
             </div>
-            
-            <form onSubmit={guardarCambios} className="profile-modal-form">
-              <div className="profile-modal-foto-area">
-                <button
-                  type="button"
-                  className="profile-modal-foto-btn"
-                  onClick={() => inputFotoRef.current?.click()}
-                  aria-label="Cambiar foto de perfil"
-                >
-                  <Avatar
-                    src={fotoPreview || perfil?.fotoperfil}
-                    nombre={nombreCompleto || perfil?.email || nombre}
-                    size="96px"
-                    className="profile-avatar-img"
-                    style={{ border: 'none', background: '#333' }}
-                  />
-                  <span className="profile-modal-foto-overlay">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                      <circle cx="12" cy="13" r="4" />
-                    </svg>
-                  </span>
-                </button>
+            <div className="pr-modal-body">
+              <p className="pr-muted">
+                Se borra la cuenta de <strong>{perfil?.nombre || perfil?.email || 'este usuario'}</strong> con sus publicaciones, inscripciones y mensajes. No se puede deshacer.
+              </p>
+              {errorCuenta && <p className="pr-error">{errorCuenta}</p>}
+            </div>
+            <div className="pr-modal-foot">
+              <button type="button" className="pr-btn pr-btn--ghost" onClick={() => setConfirmandoCuenta(false)} disabled={eliminandoCuenta}>Cancelar</button>
+              <button type="button" className="pr-btn pr-btn--danger" onClick={eliminarCuenta} disabled={eliminandoCuenta}>
+                {eliminandoCuenta ? 'Eliminando…' : 'Eliminar cuenta'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
-                <div className="profile-modal-foto-info">
-                  <span className="profile-modal-foto-titulo">Foto de perfil</span>
-                  <span className="profile-modal-foto-hint">JPG, PNG o WEBP · máx. 5 MB</span>
-                  <div className="profile-modal-foto-botones">
-                    <button type="button" className="btn-modal-cancelar" onClick={() => inputFotoRef.current?.click()}>
-                      Cambiar foto
-                    </button>
-                    {fotoPreview && (
-                      <button type="button" className="btn-modal-cancelar" onClick={limpiarFoto}>
-                        Descartar
-                      </button>
-                    )}
+      {/* ── Editar perfil ── */}
+      {modalAbierto && createPortal(
+        <div className="pr-overlay" onClick={cerrarModal}>
+          <div className="pr-modal pr-modal--form pf-editar" role="dialog" aria-modal="true" aria-labelledby="pf-editar-titulo" onClick={(e) => e.stopPropagation()}>
+            <div className="pr-modal-head pf-modal-head">
+              <h2 id="pf-editar-titulo" className="pr-modal-title">Editar perfil</h2>
+              <button type="button" className="pr-close" onClick={cerrarModal} aria-label="Cerrar">×</button>
+            </div>
+
+            <form onSubmit={guardarCambios} className="pf-form">
+              <div className="pr-modal-body">
+                <div className="pf-foto">
+                  <button type="button" className="pf-foto-btn" onClick={() => inputFotoRef.current?.click()} aria-label="Cambiar foto de perfil">
+                    <AvatarCuadrado src={fotoPreview || perfil?.fotoperfil} nombre={nombreCompleto || perfil?.email} size={96} />
+                  </button>
+                  <div>
+                    <strong>Foto de perfil</strong>
+                    <span>JPG, PNG o WEBP · hasta 5 MB</span>
+                    <div className="pf-foto-links">
+                      <button type="button" className="pr-link" onClick={() => inputFotoRef.current?.click()}>Cambiar foto</button>
+                      {fotoPreview && <button type="button" className="pr-link" onClick={limpiarFoto}>Descartar</button>}
+                    </div>
                   </div>
+                  <input ref={inputFotoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleSeleccionFoto} hidden />
                 </div>
 
-                <input
-                  ref={inputFotoRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleSeleccionFoto}
-                  style={{ display: 'none' }}
-                />
-              </div>
-
-              <div className={esClub ? 'form-field-group' : 'form-double-col'}>
-                <div className="form-field-group">
-                  <label>{esClub ? 'Nombre del club' : 'Nombre'}</label>
-                  <input 
-                    type="text" 
-                    value={formEdicion.nombre} 
-                    onChange={e => setFormEdicion(p => ({ ...p, nombre: e.target.value }))}
-                    required 
-                  />
+                <div className={esClub ? 'pf-campos' : 'pf-campos pf-campos--doble'}>
+                  <label className="pf-campo">
+                    <span>{esClub ? 'Nombre del club' : 'Nombre'}</span>
+                    <input type="text" value={formEdicion.nombre} onChange={e => setFormEdicion(p => ({ ...p, nombre: e.target.value }))} required />
+                  </label>
+                  {!esClub && (
+                    <label className="pf-campo">
+                      <span>Apellido</span>
+                      <input type="text" value={formEdicion.apellido} onChange={e => setFormEdicion(p => ({ ...p, apellido: e.target.value }))} />
+                    </label>
+                  )}
                 </div>
-                {!esClub && (
-                  <div className="form-field-group">
-                    <label>Apellido</label>
-                    <input 
-                      type="text" 
-                      value={formEdicion.apellido} 
-                      onChange={e => setFormEdicion(p => ({ ...p, apellido: e.target.value }))}
-                    />
-                  </div>
-                )}
-              </div>
 
-              <div className="form-double-col">
-                <div className="form-field-group">
-                  <label>Ubicación</label>
-                  <input 
-                    type="text" 
-                    value={formEdicion.ubicacion} 
-                    onChange={e => setFormEdicion(p => ({ ...p, ubicacion: e.target.value }))}
-                    placeholder="Ej. Caballito, CABA"
-                  />
+                <div className={esClub ? 'pf-campos' : 'pf-campos pf-campos--doble'}>
+                  <label className="pf-campo">
+                    <span>Ubicación</span>
+                    <input type="text" value={formEdicion.ubicacion} onChange={e => setFormEdicion(p => ({ ...p, ubicacion: e.target.value }))} placeholder="Ej.: Caballito, CABA" />
+                  </label>
+                  {!esClub && (
+                    <label className="pf-campo">
+                      <span>Teléfono</span>
+                      <input type="tel" value={formEdicion.telefono} onChange={e => setFormEdicion(p => ({ ...p, telefono: e.target.value }))} placeholder="+54 11 2345 6789" />
+                    </label>
+                  )}
                 </div>
-                {!esClub && (
-                  <div className="form-field-group">
-                    <label>Número Telefónico</label>
-                    <input 
-                      type="text" 
-                      value={formEdicion.telefono} 
-                      onChange={e => setFormEdicion(p => ({ ...p, telefono: e.target.value }))}
-                      placeholder="+54 11 2345 6789"
-                    />
-                  </div>
-                )}
+
+                <label className="pf-campo">
+                  <span>Biografía</span>
+                  <textarea
+                    value={formEdicion.biografia}
+                    onChange={e => setFormEdicion(p => ({ ...p, biografia: e.target.value }))}
+                    placeholder="Tu trayectoria, logros y lo que estás buscando."
+                    maxLength={1000}
+                    rows={4}
+                  />
+                  <small>{formEdicion.biografia?.length || 0}/1000</small>
+                </label>
               </div>
 
-              <div className="form-field-group">
-                <label>Biografía</label>
-                <textarea 
-                  value={formEdicion.biografia} 
-                  onChange={e => setFormEdicion(p => ({ ...p, biografia: e.target.value }))}
-                  placeholder="Escribe sobre ti, tu trayectoria deportiva, logros y metas..."
-                  maxLength={1000}
-                  rows={3}
-                />
-                <span className="char-count-modal">{formEdicion.biografia?.length || 0} / 1000</span>
-              </div>
-
-              <div className="profile-modal-actions">
-                <button type="button" className="btn-modal-cancelar" onClick={cerrarModal}>Cancelar</button>
-                <button type="submit" className="btn-modal-guardar" disabled={guardando}>
-                  {guardando ? 'Guardando...' : 'Guardar cambios'}
-                </button>
+              <div className="pr-modal-foot">
+                <button type="button" className="pr-btn pr-btn--ghost" onClick={cerrarModal}>Cancelar</button>
+                <button type="submit" className="pr-btn" disabled={guardando}>{guardando ? 'Guardando…' : 'Guardar cambios'}</button>
               </div>
             </form>
           </div>
         </div>,
         document.body
       )}
-    </>
+    </div>
   );
 };
 

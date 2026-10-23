@@ -1,36 +1,7 @@
-import React, { useState } from 'react'
-import Avatar from '../components/Avatar.jsx'
-
-const SearchIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/>
-    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-  </svg>
-)
-
-const EditIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-  </svg>
-)
-
-const ChatEmptyIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-  </svg>
-)
-
-function rolBadgeClass(rol) {
-  if (!rol) return 'mensajes-role-badge'
-  const r = rol.toLowerCase()
-  if (r === 'entrenador') return 'mensajes-role-badge entrenador'
-  if (r === 'club')       return 'mensajes-role-badge club'
-  if (r === 'jugador')    return 'mensajes-role-badge jugador'
-  return 'mensajes-role-badge grupo'
-}
-
+import { useState } from 'react'
+import AvatarCuadrado from '../components/AvatarCuadrado.jsx'
 import { formatearFechaRelativa } from './utilsFecha.js'
+import { ROLES, detallesContacto } from './utilsMensajes.js'
 
 const FILTROS = [
   { label: 'Todos', value: 'todos' },
@@ -38,179 +9,98 @@ const FILTROS = [
   { label: 'Grupos', value: 'grupos' },
 ]
 
-function SkeletonItem() {
-  return (
-    <div className="mensajes-skeleton-item">
-      <div className="mensajes-skeleton-avatar" />
-      <div className="mensajes-skeleton-info">
-        <div className="mensajes-skeleton-line larga" />
-        <div className="mensajes-skeleton-line corta" />
-      </div>
-    </div>
-  )
-}
-
 export default function SidebarConversaciones({ usuario, onlineUsers, conversaciones, conversacionActiva, setConversacionActiva, loading }) {
   const [busqueda, setBusqueda] = useState('')
-  const [filtroActivo, setFiltroActivo] = useState('todos')
+  const [filtro, setFiltro] = useState('todos')
 
-  const conversacionesFiltradas = conversaciones.filter((c) => {
+  const miId = usuario?.idusuario || usuario?.id
+  const totalNoLeidos = conversaciones.reduce((acc, c) => acc + (c.noleidos || 0), 0)
+
+  const filtradas = conversaciones.filter((c) => {
     const esPrivada = (c.tipo || 'PRIVADA').toUpperCase() === 'PRIVADA'
-    const nombre = esPrivada ? c.otroParticipante?.nombre : c.nombre
-    const matchBusqueda = (nombre || '').toLowerCase().includes(busqueda.toLowerCase())
-
-    if (!matchBusqueda) return false
-
-    if (filtroActivo === 'todos') {
-      return true
-    }
-    if (filtroActivo === 'personas') {
-      return esPrivada
-    }
-    if (filtroActivo === 'grupos') {
-      return !esPrivada
-    }
-
+    const { nombre } = detallesContacto(c)
+    if (!nombre.toLowerCase().includes(busqueda.toLowerCase())) return false
+    if (filtro === 'personas') return esPrivada
+    if (filtro === 'grupos') return !esPrivada
     return true
   })
 
-  const getDetallesContacto = (c) => {
-    if (c.tipo === 'PRIVADA') {
-      return {
-        nombre: c.otroParticipante?.nombre || 'Usuario Desconocido',
-        foto: c.otroParticipante?.fotoperfil || null,
-        rol: c.otroParticipante?.tipousuario || ''
-      }
-    }
-    return { nombre: c.nombre || 'Grupo', foto: c.foto || null, rol: 'grupo' }
-  }
-
-  const totalNoLeidos = conversaciones.reduce((acc, c) => acc + (c.noleidos || 0), 0)
+  const vacio = busqueda
+    ? 'Sin resultados para esa búsqueda.'
+    : filtro === 'personas'
+      ? 'No tenés conversaciones individuales.'
+      : filtro === 'grupos'
+        ? 'No tenés conversaciones de grupos.'
+        : 'Cuando contactes a un club o entrenador, la charla aparece acá.'
 
   return (
-    <aside className="mensajes-sidebar">
-      {/* ── Header ── */}
-      <div className="mensajes-sidebar-header">
-        <div className="mensajes-sidebar-title-row">
-          <h2 style={{ display: 'flex', alignItems: 'center', margin: 0 }}>
-            Mensajes
-            {totalNoLeidos > 0 && (
-              <span className="mensajes-unread-badge" style={{ marginLeft: '8px', fontSize: '0.6rem' }}>
-                {totalNoLeidos}
-              </span>
-            )}
-          </h2>
-          <button className="mensajes-new-chat-btn" title="Nueva conversación">
-            <EditIcon />
-          </button>
-        </div>
+    <aside className="ms-lista" aria-label="Conversaciones">
+      <div className="ms-lista-head">
+        <h1 className="pr-display ms-titulo">
+          Mensajes
+          {totalNoLeidos > 0 && <span className="ms-badge ms-badge--titulo">{totalNoLeidos > 99 ? '99+' : totalNoLeidos}</span>}
+        </h1>
 
-        <div className="mensajes-search-wrapper">
-          <span className="mensajes-search-icon"><SearchIcon /></span>
-          <input
-            type="text"
-            placeholder="Buscar conversaciones..."
-            className="mensajes-search-input"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
+        <label className="pr-search ms-search">
+          <span className="pr-sr">Buscar conversaciones</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          <input type="search" placeholder="Buscar" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+        </label>
+
+        <div className="ms-filtros" role="group" aria-label="Filtrar">
+          {FILTROS.map((f) => (
+            <button key={f.value} type="button" className={`pr-chip${filtro === f.value ? ' is-on' : ''}`} aria-pressed={filtro === f.value} onClick={() => setFiltro(f.value)}>
+              {f.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* ── Chips de filtro ── */}
-      <div className="mensajes-filtros">
-        {FILTROS.map(f => (
-          <button
-            key={f.value}
-            className={`mensajes-filtro-chip${filtroActivo === f.value ? ' activo' : ''}`}
-            onClick={() => setFiltroActivo(f.value)}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      <ul className="ms-convs">
+        {loading && [0, 1, 2, 3, 4].map((i) => <li key={i} className="ms-conv-skeleton" aria-hidden="true" />)}
 
-      {/* ── Lista de conversaciones ── */}
-      <div className="mensajes-lista">
-        {loading && (
-          <>
-            <SkeletonItem />
-            <SkeletonItem />
-            <SkeletonItem />
-            <SkeletonItem />
-            <SkeletonItem />
-          </>
-        )}
+        {!loading && filtradas.length === 0 && <li className="ms-lista-vacia">{vacio}</li>}
 
-        {!loading && conversacionesFiltradas.length === 0 && (
-          <div className="mensajes-lista-empty">
-            <div className="mensajes-lista-empty-icon">
-              <ChatEmptyIcon />
-            </div>
-            <span>
-              {busqueda
-                ? 'Sin resultados para esa búsqueda.'
-                : filtroActivo === 'todos'
-                  ? 'No tenés conversaciones todavía.'
-                  : filtroActivo === 'personas'
-                    ? 'No tenés conversaciones individuales.'
-                    : 'No tenés conversaciones de grupos.'}
-            </span>
-          </div>
-        )}
+        {!loading && filtradas.map((c) => {
+          const activa = conversacionActiva?.idconversacion === c.idconversacion
+          const { nombre, foto, rol } = detallesContacto(c)
+          const noLeidos = c.noleidos > 0
+          const online = c.tipo === 'PRIVADA' && onlineUsers?.has(String(c.otroParticipante?.idusuario))
 
-        {conversacionesFiltradas.map((c) => {
-          const isActive = conversacionActiva?.idconversacion === c.idconversacion
-          const { nombre, foto, rol } = getDetallesContacto(c)
-          const hora = formatearFechaRelativa(c.ultimoMensaje?.createdat)
-
-          const miIdUsuario = usuario?.idusuario || usuario?.id
           let preview = c.ultimoMensaje?.contenido
-            || (c.ultimoMensaje?.tipomensaje === 'EVENTO' ? '📎 Evento compartido' : 'No hay mensajes aún')
-          if (c.ultimoMensaje && Number(c.ultimoMensaje.idusuarioemisor) === Number(miIdUsuario)) {
-            preview = 'Tú: ' + preview
-          }
-
-          const hasUnread = c.noleidos > 0
-          const isOnline = c.tipo === 'PRIVADA' && onlineUsers && onlineUsers.has(String(c.otroParticipante?.idusuario))
+            || (c.ultimoMensaje?.tipomensaje === 'EVENTO' ? 'Compartió un evento' : 'Todavía no hay mensajes')
+          if (c.ultimoMensaje && Number(c.ultimoMensaje.idusuarioemisor) === Number(miId)) preview = `Vos: ${preview}`
 
           return (
-            <div
-              key={c.idconversacion}
-              className={`mensajes-item${isActive ? ' activo' : ''}`}
-              onClick={() => setConversacionActiva(c)}
-            >
-              {/* Avatar con indicador online */}
-              <div className="mensajes-item-avatar-wrapper">
-                <Avatar src={foto} nombre={nombre} size={44} />
-                {isOnline && <div className="online-indicator" />}
-              </div>
-
-              {/* Info */}
-              <div className="mensajes-item-info">
-                {/* Fila 1: nombre + badge rol + hora */}
-                <div className="mensajes-item-row1">
-                  <div className="mensajes-item-name-group">
-                    <span className={`mensajes-item-name${hasUnread ? ' unread' : ''}`}>{nombre}</span>
-                    {rol && (
-                      <span className={rolBadgeClass(rol)}>
-                        {rol.toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <span className="mensajes-item-time">{hora}</span>
-                </div>
-
-                {/* Fila 2: preview + badge no leídos */}
-                <div className="mensajes-item-row2">
-                  <div className={`mensajes-item-preview${hasUnread ? ' unread' : ''}`}>{preview}</div>
-                  {hasUnread && <div className="mensajes-unread-badge">{c.noleidos > 99 ? '99+' : c.noleidos}</div>}
-                </div>
-              </div>
-            </div>
+            <li key={c.idconversacion}>
+              <button
+                type="button"
+                className={`ms-conv${activa ? ' is-on' : ''}${noLeidos ? ' is-nueva' : ''}`}
+                aria-current={activa ? 'true' : undefined}
+                onClick={() => setConversacionActiva(c)}
+              >
+                <span className="ms-avatar">
+                  <AvatarCuadrado src={foto} nombre={nombre} size={48} />
+                  {online && <i className="ms-online" title="En línea" />}
+                </span>
+                <span className="ms-conv-txt">
+                  <span className="ms-conv-fila">
+                    <strong>{nombre}</strong>
+                    <time>{formatearFechaRelativa(c.ultimoMensaje?.createdat)}</time>
+                  </span>
+                  <span className="ms-conv-fila">
+                    <span className="ms-conv-preview">
+                      {ROLES[rol?.toLowerCase()] && <em>{ROLES[rol.toLowerCase()]} · </em>}
+                      {preview}
+                    </span>
+                    {noLeidos && <span className="ms-badge">{c.noleidos > 99 ? '99+' : c.noleidos}</span>}
+                  </span>
+                </span>
+              </button>
+            </li>
           )
         })}
-      </div>
+      </ul>
     </aside>
   )
 }

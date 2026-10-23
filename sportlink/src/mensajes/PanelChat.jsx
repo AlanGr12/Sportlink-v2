@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@supabase/supabase-js'
 import api from '../axiosConfig.js'
-import Avatar from '../components/Avatar.jsx'
+import AvatarCuadrado from '../components/AvatarCuadrado.jsx'
 import ChatInput from './ChatInput.jsx'
 import { TarjetaEventoPorId } from '../components/EventoAdjunto.jsx'
 import { eventoDeMensaje, puedeAdjuntarEventos } from '../utils/eventosAdjuntos.js'
-import { IconoMensajes } from '../iconos/IconoMensajes.jsx'
+import { formatearHoraMensaje, etiquetaFecha } from './utilsFecha.js'
+import { ROLES, detallesContacto } from './utilsMensajes.js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -14,81 +16,24 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey)
 // Columna del mensaje que referencia a cada tipo de evento adjunto
 const CAMPO_EVENTO = { PRUEBA: 'idprueba', ENTRENAMIENTO: 'identrenamiento', EMPLEO: 'idempleo' }
 
-// ── Iconos SVG ──────────────────────────────────────────────
+// ── Íconos (trazo 2px, heredan color) ───────────────────────
+const Ico = ({ children, size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
+)
+const SearchIcon = () => <Ico><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></Ico>
+const BackIcon = () => <Ico><path d="M19 12H5M12 5l-7 7 7 7" /></Ico>
+const DotsIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+)
+const UpIcon = () => <Ico size={18}><polyline points="18 15 12 9 6 15" /></Ico>
+const DownIcon = () => <Ico size={18}><polyline points="6 9 12 15 18 9" /></Ico>
 
-const PhoneIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.2H6.6a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.8 9.91a16 16 0 0 0 6.29 6.29l1.06-1.06a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+// Doble check de lectura: gris enviado, cian leído
+const DoubleCheck = ({ leido }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`ms-check${leido ? ' is-leido' : ''}`} aria-label={leido ? 'Leído' : 'Enviado'}>
+    <polyline points="7 12 11 16 19 8" /><polyline points="2 12 6 16 14 8" />
   </svg>
 )
-
-const SearchIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/>
-    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-  </svg>
-)
-
-const MoreIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
-  </svg>
-)
-
-const EmptyMessageIcon = () => (
-  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-  </svg>
-)
-
-const ThreeDotsIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
-  </svg>
-)
-
-const ProhibitedIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-  </svg>
-)
-
-const CheckIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
-)
-
-const PencilIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px'}}>
-    <path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-  </svg>
-)
-
-const TrashIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px'}}>
-    <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-  </svg>
-)
-
-// ── Helpers ─────────────────────────────────────────────────
-
-function rolBadgeClass(rol) {
-  if (!rol) return 'mensajes-panel-rol-badge'
-  const r = rol.toLowerCase()
-  if (r === 'entrenador') return 'mensajes-panel-rol-badge entrenador'
-  if (r === 'club')       return 'mensajes-panel-rol-badge club'
-  if (r === 'jugador')    return 'mensajes-panel-rol-badge jugador'
-  return 'mensajes-panel-rol-badge grupo'
-}
-
-import { formatearHoraMensaje, etiquetaFecha, parsearFechaUtc } from './utilsFecha.js'
-
-// Exportar también desde PanelChat por compatibilidad
-export { formatearHoraMensaje }
-
-// Alias para compatibilidad interna
-const formatearHora = formatearHoraMensaje
 
 function buildMensajesConSeparadores(mensajes) {
   const items = []
@@ -102,45 +47,6 @@ function buildMensajesConSeparadores(mensajes) {
     items.push({ type: 'message', data: msg, key: msg.idmensaje })
   }
   return items
-}
-
-// Doble check de lectura
-const DoubleCheck = ({ leido }) => (
-  <svg
-    width="14" height="14" viewBox="0 0 24 24"
-    fill="none"
-    stroke={leido ? '#2DEFF2' : '#ffffff'}
-    strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-    style={{ display: 'inline-block', verticalAlign: 'middle' }}
-  >
-    <polyline points="7 12 11 16 19 8" />
-    <polyline points="2 12 6 16 14 8" />
-  </svg>
-)
-
-const ChevronUpIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="18 15 12 9 6 15"/>
-  </svg>
-)
-
-const ChevronDownIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="6 9 12 15 18 9"/>
-  </svg>
-)
-
-// Skeleton del historial
-function HistorialSkeleton() {
-  return (
-    <div className="mensajes-historial-loading">
-      <div className="mensajes-historial-loading-ajeno" style={{ width: '45%', height: 44 }} />
-      <div className="mensajes-historial-loading-propio" style={{ width: '52%', height: 36 }} />
-      <div className="mensajes-historial-loading-ajeno" style={{ width: '38%', height: 52 }} />
-      <div className="mensajes-historial-loading-propio" style={{ width: '60%', height: 36 }} />
-      <div className="mensajes-historial-loading-ajeno" style={{ width: '48%', height: 44 }} />
-    </div>
-  )
 }
 
 function destacarTexto(texto, query, idmensaje, matchActivoId) {
@@ -165,7 +71,7 @@ function destacarTexto(texto, query, idmensaje, matchActivoId) {
       <mark
         key={`${idmensaje}-${pos}`}
         id={matchId}
-        className={`mensaje-search-highlight ${esActivo ? 'activo' : ''}`}
+        className={`ms-resaltado ${esActivo ? 'activo' : ''}`}
       >
         {subStr}
       </mark>
@@ -182,7 +88,7 @@ function destacarTexto(texto, query, idmensaje, matchActivoId) {
 
 // ── Componente principal ─────────────────────────────────────
 
-export default function PanelChat({ usuario, onlineUsers, conversacionActiva, actualizarUltimoMensaje, marcarComoLeida }) {
+export default function PanelChat({ usuario, onlineUsers, conversacionActiva, actualizarUltimoMensaje, marcarComoLeida, onVolver }) {
   const [mensajes, setMensajes] = useState([])
   const [loading, setLoading] = useState(false)
   const [mostrarBusqueda, setMostrarBusqueda] = useState(false)
@@ -213,6 +119,19 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
   }
 
   useEffect(() => { scrollToBottom() }, [mensajes])
+
+  // Las tarjetas de evento cargan después y agrandan el historial:
+  // si estabas abajo de todo, se sigue mostrando el último mensaje
+  const pegadoAbajo = useRef(true)
+  useEffect(() => {
+    const el = historialRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const alScroll = () => { pegadoAbajo.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80 }
+    const obs = new ResizeObserver(() => { if (pegadoAbajo.current) el.scrollTop = el.scrollHeight })
+    Array.from(el.children).forEach((c) => obs.observe(c))
+    el.addEventListener('scroll', alScroll)
+    return () => { obs.disconnect(); el.removeEventListener('scroll', alScroll) }
+  }, [mensajes, loading])
 
   const idActivo = conversacionActiva?.idconversacion ?? null
 
@@ -371,16 +290,6 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
     }
   }
 
-  const getDetallesContacto = (c) => {
-    if (c.tipo === 'PRIVADA') {
-      return {
-        nombre: c.otroParticipante?.nombre || 'Usuario Desconocido',
-        foto: c.otroParticipante?.fotoperfil || null,
-        rol: c.otroParticipante?.tipousuario || '',
-      }
-    }
-    return { nombre: c.nombre || 'Grupo', foto: c.foto || null, rol: 'grupo' }
-  }
 
   // Obtener todas las coincidencias de búsqueda en la lista de mensajes
   const coincidencias = React.useMemo(() => {
@@ -496,137 +405,94 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
     }
   }
 
-  /* ── Panel vacío ── */
+  /* ── Sin conversación elegida ── */
   if (!conversacionActiva) {
     return (
-      <main className="mensajes-panel">
-        <div className="mensajes-panel-empty">
-          <div className="mensajes-panel-empty-icon">
-            <EmptyMessageIcon />
-          </div>
-          <h3>Tus mensajes</h3>
-          <p>Seleccioná una conversación de la lista para comenzar a chatear</p>
+      <main className="ms-panel ms-panel--vacio">
+        <div className="ms-vacio">
+          <h2 className="pr-display ms-vacio-titulo">Elegí una charla</h2>
+          <p>Abrí una conversación de la lista para leerla y responder.</p>
         </div>
       </main>
     )
   }
 
-  const { nombre, foto, rol } = getDetallesContacto(conversacionActiva)
+  const { nombre, foto, rol } = detallesContacto(conversacionActiva)
+  const rolTexto = ROLES[rol?.toLowerCase()]
+  const esPrivada = conversacionActiva.tipo === 'PRIVADA'
   const miIdUsuario = usuario?.idusuario || usuario?.id
-
   const items = buildMensajesConSeparadores(mensajes)
-  const isOnline = conversacionActiva.tipo === 'PRIVADA' &&
-    onlineUsers && onlineUsers.has(String(conversacionActiva.otroParticipante?.idusuario))
+  const isOnline = esPrivada && onlineUsers && onlineUsers.has(String(conversacionActiva.otroParticipante?.idusuario))
+  const cerrarBusqueda = () => { setMostrarBusqueda(false); setBusquedaTexto('') }
 
-  /* ── Chat activo ── */
   return (
-    <main className="mensajes-panel">
-      {/* Header */}
-      <div className="mensajes-panel-header">
-        <div className="mensajes-panel-header-avatar">
-          <Avatar src={foto} nombre={nombre} size={44} />
-          {isOnline && <div className="mensajes-panel-header-online" />}
+    <main className="ms-panel">
+      <header className="ms-panel-head">
+        <button type="button" className="ms-icono ms-volver" onClick={onVolver} aria-label="Volver a la lista">
+          <BackIcon />
+        </button>
+        <span className="ms-avatar">
+          <AvatarCuadrado src={foto} nombre={nombre} size={44} />
+          {isOnline && <i className="ms-online" />}
+        </span>
+        <div className="ms-panel-id">
+          <h2>{nombre}</h2>
+          <p>
+            {rolTexto}
+            {rolTexto && esPrivada && ' · '}
+            {esPrivada && (isOnline ? <span className="ms-en-linea">En línea</span> : 'Desconectado')}
+          </p>
         </div>
+        <button
+          type="button"
+          className={`ms-icono${mostrarBusqueda ? ' is-on' : ''}`}
+          aria-label="Buscar en la conversación"
+          aria-pressed={mostrarBusqueda}
+          onClick={() => (mostrarBusqueda ? cerrarBusqueda() : setMostrarBusqueda(true))}
+        >
+          <SearchIcon />
+        </button>
+      </header>
 
-        <div className="mensajes-panel-header-info">
-          <div className="mensajes-panel-name">{nombre}</div>
-          <div className="mensajes-panel-status">
-            {rol && (
-              <span className={rolBadgeClass(rol)}>{rol.toUpperCase()}</span>
-            )}
-            {isOnline
-              ? <span className="mensajes-panel-online-text">● En línea</span>
-              : <span className="mensajes-panel-offline-text">Desconectado</span>
-            }
-          </div>
-        </div>
-
-        <div className="mensajes-panel-acciones">
-          <button className="mensajes-panel-accion-btn" title="Llamada">
-            <PhoneIcon />
-          </button>
-          <button
-            className={`mensajes-panel-accion-btn ${mostrarBusqueda ? 'activo' : ''}`}
-            title="Buscar en conversación"
-            onClick={() => {
-              setMostrarBusqueda((prev) => !prev)
-              if (mostrarBusqueda) setBusquedaTexto('')
-            }}
-          >
-            <SearchIcon />
-          </button>
-          <button className="mensajes-panel-accion-btn" title="Más opciones">
-            <MoreIcon />
-          </button>
-        </div>
-      </div>
-
-      {/* Barra de búsqueda estilo VS Code */}
       {mostrarBusqueda && (
-        <div className="mensajes-chat-search-bar">
-          <div className="mensajes-chat-search-input-wrapper">
-            <SearchIcon />
+        <div className="ms-buscar">
+          <label className="pr-search ms-buscar-campo">
+            <span className="pr-sr">Buscar en el chat</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
             <input
               type="text"
-              placeholder="Buscar en el chat (Enter siguiente, Shift+Enter anterior)..."
+              placeholder="Buscar en el chat"
               value={busquedaTexto}
               onChange={(e) => setBusquedaTexto(e.target.value)}
               onKeyDown={handleSearchKeyDown}
               autoFocus
             />
-
-            {busquedaTexto.trim() && (
-              <div className="mensajes-search-nav-btns">
-                <span className="mensajes-search-count">
-                  {coincidencias.length > 0
-                    ? `${coincidenciaIndex + 1} de ${coincidencias.length}`
-                    : 'Sin resultados'}
-                </span>
-                <button
-                  type="button"
-                  className="mensajes-search-nav-btn"
-                  title="Anterior coincidencia (Shift+Enter)"
-                  disabled={coincidencias.length === 0}
-                  onClick={anteriorCoincidencia}
-                >
-                  <ChevronUpIcon />
-                </button>
-                <button
-                  type="button"
-                  className="mensajes-search-nav-btn"
-                  title="Siguiente coincidencia (Enter)"
-                  disabled={coincidencias.length === 0}
-                  onClick={siguienteCoincidencia}
-                >
-                  <ChevronDownIcon />
-                </button>
-              </div>
-            )}
-          </div>
-          <button
-            className="mensajes-chat-search-close"
-            onClick={() => {
-              setMostrarBusqueda(false)
-              setBusquedaTexto('')
-            }}
-            title="Cerrar búsqueda (Esc)"
-          >
-            ✕
-          </button>
+          </label>
+          {busquedaTexto.trim() && (
+            <span className="ms-buscar-cuenta" aria-live="polite">
+              {coincidencias.length > 0 ? `${coincidenciaIndex + 1} de ${coincidencias.length}` : 'Sin resultados'}
+            </span>
+          )}
+          <button type="button" className="ms-icono" aria-label="Anterior (Shift+Enter)" disabled={coincidencias.length === 0} onClick={anteriorCoincidencia}><UpIcon /></button>
+          <button type="button" className="ms-icono" aria-label="Siguiente (Enter)" disabled={coincidencias.length === 0} onClick={siguienteCoincidencia}><DownIcon /></button>
+          <button type="button" className="pr-close" aria-label="Cerrar búsqueda (Esc)" onClick={cerrarBusqueda}>×</button>
         </div>
       )}
 
-      {/* Historial */}
-      <div className="mensajes-historial" ref={historialRef}>
-        {loading && <HistorialSkeleton />}
+      <div className="ms-historial" ref={historialRef}>
+        {loading && (
+          <div className="ms-historial-carga" aria-label="Cargando mensajes">
+            {[45, 52, 38, 60, 48].map((w, i) => <i key={i} className={i % 2 ? 'is-propio' : ''} style={{ width: `${w}%` }} />)}
+          </div>
+        )}
+
+        {!loading && items.length === 0 && (
+          <p className="ms-historial-vacio">Todavía no hay mensajes. Escribí el primero.</p>
+        )}
 
         {!loading && items.map((item) => {
           if (item.type === 'separator') {
-            return (
-              <div key={item.key} className="mensaje-fecha-sep">
-                {item.label}
-              </div>
-            )
+            return <div key={item.key} className="ms-fecha"><span>{item.label}</span></div>
           }
 
           const msg = item.data
@@ -634,69 +500,72 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
           const isEliminado = msg.tipomensaje === 'ELIMINADO' || msg.eliminado
           const isEditado = msg.tipomensaje === 'EDITADO' || msg.editado
           const eventoAdjunto = eventoDeMensaje(msg)
+          const editando = editandoMsgId === msg.idmensaje
 
           return (
-            <div 
-              key={item.key} 
-              className={`mensaje-burbuja-container ${esPropio ? 'propio' : 'ajeno'}`}
-            >
-              <div className="mensaje-burbuja-row">
-                <div className={`mensaje-burbuja ${isEliminado ? 'eliminado' : ''}`}>
+            <div key={item.key} className={`ms-msg ${esPropio ? 'is-propio' : 'is-ajeno'}`}>
+              <div className="ms-msg-fila">
+                {esPropio && !isEliminado && !editando && (
+                  <div className="ms-msg-opciones mensaje-opciones-externas">
+                    <button
+                      type="button"
+                      className="ms-icono ms-icono--sm"
+                      aria-label="Opciones del mensaje"
+                      aria-expanded={dropdownMsgId === msg.idmensaje}
+                      onClick={(e) => { e.stopPropagation(); setDropdownMsgId(dropdownMsgId === msg.idmensaje ? null : msg.idmensaje) }}
+                    >
+                      <DotsIcon />
+                    </button>
+                    {dropdownMsgId === msg.idmensaje && (
+                      <div className="ms-menu" role="menu">
+                        <button type="button" role="menuitem" onClick={(e) => { e.stopPropagation(); setEditandoMsgId(msg.idmensaje); setEditTexto(msg.contenido); setDropdownMsgId(null) }}>
+                          Editar
+                        </button>
+                        <button type="button" role="menuitem" className="is-peligro" onClick={(e) => { e.stopPropagation(); setMsgAEliminar(msg); setDropdownMsgId(null) }}>
+                          Borrar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className={`ms-burbuja${isEliminado ? ' is-eliminado' : ''}${editando ? ' is-editando' : ''}`}>
                   {isEliminado ? (
-                    <div className="mensaje-eliminado-content">
-                      <ProhibitedIcon /> <i>Mensaje eliminado</i>
-                    </div>
-                  ) : editandoMsgId === msg.idmensaje ? (
-                    <div className="mensaje-editar-wrapper">
-                      <input 
-                        type="text" 
-                        value={editTexto} 
-                        onChange={(e) => setEditTexto(e.target.value)} 
+                    <span>Mensaje eliminado</span>
+                  ) : editando ? (
+                    <div className="ms-editar">
+                      <label className="pr-sr" htmlFor={`editar-${msg.idmensaje}`}>Editar mensaje</label>
+                      <input
+                        id={`editar-${msg.idmensaje}`}
+                        type="text"
+                        value={editTexto}
+                        onChange={(e) => setEditTexto(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') guardarEdicion(msg)
                           else if (e.key === 'Escape') setEditandoMsgId(null)
                         }}
                         autoFocus
                       />
-                      <button className="btn-guardar-edicion" title="Guardar cambios" onClick={() => guardarEdicion(msg)}><CheckIcon /></button>
-                      <button className="btn-cancelar-edicion" title="Cancelar edición" onClick={() => setEditandoMsgId(null)}>✕</button>
+                      <div className="ms-editar-acciones">
+                        <button type="button" className="pr-link" onClick={() => setEditandoMsgId(null)}>Cancelar</button>
+                        <button type="button" className="pr-btn pr-btn--sm" onClick={() => guardarEdicion(msg)}>Guardar</button>
+                      </div>
                     </div>
                   ) : (
                     <>
                       {eventoAdjunto && <TarjetaEventoPorId tipo={eventoAdjunto.tipo} id={eventoAdjunto.id} />}
                       {(msg.contenido || !eventoAdjunto) && (
-                        <div className="mensaje-contenido-wrapper">
-                          <span className="mensaje-texto">
-                            {destacarTexto(msg.contenido, mostrarBusqueda ? busquedaTexto : '', msg.idmensaje, matchActivoId)}
-                          </span>
-                          {isEditado && <span className="mensaje-editado-tag"> (editado)</span>}
-                        </div>
+                        <p className="ms-texto">
+                          {destacarTexto(msg.contenido, mostrarBusqueda ? busquedaTexto : '', msg.idmensaje, matchActivoId)}
+                        </p>
                       )}
                     </>
                   )}
                 </div>
-
-                {/* Opciones fuera de la burbuja a la derecha */}
-                {esPropio && !isEliminado && editandoMsgId !== msg.idmensaje && (
-                  <div className="mensaje-opciones-externas">
-                    <button className="mensaje-trigger-btn white" title="Opciones" onClick={(e) => { e.stopPropagation(); setDropdownMsgId(dropdownMsgId === msg.idmensaje ? null : msg.idmensaje); }}>
-                       <ThreeDotsIcon />
-                    </button>
-                    {dropdownMsgId === msg.idmensaje && (
-                      <div className="mensaje-dropdown outside">
-                        <button onClick={(e) => { e.stopPropagation(); setEditandoMsgId(msg.idmensaje); setEditTexto(msg.contenido); setDropdownMsgId(null); }}>
-                          <PencilIcon /> Editar
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); setMsgAEliminar(msg); setDropdownMsgId(null); }} className="danger">
-                          <TrashIcon /> Borrar
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
-              <div className="mensaje-hora">
-                {formatearHoraMensaje(msg.createdat)}
+              <div className="ms-hora">
+                {isEditado && !isEliminado && <span>Editado ·</span>}
+                <time>{formatearHoraMensaje(msg.createdat)}</time>
                 {esPropio && <DoubleCheck leido={msg.leido} />}
               </div>
             </div>
@@ -704,31 +573,30 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
         })}
       </div>
 
-      {/* Indicador de typing con animación de puntos */}
       {typingUser && (
-        <div className="typing-indicator">
-          <div className="typing-bubbles">
-            <span /><span /><span />
-          </div>
-          <span>{typingUser} está escribiendo</span>
+        <div className="ms-escribiendo" aria-live="polite">
+          <span className="ms-puntos" aria-hidden="true"><i /><i /><i /></span>
+          {typingUser} está escribiendo
         </div>
       )}
 
-      {/* Input */}
       <ChatInput onSend={handleEnviarMensaje} onTyping={handleTyping} puedeAdjuntarEvento={puedeAdjuntarEventos(usuario)} />
 
-      {/* Modal Confirmar Eliminar */}
-      {msgAEliminar && (
-        <div className="mensaje-modal-overlay" onClick={() => setMsgAEliminar(null)}>
-          <div className="mensaje-modal-card" onClick={e => e.stopPropagation()}>
-            <h4>¿Eliminar mensaje?</h4>
-            <p>¿Estás seguro que querés eliminar este mensaje?</p>
-            <div className="mensaje-modal-actions">
-              <button onClick={() => setMsgAEliminar(null)}>Cancelar</button>
-              <button className="danger" onClick={handleConfirmarEliminar}>Eliminar</button>
+      {msgAEliminar && createPortal(
+        <div className="pr-overlay" onClick={() => setMsgAEliminar(null)}>
+          <div className="pr-modal pr-modal--sm" role="dialog" aria-modal="true" aria-labelledby="ms-borrar-titulo" onClick={(e) => e.stopPropagation()}>
+            <div className="pr-modal-head ms-modal-head">
+              <h2 id="ms-borrar-titulo" className="pr-modal-title">¿Borrar el mensaje?</h2>
+              <button type="button" className="pr-close" onClick={() => setMsgAEliminar(null)} aria-label="Cerrar">×</button>
+            </div>
+            <div className="pr-modal-body"><p className="pr-muted">Va a quedar como “Mensaje eliminado” en la conversación.</p></div>
+            <div className="pr-modal-foot">
+              <button type="button" className="pr-btn pr-btn--ghost" onClick={() => setMsgAEliminar(null)}>Cancelar</button>
+              <button type="button" className="pr-btn pr-btn--danger" onClick={handleConfirmarEliminar}>Borrar</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </main>
   )

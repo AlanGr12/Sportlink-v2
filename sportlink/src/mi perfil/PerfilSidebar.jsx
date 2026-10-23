@@ -4,7 +4,6 @@ import api from '../axiosConfig.js';
 import MapaUbicacionDark from '../components/maps/MapaUbicacionDark.jsx';
 import InputDireccionOSM from '../components/maps/InputDireccionOSM.jsx';
 import { formatearUbicacionCorta } from '../utils/mapUtils.js';
-import './PerfilSidebar.css';
 
 /*
   Tarjeta lateral "PERFIL":
@@ -33,12 +32,12 @@ const PerfilSidebar = ({
   esPerfilPropio = false,
   onUbicacionActualizada,
 }) => {
-  if (!perfil) return null;
-
   const [modalUbicacionAbierto, setModalUbicacionAbierto] = useState(false);
   const [nuevaUbicacion, setNuevaUbicacion] = useState(null);
   const [guardandoUbicacion, setGuardandoUbicacion] = useState(false);
   const [errorUbicacion, setErrorUbicacion] = useState('');
+
+  if (!perfil) return null;
 
   const lat = perfil?.latitud;
   const lon = perfil?.longitud;
@@ -122,73 +121,6 @@ const PerfilSidebar = ({
   };
 
 
-  // Helper para renderizar iconos de atributos
-  const getFieldIcon = (key) => {
-    switch (key) {
-      case 'rating':
-        return (
-          <svg className="field-icon" viewBox="0 0 24 24" fill="#2DEFF2" stroke="#2DEFF2" strokeWidth="1.5">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
-        );
-      case 'deporte':
-        return (
-          <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-            <path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24" />
-          </svg>
-        );
-      case 'ubicacion':
-        return (
-          <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-        );
-      case 'edad':
-        return (
-          <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-        );
-      case 'experiencia':
-        return (
-          <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="8" r="7" />
-            <path d="M5.21 14A10 10 0 0 0 12 22a10 10 0 0 0 6.79-8" />
-          </svg>
-        );
-      case 'categoria':
-        return (
-          <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34M12 2a4 4 0 0 1 4 4v5a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/>
-          </svg>
-        );
-      case 'genero':
-        return (
-          <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-          </svg>
-        );
-      case 'titulo':
-        return (
-          <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
-          </svg>
-        );
-      default:
-        return (
-          <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-        );
-    }
-  };
-
   // Extraer deporte legible
   const deporteStr = perfil.deporte?.deporte || 
     (Array.isArray(perfil.deportes) ? perfil.deportes.map(d => d.deporte || d).join(', ') : perfil.deporte) || null;
@@ -196,8 +128,8 @@ const PerfilSidebar = ({
   // Rating formateado dinámicamente
   const tieneRatingCalculado = ratingPromedio !== undefined && ratingPromedio !== null;
   const ratingValor = tieneRatingCalculado && Number(ratingPromedio) > 0
-    ? `${Number(ratingPromedio).toFixed(1)} `
-    : '— ';
+    ? `★ ${Number(ratingPromedio).toFixed(1).replace('.', ',')}${totalResenas > 0 ? ` · ${totalResenas} ${totalResenas === 1 ? 'reseña' : 'reseñas'}` : ''}`
+    : 'Sin reseñas todavía';
 
   // Configuración de campos dinámicos
   const items = [];
@@ -206,20 +138,8 @@ const PerfilSidebar = ({
   if (esClubOEntrenador) {
     items.push({
       key: 'rating',
-      label: 'Rating',
-      value: (
-        <span style={{ color: '#2DEFF2', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-          {tieneRatingCalculado && Number(ratingPromedio) > 0
-            ? ratingValor
-            : <span style={{ color: '#2DEFF2' }}>—</span>}
-          <span style={{ color: '#2DEFF2' }}>★</span>
-          {totalResenas !== undefined && totalResenas > 0 && (
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-              ({totalResenas})
-            </span>
-          )}
-        </span>
-      ),
+      label: 'Calificación',
+      value: ratingValor,
     });
   }
 
@@ -234,17 +154,10 @@ const PerfilSidebar = ({
         key: 'ubicacion',
         label: 'Ubicación',
         value: (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <span>{formatearUbicacionCorta(perfil.ubicacion || perfil.direccion) || 'Sin configurar'}</span>
+          <span className="pf-dato-ubic">
+            <span>{formatearUbicacionCorta(perfil.ubicacion || perfil.direccion) || 'Sin cargar'}</span>
             {esPerfilPropio && (
-              <button
-                type="button"
-                className="perfil-sidebar-btn-edit-ubicacion"
-                onClick={abrirModalUbicacion}
-                title="Configurar ubicación en el mapa"
-              >
-                ✎
-              </button>
+              <button type="button" className="pr-link" onClick={abrirModalUbicacion}>Ubicar en el mapa</button>
             )}
           </span>
         ),
@@ -280,32 +193,22 @@ const PerfilSidebar = ({
 
   return (
     <>
-      <div className="perfil-sidebar-card">
-        <div className="sidebar-card-header">
-          <svg className="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" strokeLinecap="round" strokeLinejoin="round"/>
-            <polyline points="14 2 14 8 20 8" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <h3>PERFIL</h3>
-        </div>
-        <div className="sidebar-card-body">
-          {items.map((item) => (
-            <div key={item.key} className="perfil-info-row perfil-stat-row">
-              <div className="perfil-info-label perfil-stat-label">
-                {getFieldIcon(item.key)}
-                <span>{item.label}</span>
+      {items.length > 0 && (
+        <section className="pf-bloque" aria-labelledby="pf-datos-titulo">
+          <h2 id="pf-datos-titulo" className="pf-seccion-titulo">Datos</h2>
+          <dl className="pf-datos">
+            {items.map((item) => (
+              <div key={item.key}>
+                <dt>{item.label}</dt>
+                <dd>{item.value}</dd>
               </div>
-              <div className="perfil-info-value perfil-stat-value">
-                {item.value}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            ))}
+          </dl>
+        </section>
+      )}
 
-      {/* Tarjeta INDEPENDIENTE de Ubicación / Mapa (entre tarjeta PERFIL y tarjeta RESEÑAS) */}
       {esClubOEntrenador && tieneCoordenadas && (
-        <div className="perfil-sidebar-mapa-independiente">
+        <section className="pf-bloque pf-mapa" aria-label="Ubicación en el mapa">
           <MapaUbicacionDark
             latitud={lat}
             longitud={lon}
@@ -315,78 +218,36 @@ const PerfilSidebar = ({
             tipo={perfil.tipousuario || 'club'}
             esEditable={esPerfilPropio}
             onEditar={abrirModalUbicacion}
-            height="180px"
+            height="200px"
           />
-        </div>
+        </section>
       )}
 
-      {/* Mini-modal para editar/configurar ubicación */}
       {modalUbicacionAbierto && createPortal(
-        <div className="profile-modal-overlay" onClick={cerrarModalUbicacion}>
-          <div className="profile-modal-card modal-ubicacion-card" onClick={(e) => e.stopPropagation()}>
-            <div className="profile-modal-header">
-              <h3>Actualizar Ubicación en el Mapa</h3>
-              <button
-                type="button"
-                className="profile-modal-btn-close"
-                onClick={cerrarModalUbicacion}
-                disabled={guardandoUbicacion}
-              >
-                ×
-              </button>
+        <div className="pr-overlay" onClick={cerrarModalUbicacion}>
+          <div className="pr-modal pr-modal--form" role="dialog" aria-modal="true" aria-labelledby="pf-ubic-titulo" onClick={(e) => e.stopPropagation()}>
+            <div className="pr-modal-head pf-modal-head">
+              <h2 id="pf-ubic-titulo" className="pr-modal-title">Ubicación en el mapa</h2>
+              <button type="button" className="pr-close" onClick={cerrarModalUbicacion} disabled={guardandoUbicacion} aria-label="Cerrar">×</button>
             </div>
-            
-            <div className="modal-ubicacion-body">
-              <p className="modal-ubicacion-desc">
-                Buscá y seleccioná la dirección exacta para ubicar tu club en el mapa y permitir a los deportistas saber cómo llegar.
-              </p>
-
-              <div className="form-field-group">
-                <label>Dirección / Ubicación *</label>
+            <div className="pr-modal-body">
+              <p className="pr-muted">Buscá la dirección exacta y elegila de la lista, así los deportistas saben cómo llegar.</p>
+              <div className="pf-campo">
+                <span>Dirección</span>
                 <InputDireccionOSM
-                  placeholder="Ej: Av. San Martín 5125, Agronomía"
+                  placeholder="Ej.: Av. San Martín 5125, Agronomía"
                   value={nuevaUbicacion ? nuevaUbicacion.direccion : (perfil.direccion || perfil.ubicacion || '')}
-                  onSelectUbicacion={(loc) => {
-                    setNuevaUbicacion(loc);
-                    setErrorUbicacion('');
-                  }}
+                  onSelectUbicacion={(loc) => { setNuevaUbicacion(loc); setErrorUbicacion(''); }}
                 />
               </div>
-
-              {nuevaUbicacion && (
-                <div className="modal-ubicacion-preview-box">
-                  <span className="modal-ubicacion-badge-check">✓ Ubicación confirmada</span>
-                  <p className="modal-ubicacion-dir-res">{nuevaUbicacion.direccion}</p>
-                  <span className="modal-ubicacion-coords">
-                    Latitud: {Number(nuevaUbicacion.latitud).toFixed(5)} | Longitud: {Number(nuevaUbicacion.longitud).toFixed(5)}
-                  </span>
-                </div>
-              )}
-
-              {errorUbicacion && (
-                <div className="modal-ubicacion-error">
-                  {errorUbicacion}
-                </div>
-              )}
-
-              <div className="modal-ubicacion-actions">
-                <button
-                  type="button"
-                  className="btn-modal-cancelar"
-                  onClick={cerrarModalUbicacion}
-                  disabled={guardandoUbicacion}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="btn-modal-guardar"
-                  onClick={handleGuardarUbicacion}
-                  disabled={!nuevaUbicacion || guardandoUbicacion}
-                >
-                  {guardandoUbicacion ? 'Guardando...' : 'Confirmar Ubicación'}
-                </button>
-              </div>
+              {nuevaUbicacion && <p className="pr-notice">Elegiste: <strong>{nuevaUbicacion.direccion}</strong></p>}
+              {errorUbicacion && <p className="pr-error">{errorUbicacion}</p>}
+            </div>
+            <div className="pr-modal-foot">
+              <button type="button" className="pr-btn pr-btn--ghost" onClick={cerrarModalUbicacion} disabled={guardandoUbicacion}>Cancelar</button>
+              <button type="button" className="pr-btn" onClick={handleGuardarUbicacion} disabled={!nuevaUbicacion || guardandoUbicacion}>
+                {guardandoUbicacion ? 'Guardando…' : 'Guardar ubicación'}
+              </button>
             </div>
           </div>
         </div>,

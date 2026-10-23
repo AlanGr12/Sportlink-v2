@@ -1,416 +1,277 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import api from '../axiosConfig.js'
-import { PostCompleto } from './PostCard.jsx'
-import CrearPost from './CrearPost.jsx'
-import Avatar from '../components/Avatar.jsx'
+import useSeguidos from '../hooks/useSeguidos.js'
 import { parsearFechaUTC } from '../utils/dateUtils.js'
-import './FeedView.css'
+import Publicacion, { FdAvatar } from './Publicacion.jsx'
+import { ROLES, fechaDePost } from './feedUtils.js'
+import Compositor from './Compositor.jsx'
+import '../pruebas/PruebasView.css'
+import './Feed.css'
 
-function obtenerTimePost(p) {
-  const f = parsearFechaUTC(p.createdat || p.created_at || p.createdAt || p.fecha_creacion || p.fechacreacion)
-  return f ? f.getTime() : (Number(p.idpublicacion) || 0)
-}
+const idDe = (p) => Number(p.idpublicacion || p.id) || 0
+const tiempoDe = (p) => parsearFechaUTC(fechaDePost(p))?.getTime() || idDe(p)
+const ordenar = (lista) => [...lista].sort((a, b) => tiempoDe(b) - tiempoDe(a))
 
-function ordenarPostsPorFecha(lista) {
-  if (!Array.isArray(lista)) return []
-  return [...lista].sort((a, b) => obtenerTimePost(b) - obtenerTimePost(a))
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// VISTA PRINCIPAL: FeedView
-// ═══════════════════════════════════════════════════════════════════════════════
 export default function FeedView({ usuario }) {
   const navigate = useNavigate()
-  const [tabActiva, setTabActiva] = useState('paraTi') // 'paraTi' | 'siguiendo'
+  const [tab, setTab] = useState('paraVos') // 'paraVos' | 'siguiendo'
   const [posts, setPosts] = useState([])
   const [page, setPage] = useState(1)
-  const [totalPaginas, setTotalPaginas] = useState(1)
+  const [hayMas, setHayMas] = useState(true)
   const [loading, setLoading] = useState(true)
   const [loadingMas, setLoadingMas] = useState(false)
-  const [hayMas, setHayMas] = useState(true)
-  const [nuevasPublicaciones, setNuevasPublicaciones] = useState([])
-
-  // Stats
-  const [stats, setStats] = useState({ totalPosts: 0, totalLikes: 0, totalComentarios: 0 })
-
-  // Datos dinámicos para sidebars (según backend)
-  const [seguidos, setSeguidos] = useState(usuario?.seguidos || [])
-  const [recomendaciones, setRecomendaciones] = useState([])
-
+  const [error, setError] = useState(false)
+  const [nuevas, setNuevas] = useState([])
+  const [recomendaciones, setRecomendaciones] = useState(null)
+  const [red, setRed] = useState(null)
+  const [aviso, setAviso] = useState(null)
   const sentinelRef = useRef(null)
 
-  // Cargar lista de seguidos del usuario en sesión
-  useEffect(() => {
-    if (!usuario) return
-    const myId = usuario.idusuario || usuario.id
-    if (!myId) return
+  const miId = usuario?.idusuario || usuario?.id
+  const seguidos = useSeguidos(usuario)
 
-    const fetchMisSeguidos = async () => {
-      try {
-        const { data } = await api.get(`/api/seguidores/${myId}`)
-        if (data && Array.isArray(data.seguidosLista)) {
-          setSeguidos(data.seguidosLista)
-        } else if (data && Array.isArray(data.lista)) {
-          setSeguidos(data.lista)
-        } else if (Array.isArray(data.seguidos)) {
-          setSeguidos(data.seguidos)
-        }
-      } catch {
-        if (Array.isArray(usuario?.seguidos)) {
-          setSeguidos(usuario.seguidos)
-        }
-      }
-    }
+  const avisoTimer = useRef(null)
+  const mostrarAviso = useCallback((texto) => {
+    setAviso(texto)
+    clearTimeout(avisoTimer.current)
+    avisoTimer.current = setTimeout(() => setAviso(null), 2400)
+  }, [])
+  useEffect(() => () => clearTimeout(avisoTimer.current), [])
 
-    fetchMisSeguidos()
-  }, [usuario])
-
+  // Quien llama marca loading / loadingMas antes (la primera carga ya arranca en loading)
   const cargarPosts = useCallback(async (pagina = 1, reemplazar = false) => {
-    if (pagina === 1) setLoading(true)
-    else setLoadingMas(true)
     try {
       const { data } = await api.get('/api/publicaciones', { params: { page: pagina, limit: 20 } })
-      const nuevos = data.publicaciones || []
-      setPosts(prev => reemplazar ? nuevos : [...prev, ...nuevos])
-      setTotalPaginas(data.totalPaginas || 1)
+      const lista = data.publicaciones || []
+      setPosts((prev) => (reemplazar ? lista : [...prev, ...lista]))
       setHayMas(pagina < (data.totalPaginas || 1))
-      if (pagina === 1) {
-        setStats({
-          totalPosts: data.totalItems || 0,
-          totalLikes: nuevos.reduce((a, p) => a + (p.totalLikes || 0), 0),
-          totalComentarios: nuevos.reduce((a, p) => a + (p.totalComentarios || 0), 0),
-        })
-      }
-    } catch (err) {
-      console.error('Error cargando feed:', err)
+      setError(false)
+    } catch {
+      if (pagina === 1) setError(true)
     } finally {
       setLoading(false)
       setLoadingMas(false)
     }
   }, [])
 
-  // Comprobar periódicamente si se subieron publicaciones realmente nuevas
+  // Primera página
   useEffect(() => {
-    if (posts.length === 0) return;
-
-    const existingIds = new Set(posts.map(p => Number(p.idpublicacion || p.id)));
-    const maxId = Math.max(...posts.map(p => Number(p.idpublicacion || p.id) || 0));
-    const maxTimestamp = Math.max(
-      0,
-      ...posts.map(p => {
-        const f = parsearFechaUTC(p.createdat || p.created_at || p.createdAt || p.fecha_creacion || p.fechacreacion);
-        return f ? f.getTime() : 0;
+    let vivo = true
+    api.get('/api/publicaciones', { params: { page: 1, limit: 20 } })
+      .then(({ data }) => {
+        if (!vivo) return
+        setPosts(data.publicaciones || [])
+        setHayMas(1 < (data.totalPaginas || 1))
       })
-    );
+      .catch(() => { if (vivo) setError(true) })
+      .finally(() => { if (vivo) setLoading(false) })
+    return () => { vivo = false }
+  }, [])
 
-    const checkNuevas = async () => {
-      try {
-        const { data } = await api.get('/api/publicaciones', { params: { page: 1, limit: 20 } });
-        const lista = data.publicaciones || [];
-
-        const realmenteNuevos = lista.filter(p => {
-          const pId = Number(p.idpublicacion || p.id);
-          if (!pId || existingIds.has(pId)) return false;
-
-          const pTime = parsearFechaUTC(p.createdat || p.created_at || p.createdAt || p.fecha_creacion || p.fechacreacion)?.getTime() || 0;
-          return pId > maxId || (pTime > 0 && pTime > maxTimestamp);
-        });
-
-        if (realmenteNuevos.length > 0) {
-          setNuevasPublicaciones(realmenteNuevos);
-        } else {
-          setNuevasPublicaciones([]);
-        }
-      } catch (err) {
-        // consulta silenciosa en segundo plano
-      }
-    };
-
-    const timer = setInterval(checkNuevas, 15000);
-    return () => clearInterval(timer);
-  }, [posts]);
-
-  const handleCargarNuevasPublicaciones = () => {
-    if (nuevasPublicaciones.length === 0) return;
-    setPosts(prev => {
-      const existingIds = new Set(prev.map(p => Number(p.idpublicacion || p.id)));
-      const aAgregar = nuevasPublicaciones.filter(p => !existingIds.has(Number(p.idpublicacion || p.id)));
-      return [...aAgregar, ...prev];
-    });
-    setNuevasPublicaciones([]);
-  };
-
-  // Recomendaciones: perfiles al azar que comparten deporte con el usuario
+  // Recomendaciones (perfiles que comparten deporte) y números reales de la red
   useEffect(() => {
-    cargarPosts(1, true)
-
-    const cargarRecomendaciones = async () => {
-      try {
-        const res = await api.get('/api/recomendaciones', { params: { limite: 3 } })
-        setRecomendaciones(Array.isArray(res.data) ? res.data : [])
-      } catch {
-        // En caso de que no devuelva datos o falle
-        setRecomendaciones([])
-      }
+    let vivo = true
+    api.get('/api/recomendaciones', { params: { limite: 3 } })
+      .then((r) => { if (vivo) setRecomendaciones(Array.isArray(r.data) ? r.data : []) })
+      .catch(() => { if (vivo) setRecomendaciones([]) })
+    if (miId) {
+      api.get(`/api/seguidores/${miId}`)
+        .then((r) => { if (vivo) setRed(r.data) })
+        .catch(() => {})
     }
+    return () => { vivo = false }
+  }, [miId])
 
-    cargarRecomendaciones()
-  }, [cargarPosts, usuario])
+  // Cada 15 s busca publicaciones realmente nuevas y ofrece mostrarlas
+  useEffect(() => {
+    if (posts.length === 0) return
+    const existentes = new Set(posts.map(idDe))
+    const maxId = Math.max(...posts.map(idDe))
+    const maxTiempo = Math.max(0, ...posts.map((p) => parsearFechaUTC(fechaDePost(p))?.getTime() || 0))
+
+    const revisar = async () => {
+      try {
+        const { data } = await api.get('/api/publicaciones', { params: { page: 1, limit: 20 } })
+        setNuevas((data.publicaciones || []).filter((p) => {
+          const id = idDe(p)
+          if (!id || existentes.has(id)) return false
+          const t = parsearFechaUTC(fechaDePost(p))?.getTime() || 0
+          return id > maxId || (t > 0 && t > maxTiempo)
+        }))
+      } catch { /* consulta silenciosa */ }
+    }
+    const timer = setInterval(revisar, 15000)
+    return () => clearInterval(timer)
+  }, [posts])
+
+  const mostrarNuevas = () => {
+    setPosts((prev) => {
+      const existentes = new Set(prev.map(idDe))
+      return [...nuevas.filter((p) => !existentes.has(idDe(p))), ...prev]
+    })
+    setNuevas([])
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   // Scroll infinito
   useEffect(() => {
     if (!sentinelRef.current) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hayMas && !loadingMas && !loading) {
-          const siguientePagina = page + 1
-          setPage(siguientePagina)
-          cargarPosts(siguientePagina)
-        }
-      },
-      { threshold: 0.1 }
-    )
-    observer.observe(sentinelRef.current)
-    return () => observer.disconnect()
+    const obs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hayMas && !loadingMas && !loading) {
+        const siguiente = page + 1
+        setPage(siguiente)
+        setLoadingMas(true)
+        cargarPosts(siguiente)
+      }
+    }, { rootMargin: '400px 0px' })
+    obs.observe(sentinelRef.current)
+    return () => obs.disconnect()
   }, [hayMas, loadingMas, loading, page, cargarPosts])
 
-  const handlePostCreado = (nuevoPost) => {
-    setPosts(prev => [nuevoPost, ...prev])
-    setStats(prev => ({ ...prev, totalPosts: prev.totalPosts + 1 }))
-    setNuevasPublicaciones(prev => prev.filter(p => p.idpublicacion !== nuevoPost.idpublicacion))
+  const alPublicar = (nuevo) => {
+    setPosts((prev) => [nuevo, ...prev])
+    setNuevas((prev) => prev.filter((p) => idDe(p) !== idDe(nuevo)))
   }
+  const alEliminar = (id) => setPosts((prev) => prev.filter((p) => p.idpublicacion !== id))
 
-  const handleEliminarPost = (idpublicacion) => {
-    setPosts(prev => prev.filter(p => p.idpublicacion !== idpublicacion))
-    setStats(prev => ({ ...prev, totalPosts: Math.max(0, prev.totalPosts - 1) }))
-  }
-
-  // Traducción del tipo de usuario
-  const rolUsuario = usuario?.tipousuario === 'jugador'
-    ? 'Atleta Profesional'
-    : usuario?.tipousuario === 'entrenador'
-      ? 'Entrenador Elite'
-      : usuario?.tipousuario === 'club'
-        ? 'Club Deportivo'
-        : usuario?.tipousuario || 'Miembro de SportLink'
-
-  // Set de IDs seguidos para filtrado rápido
-  const idsSeguidos = new Set()
-  if (Array.isArray(seguidos)) {
-    seguidos.forEach(s => {
-      if (typeof s === 'number' || typeof s === 'string') {
-        idsSeguidos.add(String(s))
-      } else if (s && typeof s === 'object') {
-        const id = s.idusuario || s.id || s.id_usuario || s.usuario_id || s.id_seguido || s.seguido_id
-        if (id) idsSeguidos.add(String(id))
-      }
-    })
-  }
-
-  const postsOrdenados = ordenarPostsPorFecha(posts)
-
-  const postsAmostrar = tabActiva === 'siguiendo'
-    ? postsOrdenados.filter(p => {
-        const autorId = String(
-          p.autor?.idusuario ||
-          p.autor?.id ||
-          p.autor?.id_usuario ||
-          p.idusuario ||
-          p.id_usuario ||
-          p.usuario_id ||
-          ''
-        )
-        return idsSeguidos.has(autorId)
-      })
-    : postsOrdenados
+  const ordenados = ordenar(posts)
+  const visibles = tab === 'siguiendo'
+    ? ordenados.filter((p) => seguidos.has(Number(p.autor?.idusuario || p.idusuario)))
+    : ordenados
 
   return (
-    <div className="feed-pagina">
-      <div className="feed-layout">
-        {/* ════ Columna Izquierda: Perfil + Seguidos ════ */}
-        <aside className="feed-sidebar-izquierda">
-          {/* Card Resumen Perfil */}
-          <div className="feed-profile-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/perfil')}>
-            <div className="feed-profile-banner" />
-            <div className="feed-profile-avatar-container">
-              <Avatar src={usuario?.fotoperfil} nombre={usuario?.nombre || 'Usuario'} size={72} />
-            </div>
-            <div className="feed-profile-info">
-              <h3 className="feed-profile-name">{usuario?.nombre || usuario?.email || 'Usuario'}</h3>
-              <p className="feed-profile-role">{rolUsuario}</p>
-            </div>
-            <div className="feed-profile-stats">
-              <div className="feed-profile-stat-row">
-                <span className="feed-stat-label">Vistas del perfil</span>
-                <span className="feed-stat-value">{usuario?.vistasPerfil ?? stats.totalPosts ?? 0}</span>
-              </div>
-              <div className="feed-profile-stat-row">
-                <span className="feed-stat-label">Conexiones</span>
-                <span className="feed-stat-value">{usuario?.conexiones ?? 0}</span>
-              </div>
-            </div>
-          </div>
+    <div className="pr fd">
+      <div className="pr-wrap fd-layout">
+        {/* ── Izquierda: quién sos ── */}
+        <aside className="fd-lado fd-lado--izq" aria-label="Tu perfil">
+          <div className="fd-sticky">
+            <section className="fd-yo">
+              <FdAvatar persona={usuario} size={64} />
+              <h2 className="fd-yo-nombre">{usuario?.nombre || usuario?.email || 'Tu perfil'}</h2>
+              {ROLES[usuario?.tipousuario] && <p className="fd-yo-rol">{ROLES[usuario.tipousuario]}</p>}
+              {red && (
+                <dl className="fd-yo-red">
+                  <div><dt>Seguidores</dt><dd>{red.seguidores ?? 0}</dd></div>
+                  <div><dt>Siguiendo</dt><dd>{red.seguidos ?? 0}</dd></div>
+                </dl>
+              )}
+              <button type="button" className="pr-btn pr-btn--ink pr-btn--block" onClick={() => navigate('/perfil')}>
+                Ver mi perfil
+              </button>
+            </section>
 
-          {/* Card SEGUIDOS */}
-          <div className="feed-sidebar-card">
-            <h4 className="feed-sidebar-header-title">SEGUIDOS</h4>
-            {seguidos && seguidos.length > 0 ? (
-              <div className="feed-seguidos-lista">
-                {seguidos.map((item, idx) => (
-                  <div key={item.id || idx} className="feed-seguido-item">
-                    <Avatar src={item.logo || item.fotoperfil} nombre={item.nombre} size={36} />
-                    <div className="feed-seguido-info">
-                      <span className="feed-seguido-nombre">{item.nombre}</span>
-                      <span className="feed-seguido-sub">{item.categoria || item.tipousuario || 'Club'}</span>
-                    </div>
-                  </div>
-                ))}
-                <button className="feed-ver-todo-btn">Ver todo →</button>
-              </div>
-            ) : (
-              <div className="feed-vacio-box">Sin seguidos por el momento</div>
-            )}
+            <nav className="fd-atajos" aria-label="Explorar">
+              <Link to="/pruebas">Pruebas</Link>
+              <Link to="/entrenamientos">Entrenamientos</Link>
+              <Link to="/clubes">Clubes</Link>
+              <Link to="/entrenadores">Entrenadores</Link>
+            </nav>
           </div>
         </aside>
 
-        {/* ════ Columna Central: Publicar + Feed ════ */}
-        <main className="feed-columna-principal">
-          {/* Header con Pestañas Para ti / Siguiendo */}
-          <div className="feed-header-tabs">
-            <button
-              type="button"
-              className={`feed-header-tab ${tabActiva === 'paraTi' ? 'active' : ''}`}
-              onClick={() => setTabActiva('paraTi')}
-            >
-              <span>Para ti</span>
-              {tabActiva === 'paraTi' && <div className="feed-tab-indicator" />}
+        {/* ── Centro: la línea de tiempo ── */}
+        <main className="fd-centro">
+          <h1 className="pr-sr">Inicio</h1>
+          <div className="fd-tabs" role="tablist" aria-label="Qué mostrar">
+            <button type="button" role="tab" aria-selected={tab === 'paraVos'} className={`fd-tab${tab === 'paraVos' ? ' is-on' : ''}`} onClick={() => setTab('paraVos')}>
+              Para vos
             </button>
-            <button
-              type="button"
-              className={`feed-header-tab ${tabActiva === 'siguiendo' ? 'active' : ''}`}
-              onClick={() => setTabActiva('siguiendo')}
-            >
-              <span>Siguiendo</span>
-              {tabActiva === 'siguiendo' && <div className="feed-tab-indicator" />}
+            <button type="button" role="tab" aria-selected={tab === 'siguiendo'} className={`fd-tab${tab === 'siguiendo' ? ' is-on' : ''}`} onClick={() => setTab('siguiendo')}>
+              Siguiendo
             </button>
           </div>
 
-          {usuario && (
-            <CrearPost usuario={usuario} onPostCreado={handlePostCreado} />
-          )}
+          {usuario && <Compositor usuario={usuario} onPublicado={alPublicar} onAviso={mostrarAviso} />}
 
-          {nuevasPublicaciones.length > 0 && (
-            <button
-              type="button"
-              className="feed-nuevas-banner"
-              onClick={handleCargarNuevasPublicaciones}
-            >
-              Mostrar {nuevasPublicaciones.length} {nuevasPublicaciones.length === 1 ? 'nueva' : 'nuevas'}.
-            </button>
+          {nuevas.length > 0 && (
+            <div className="fd-nuevas">
+              <button type="button" className="pr-btn pr-btn--ink pr-btn--sm" onClick={mostrarNuevas}>
+                Ver {nuevas.length} {nuevas.length === 1 ? 'publicación nueva' : 'publicaciones nuevas'}
+              </button>
+            </div>
           )}
 
           {loading ? (
-            <div className="feed-spinner-wrapper">
-              <div className="feed-spinner" />
+            <div aria-busy="true" aria-label="Cargando publicaciones">
+              {[0, 1, 2].map((i) => <div key={i} className="fd-post fd-post--skeleton" />)}
             </div>
-          ) : postsAmostrar.length === 0 ? (
-            <div className="feed-vacio">
-              {tabActiva === 'siguiendo' ? (
-                <>
-                  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#2DEFF2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                  </svg>
-                  <h3>No hay publicaciones de tu red</h3>
-                  <p>Seguí a entrenadores, clubes y atletas para ver sus publicaciones acá.</p>
-                </>
-              ) : (
-                <>
-                  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#2DEFF2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  <h3>El feed está vacío</h3>
-                  <p>Sé el primero en publicar algo.</p>
-                </>
-              )}
+          ) : error ? (
+            <div className="pr-empty fd-vacio">
+              <h2 className="pr-display pr-empty-title">No pudimos cargar el feed</h2>
+              <p>Revisá tu conexión y probá de nuevo.</p>
+              <button type="button" className="pr-btn pr-btn--ink" onClick={() => { setLoading(true); setPage(1); cargarPosts(1, true) }}>Reintentar</button>
             </div>
+          ) : visibles.length === 0 ? (
+            tab === 'siguiendo' ? (
+              <div className="pr-empty fd-vacio">
+                <h2 className="pr-display pr-empty-title">Tu red todavía está callada</h2>
+                <p>Seguí clubes y entrenadores para ver acá lo que publican.</p>
+                <button type="button" className="pr-btn pr-btn--ink" onClick={() => navigate('/clubes')}>
+                  Buscar clubes
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
+                </button>
+              </div>
+            ) : (
+              <div className="pr-empty fd-vacio">
+                <h2 className="pr-display pr-empty-title">Todavía no hay publicaciones</h2>
+                <p>Arrancá vos: contá en qué andás.</p>
+              </div>
+            )
           ) : (
             <>
-              {postsAmostrar.map(post => (
-                <PostCompleto
-                  key={post.idpublicacion}
-                  post={post}
-                  usuario={usuario}
-                  onEliminar={handleEliminarPost}
-                />
-              ))}
-
+              <div className="fd-lista">
+                {visibles.map((post) => (
+                  <Publicacion key={post.idpublicacion} post={post} usuario={usuario} onEliminar={alEliminar} onAviso={mostrarAviso} />
+                ))}
+              </div>
               <div ref={sentinelRef} />
-
-              {loadingMas && (
-                <div className="feed-spinner-wrapper">
-                  <div className="feed-spinner" />
-                </div>
-              )}
-
-              {!hayMas && postsAmostrar.length > 0 && (
-                <div className="feed-fin">Ya viste todo</div>
-              )}
+              {loadingMas && <div className="fd-post fd-post--skeleton" aria-label="Cargando más" />}
+              {!hayMas && <p className="fd-fin">Llegaste al final.</p>}
             </>
           )}
         </main>
 
-        {/* ════ Columna Derecha: Recomendados ════ */}
-        <aside className="feed-sidebar-derecha">
-          {/* Recomendado para ti */}
-          <div className="feed-sidebar-card">
-            <h4 className="feed-sidebar-header-title">RECOMENDADO PARA TI</h4>
-            {recomendaciones && recomendaciones.length > 0 ? (
-              <div className="feed-recomendados-lista">
-                {recomendaciones.map((rec) => (
-                  <div 
-                    key={rec.idusuario}
-                    className="feed-recomendado-item"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => navigate(`/perfil/${rec.idusuario}`)}
-                  >
-                    <Avatar src={rec.fotoperfil} nombre={rec.nombre || 'Usuario'} size={40} />
-                    <div className="feed-recomendado-info">
-                      <span className="feed-recomendado-nombre">{rec.nombre}</span>
-                      <span className="feed-recomendado-sub">
-                        {rec.tipousuario === 'club' ? 'Club' : 'Entrenador'}{rec.deporte ? ` · ${rec.deporte}` : ''}
-                      </span>
-                    </div>
-                    <button className="feed-btn-conectar" onClick={(e) => { e.stopPropagation(); navigate(`/perfil/${rec.idusuario}`) }}>Perfil</button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="feed-vacio-box">Sin recomendaciones por el momento</div>
-            )}
-          </div>
+        {/* ── Derecha: a quién seguir ── */}
+        <aside className="fd-lado fd-lado--der" aria-label="Sugerencias">
+          <div className="fd-sticky">
+            <section className="fd-bloque">
+              <h2 className="fd-bloque-titulo">A quién seguir</h2>
+              {recomendaciones === null ? (
+                <p className="pr-muted">Cargando…</p>
+              ) : recomendaciones.length === 0 ? (
+                <p className="pr-muted">Cuando cargues tus deportes en el perfil, te sugerimos clubes y entrenadores.</p>
+              ) : (
+                <ul className="fd-recos">
+                  {recomendaciones.map((r) => (
+                    <li key={r.idusuario}>
+                      <button type="button" className="fd-reco" onClick={() => navigate(`/perfil/${r.idusuario}`)}>
+                        <FdAvatar persona={r} size={44} />
+                        <span className="fd-reco-txt">
+                          <strong>{r.nombre}</strong>
+                          <span>{r.tipousuario === 'club' ? 'Club' : 'Entrenador'}{r.deporte ? ` · ${r.deporte}` : ''}</span>
+                        </span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
 
-          {/* Footer links */}
-          <footer className="feed-footer-links">
-            <div className="feed-footer-row">
-              <span onClick={() => navigate('/landing')} style={{ cursor: 'pointer' }}>Landing</span>
-              <span>•</span>
-              <span>Acerca de</span>
-              <span>•</span>
-              <span>Accesibilidad</span>
-              <span>•</span>
-              <span>Centro de ayuda</span>
+            <div className="fd-legal">
+              <Link to="/landing">Qué es SportLink</Link>
+              <span>SportLink © 2026</span>
             </div>
-            <div className="feed-footer-row">
-              <span>Privacidad y Términos</span>
-            </div>
-            <p className="feed-copyright">SportLink © 2026</p>
-          </footer>
+          </div>
         </aside>
       </div>
+
+      {aviso && (
+        <div className="pr-toast fd-toast" role="status">
+          <p className="pr-toast-titulo">{aviso}</p>
+        </div>
+      )}
     </div>
   )
 }

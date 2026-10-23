@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import api from '../axiosConfig.js';
-import './PerfilBiografia.css';
-
-const IconoLapiz = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-  </svg>
-);
 
 const PerfilBiografia = ({ biografia, esDuenio, onActualizar, onToast }) => {
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -67,80 +60,47 @@ const PerfilBiografia = ({ biografia, esDuenio, onActualizar, onToast }) => {
   const tieneTexto = Boolean(biografia && biografia.trim().length > 0);
 
   return (
-    <div className="perfil-biografia-card">
-      <div className="perfil-biografia-header">
-        <div className="perfil-biografia-title-wrap">
-          <span className="perfil-biografia-title-indicator" />
-          <h3 className="perfil-biografia-title">Biografía</h3>
-        </div>
-
+    <section className="pf-bloque" aria-labelledby="pf-bio-titulo">
+      <div className="pf-bloque-head">
+        <h2 id="pf-bio-titulo" className="pf-seccion-titulo">Biografía</h2>
         {esDuenio && !modoEdicion && (
-          <button
-            type="button"
-            className="perfil-biografia-btn-edit"
-            onClick={handleIniciarEdicion}
-            title="Editar biografía"
-          >
-            <IconoLapiz />
-            <span>Editar</span>
-          </button>
+          <button type="button" className="pr-link" onClick={handleIniciarEdicion}>{tieneTexto ? 'Editar' : 'Escribir'}</button>
         )}
       </div>
 
       {!modoEdicion ? (
         tieneTexto ? (
-          <p className="perfil-biografia-content">{biografia}</p>
+          <p className="pf-bio">{biografia}</p>
         ) : (
-          <p
-            className={`perfil-biografia-placeholder ${esDuenio ? 'clickable' : ''}`}
-            onClick={esDuenio ? handleIniciarEdicion : undefined}
-          >
+          <p className="pr-muted">
             {esDuenio
-              ? 'Aún no has agregado una biografía. Haz clic en el lápiz para escribir sobre ti...'
-              : 'Este usuario aún no ha agregado una biografía.'}
+              ? 'Todavía no escribiste tu biografía. Contá tu trayectoria, tus logros y qué estás buscando.'
+              : 'Todavía no escribió su biografía.'}
           </p>
         )
       ) : (
-        <form onSubmit={handleGuardar} className="perfil-biografia-edit-form">
-          <textarea
-            className="perfil-biografia-textarea"
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            placeholder="Escribe sobre ti, tu trayectoria deportiva, logros y aspiraciones..."
-            maxLength={1000}
-            rows={4}
-            disabled={guardando}
-            autoFocus
-          />
-
-          {errorMsg && <div className="perfil-biografia-error">{errorMsg}</div>}
-
-          <div className="perfil-biografia-edit-footer">
-            <span className="perfil-biografia-char-count">
-              {texto.length} / 1000 caracteres
-            </span>
-
-            <div className="perfil-biografia-actions">
-              <button
-                type="button"
-                className="perfil-biografia-btn-cancel"
-                onClick={handleCancelar}
-                disabled={guardando}
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="perfil-biografia-btn-save"
-                disabled={guardando}
-              >
-                {guardando ? 'Guardando...' : 'Guardar'}
-              </button>
-            </div>
+        <form onSubmit={handleGuardar} className="pf-bio-form">
+          <label className="pf-campo">
+            <span className="pr-sr">Biografía</span>
+            <textarea
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              placeholder="Tu trayectoria, logros y lo que estás buscando."
+              maxLength={1000}
+              rows={5}
+              disabled={guardando}
+              autoFocus
+            />
+            <small>{texto.length}/1000</small>
+          </label>
+          {errorMsg && <p className="pr-error">{errorMsg}</p>}
+          <div className="pf-bio-acciones">
+            <button type="button" className="pr-link" onClick={handleCancelar} disabled={guardando}>Cancelar</button>
+            <button type="submit" className="pr-btn pr-btn--sm" disabled={guardando}>{guardando ? 'Guardando…' : 'Guardar'}</button>
           </div>
         </form>
       )}
-    </div>
+    </section>
   );
 };
 

@@ -36,13 +36,11 @@ export default function ModalEvento({
   const [hora,              setHora]              = useState('');
   const [descripcion,       setDescripcion]       = useState('');
   const [colorSeleccionado, setColorSeleccionado] = useState('#ffffff');
-  const [showColorMenu,     setShowColorMenu]     = useState(false);
   const [imagenFile,        setImagenFile]        = useState(null);
   const [imagenPreview,     setImagenPreview]     = useState(null);
   const [errores,           setErrores]           = useState({});
   const [guardando,         setGuardando]         = useState(false);
   const imagenRef = useRef(null);
-  const colorPickerRef = useRef(null);
 
   // ── Inicialización ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -72,17 +70,6 @@ export default function ModalEvento({
       setHora(`${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`);
     }
   }, []);   // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Cerrar menú de colores al hacer click fuera ─────────────────────────────
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target)) {
-        setShowColorMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // ── Cerrar con Escape ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -148,175 +135,96 @@ export default function ModalEvento({
 
 
   return createPortal(
-    <div
-      className="mev-overlay"
-      onClick={(e) => { if (e.target === e.currentTarget) onCerrar(); }}
-    >
-      <div className="mev-contenedor" role="dialog" aria-modal="true" aria-labelledby="mev-titulo">
-
-        {/* ── Header ── */}
-        <div className="mev-header">
-          <div className="mev-header-left">
-            <span className="mev-header-dot" style={{ background: colorSeleccionado, boxShadow: `0 0 10px ${colorSeleccionado}80` }} />
-            <h2 className="mev-titulo" id="mev-titulo">
-              {modoEdicion ? 'EDITAR EVENTO' : 'NUEVO EVENTO'}
-            </h2>
-          </div>
-          <button className="mev-btn-cerrar" onClick={onCerrar} aria-label="Cerrar">
-            <svg viewBox="0 0 14 14" fill="none" width="14" height="14">
-              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
+    <div className="pr-overlay" onClick={(e) => { if (e.target === e.currentTarget) onCerrar(); }}>
+      <div className="pr-modal pr-modal--form mev" role="dialog" aria-modal="true" aria-labelledby="mev-titulo">
+        <div className="pr-modal-head">
+          <h2 className="pr-modal-title" id="mev-titulo">{modoEdicion ? 'Editar evento' : 'Nuevo evento'}</h2>
+          <button type="button" className="pr-close" onClick={onCerrar} aria-label="Cerrar">×</button>
         </div>
 
-        {/* ── Formulario ── */}
         <form className="mev-form" onSubmit={handleSubmit} noValidate>
-
-          {/* Nombre con selector de color */}
-          <div className="mev-grupo">
-            <label className="mev-label" htmlFor="mev-nombre">
-              Nombre del evento <span className="mev-req">*</span>
-            </label>
-            <div className="mev-nombre-row">
-              <div className="mev-color-picker-wrap" ref={colorPickerRef}>
-                <button
-                  type="button"
-                  className="mev-color-dot-btn"
-                  style={{ background: colorSeleccionado }}
-                  onClick={() => setShowColorMenu(!showColorMenu)}
-                  title="Seleccionar color del evento"
-                />
-                {showColorMenu && (
-                  <div className="mev-color-menu">
-                    <div className="mev-color-menu-title">Color del evento</div>
-                    <div className="mev-color-grid">
-                      {COLORES_DISPONIBLES.map((c) => (
-                        <button
-                          key={c.hex}
-                          type="button"
-                          className={`mev-color-option ${colorSeleccionado === c.hex ? 'activo' : ''}`}
-                          style={{ background: c.hex }}
-                          title={c.nombre}
-                          onClick={() => {
-                            setColorSeleccionado(c.hex);
-                            setShowColorMenu(false);
-                          }}
-                        >
-                          {colorSeleccionado === c.hex && (
-                            <span className="mev-color-check" style={{ color: c.hex === '#ffffff' ? '#000' : '#fff' }}>✓</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+          <div className="pr-modal-body">
+            <label className="mev-campo">
+              <span>Nombre del evento</span>
               <input
-                id="mev-nombre"
                 type="text"
-                className={`mev-input mev-nombre-input${errores.nombre ? ' mev-input--error' : ''}`}
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
-                placeholder="ej. Entrenamiento táctico"
+                placeholder="Ej.: Entrenamiento con el equipo"
                 autoFocus
                 autoComplete="off"
+                aria-invalid={!!errores.nombre}
               />
-            </div>
-            {errores.nombre && <span className="mev-error">{errores.nombre}</span>}
-          </div>
-
-          {/* Fecha + Hora */}
-          <div className="mev-fila-doble">
-            <div className="mev-grupo">
-              <label className="mev-label" htmlFor="mev-fecha">
-                Fecha <span className="mev-req">*</span>
-                {fechaBloqueada && <span className="mev-bloqueado-badge">Fijada</span>}
-              </label>
-              <input
-                id="mev-fecha"
-                type="date"
-                className={`mev-input${errores.fecha ? ' mev-input--error' : ''}${fechaBloqueada ? ' mev-input--disabled' : ''}`}
-                value={fecha}
-                onChange={(e) => { if (!fechaBloqueada) setFecha(e.target.value); }}
-                readOnly={fechaBloqueada}
-                disabled={fechaBloqueada}
-              />
-              {errores.fecha && <span className="mev-error">{errores.fecha}</span>}
-            </div>
-
-            <div className="mev-grupo">
-              <label className="mev-label" htmlFor="mev-hora">
-                Hora <span className="mev-req">*</span>
-              </label>
-              <input
-                id="mev-hora"
-                type="time"
-                className={`mev-input${errores.hora ? ' mev-input--error' : ''}`}
-                value={hora}
-                onChange={(e) => setHora(e.target.value)}
-              />
-              {errores.hora && <span className="mev-error">{errores.hora}</span>}
-            </div>
-          </div>
-
-          {/* Descripción */}
-          <div className="mev-grupo">
-            <label className="mev-label" htmlFor="mev-desc">
-              Descripción <span className="mev-opcional">(Opcional)</span>
+              {errores.nombre && <small className="mev-error">{errores.nombre}</small>}
             </label>
-            <textarea
-              id="mev-desc"
-              className="mev-textarea"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Detalles del evento, notas, lugar…"
-              rows={3}
-            />
-          </div>
 
-          {/* Imagen */}
-          <div className="mev-grupo">
-            <label className="mev-label">
-              Imagen <span className="mev-opcional">(Opcional)</span>
-            </label>
-            {imagenPreview ? (
-              <div className="mev-imagen-preview-wrap">
-                <img src={imagenPreview} alt="Vista previa" className="mev-imagen-preview" />
-                <div className="mev-imagen-info">
-                  <span className="mev-imagen-nombre">📷 {imagenFile?.name || 'imagen'}</span>
-                  <button type="button" className="mev-btn-quitar-imagen" onClick={handleQuitarImagen}>
-                    Quitar
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <label className="mev-upload-box" htmlFor="mev-imagen">
+            <div className="mev-doble">
+              <label className="mev-campo">
+                <span>Fecha{fechaBloqueada && ' · fijada por el día elegido'}</span>
                 <input
-                  id="mev-imagen"
-                  type="file"
-                  accept="image/*"
-                  ref={imagenRef}
-                  onChange={handleImagenChange}
-                  style={{ display: 'none' }}
+                  type="date"
+                  value={fecha}
+                  onChange={(e) => { if (!fechaBloqueada) setFecha(e.target.value); }}
+                  readOnly={fechaBloqueada}
+                  disabled={fechaBloqueada}
+                  aria-invalid={!!errores.fecha}
                 />
-                <div className="mev-upload-icon">🖼️</div>
-                <div className="mev-upload-text">Haz clic para subir una imagen del evento</div>
-                <div className="mev-upload-hint">PNG, JPG, WEBP, GIF</div>
+                {errores.fecha && <small className="mev-error">{errores.fecha}</small>}
               </label>
-            )}
+              <label className="mev-campo">
+                <span>Hora</span>
+                <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} aria-invalid={!!errores.hora} />
+                {errores.hora && <small className="mev-error">{errores.hora}</small>}
+              </label>
+            </div>
+
+            <fieldset className="mev-colores">
+              <legend>Color en el calendario</legend>
+              <div>
+                {COLORES_DISPONIBLES.map((c) => (
+                  <button
+                    key={c.hex}
+                    type="button"
+                    className={`mev-color${colorSeleccionado === c.hex ? ' is-on' : ''}`}
+                    style={{ '--mev-color': c.hex === '#ffffff' ? 'var(--slk-text)' : c.hex }}
+                    onClick={() => setColorSeleccionado(c.hex)}
+                    aria-pressed={colorSeleccionado === c.hex}
+                    title={c.nombre}
+                  >
+                    <span className="pr-sr">{c.nombre}</span>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <label className="mev-campo">
+              <span>Descripción (opcional)</span>
+              <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Notas, lugar, qué llevar…" rows={3} />
+            </label>
+
+            <div className="mev-campo">
+              <span>Imagen (opcional)</span>
+              {imagenPreview ? (
+                <div className="mev-imagen">
+                  <img src={imagenPreview} alt="Vista previa" />
+                  <button type="button" className="pr-link pr-link--danger" onClick={handleQuitarImagen}>Quitar imagen</button>
+                </div>
+              ) : (
+                <label className="mev-subir">
+                  <input type="file" accept="image/*" ref={imagenRef} onChange={handleImagenChange} hidden />
+                  <strong>Elegí una imagen</strong>
+                  <span>PNG, JPG, WEBP o GIF</span>
+                </label>
+              )}
+            </div>
           </div>
 
-          {/* Acciones */}
-          <div className="mev-acciones">
-            <button type="button" className="mev-btn-cancelar" onClick={onCerrar} disabled={guardando}>
-              Cancelar
-            </button>
-            <button type="submit" className="mev-btn-guardar" disabled={guardando}>
-              <span className="mev-btn-guardar-dot" />
-              {guardando ? 'Guardando…' : modoEdicion ? 'Actualizar evento' : 'Guardar evento'}
+          <div className="pr-modal-foot">
+            <button type="button" className="pr-btn pr-btn--ghost" onClick={onCerrar} disabled={guardando}>Cancelar</button>
+            <button type="submit" className="pr-btn" disabled={guardando}>
+              {guardando ? 'Guardando…' : modoEdicion ? 'Guardar cambios' : 'Agendar'}
             </button>
           </div>
-
         </form>
       </div>
     </div>,

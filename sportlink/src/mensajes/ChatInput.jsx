@@ -1,50 +1,12 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { SelectorEventos, TarjetaEvento } from '../components/EventoAdjunto.jsx'
 
-const ClipIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-  </svg>
+const Ico = ({ children }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
 )
-
-const EmojiIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/>
-    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-    <line x1="9" y1="9" x2="9.01" y2="9"/>
-    <line x1="15" y1="9" x2="15.01" y2="9"/>
-  </svg>
-)
-
-const SendIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-  </svg>
-)
-
-const ImageIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-    <circle cx="8.5" cy="8.5" r="1.5"/>
-    <polyline points="21 15 16 10 5 21"/>
-  </svg>
-)
-
-const VideoIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="23 7 16 12 23 17 23 7"/>
-    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-  </svg>
-)
-
-const EventIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-    <line x1="16" y1="2" x2="16" y2="6"/>
-    <line x1="8" y1="2" x2="8" y2="6"/>
-    <line x1="3" y1="10" x2="21" y2="10"/>
-  </svg>
-)
+const EmojiIcon = () => <Ico><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></Ico>
+const EventIcon = () => <Ico><rect x="3" y="4" width="18" height="18" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></Ico>
+const SendIcon = () => <Ico><path d="M5 12h14M13 5l7 7-7 7" /></Ico>
 
 const EMOJI_LIST = [
   '😊', '😂', '🤣', '😍', '😎', '🥳', '😉', '😜', '🤩', '😇',
@@ -57,174 +19,92 @@ export default function ChatInput({ onSend, onTyping, puedeAdjuntarEvento = fals
   const [texto, setTexto] = useState('')
   const [evento, setEvento] = useState(null)
   const [selectorAbierto, setSelectorAbierto] = useState(false)
+  const [showEmoji, setShowEmoji] = useState(false)
   const cerrarSelector = useCallback(() => setSelectorAbierto(false), [])
   const puedeEnviar = Boolean(texto.trim() || evento)
-  const [showAdjuntar, setShowAdjuntar] = useState(false)
-  const [showEmoji, setShowEmoji] = useState(false)
 
   const textareaRef = useRef(null)
   const containerRef = useRef(null)
 
-  // Cerrar popovers al hacer click afuera
+  // Cerrar el popover de emojis al hacer click afuera
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setShowAdjuntar(false)
-        setShowEmoji(false)
-      }
+    const fuera = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) setShowEmoji(false)
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('mousedown', fuera)
+    return () => document.removeEventListener('mousedown', fuera)
   }, [])
 
-  // Auto-resize del textarea
+  // El textarea crece con el texto hasta un tope
   useEffect(() => {
     const el = textareaRef.current
     if (!el) return
     el.style.height = 'auto'
-    el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px'
   }, [texto])
 
   const enviar = () => {
-    if (puedeEnviar) {
-      onSend(texto.trim(), evento)
-      setTexto('')
-      setEvento(null)
-      setShowAdjuntar(false)
-      setShowEmoji(false)
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto'
-      }
-    }
+    if (!puedeEnviar) return
+    onSend(texto.trim(), evento)
+    setTexto('')
+    setEvento(null)
+    setShowEmoji(false)
   }
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      enviar()
-    }
-  }
-
-  const handleChange = (e) => {
-    setTexto(e.target.value)
-    if (onTyping) onTyping()
-  }
-
-  const handleSelectEmoji = (emoji) => {
+  const elegirEmoji = (emoji) => {
     setTexto((prev) => prev + emoji)
-    if (textareaRef.current) {
-      textareaRef.current.focus()
-    }
+    textareaRef.current?.focus()
   }
 
   return (
-    <div className="mensajes-input-container" ref={containerRef}>
-      {/* Popover de Adjuntar */}
-      {showAdjuntar && (
-        <div className="mensajes-popover mensajes-adjuntar-popover">
-          <button
-            type="button"
-            className="mensajes-adjuntar-opcion"
-            onClick={() => setShowAdjuntar(false)}
-          >
-            <ImageIcon />
-            <span>Imagen</span>
-          </button>
-          <button
-            type="button"
-            className="mensajes-adjuntar-opcion"
-            onClick={() => setShowAdjuntar(false)}
-          >
-            <VideoIcon />
-            <span>Video</span>
-          </button>
-          {puedeAdjuntarEvento && (
-            <button
-              type="button"
-              className="mensajes-adjuntar-opcion"
-              onClick={() => { setShowAdjuntar(false); setSelectorAbierto(true) }}
-            >
-              <EventIcon />
-              <span>Evento</span>
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Popover de Emojis */}
+    <div className="ms-input" ref={containerRef}>
       {showEmoji && (
-        <div className="mensajes-popover mensajes-emoji-popover">
-          <div className="mensajes-emoji-header">Emojis</div>
-          <div className="mensajes-emoji-grid">
-            {EMOJI_LIST.map((emoji, idx) => (
-              <button
-                key={idx}
-                type="button"
-                className="mensajes-emoji-btn"
-                onClick={() => handleSelectEmoji(emoji)}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
+        <div className="ms-pop" role="dialog" aria-label="Emojis">
+          {EMOJI_LIST.map((emoji) => (
+            <button key={emoji} type="button" className="ms-emoji" onClick={() => elegirEmoji(emoji)} aria-label={`Agregar ${emoji}`}>
+              {emoji}
+            </button>
+          ))}
         </div>
       )}
 
-      {/* Evento elegido, pendiente de enviar */}
       {evento && (
-        <div className="mensajes-evento-pendiente">
+        <div className="ms-input-evento">
           <TarjetaEvento evento={evento} onQuitar={() => setEvento(null)} />
         </div>
       )}
 
       <SelectorEventos abierto={selectorAbierto} onCerrar={cerrarSelector} onElegir={setEvento} />
 
-      <form className="mensajes-input-area" onSubmit={(e) => { e.preventDefault(); enviar() }}>
-        {/* Botón clip */}
+      <form className="ms-input-fila" onSubmit={(e) => { e.preventDefault(); enviar() }}>
+        {puedeAdjuntarEvento && (
+          <button type="button" className="ms-icono" title="Adjuntar prueba, entrenamiento o empleo" aria-label="Adjuntar evento" onClick={() => { setSelectorAbierto(true); setShowEmoji(false) }}>
+            <EventIcon />
+          </button>
+        )}
         <button
           type="button"
-          className={`mensajes-input-btn ${showAdjuntar ? 'activo' : ''}`}
-          title="Adjuntar archivo"
-          onClick={() => {
-            setShowAdjuntar((prev) => !prev)
-            setShowEmoji(false)
-          }}
-        >
-          <ClipIcon />
-        </button>
-
-        {/* Botón emoji */}
-        <button
-          type="button"
-          className={`mensajes-input-btn ${showEmoji ? 'activo' : ''}`}
-          title="Emojis"
-          onClick={() => {
-            setShowEmoji((prev) => !prev)
-            setShowAdjuntar(false)
-          }}
+          className={`ms-icono${showEmoji ? ' is-on' : ''}`}
+          aria-label="Emojis"
+          aria-expanded={showEmoji}
+          onClick={() => setShowEmoji((v) => !v)}
         >
           <EmojiIcon />
         </button>
 
-        {/* Campo de texto */}
-        <textarea
-          ref={textareaRef}
-          rows={1}
-          className="mensajes-input-field"
-          placeholder="Escribí un mensaje..."
-          value={texto}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          autoComplete="off"
-        />
+        <label className="ms-input-campo">
+          <span className="pr-sr">Mensaje</span>
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            placeholder="Escribí un mensaje"
+            value={texto}
+            onChange={(e) => { setTexto(e.target.value); onTyping?.() }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar() } }}
+          />
+        </label>
 
-        {/* Botón de envío */}
-        <button
-          type="submit"
-          className="mensajes-input-btn primary"
-          title="Enviar mensaje"
-          disabled={!puedeEnviar}
-        >
+        <button type="submit" className="pr-btn ms-enviar" aria-label="Enviar mensaje" disabled={!puedeEnviar}>
           <SendIcon />
         </button>
       </form>

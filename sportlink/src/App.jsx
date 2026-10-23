@@ -18,6 +18,7 @@ import Pruebas from './pruebas/pruebas.jsx'
 import PaginaEntrenamientos from './entrenamientos/PaginaEntrenamientos.jsx'
 import Empleos from './empleos/Empleos.jsx'
 import MensajesView from './mensajes/MensajesView.jsx'
+import NotificacionesView from './notificaciones/NotificacionesView.jsx'
 import Ajustes from './ajustes/Ajustes.jsx'
 import FeedView from './feed/FeedView.jsx'
 import PublicacionDetalle from './feed/PublicacionDetalle.jsx'
@@ -339,6 +340,14 @@ function App() {
             }
           />
           <Route
+            path="/notificaciones"
+            element={
+              <ProtectedRoute usuario={usuario}>
+                <NotificacionesView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/perfil"
             element={
               <ProtectedRoute usuario={usuario}>
@@ -380,7 +389,7 @@ function App() {
             path="/ajustes"
             element={
               <ProtectedRoute usuario={usuario}>
-                <Ajustes usuario={usuario} />
+                <Ajustes usuario={usuario} onLogout={() => actualizarUsuario(null)} />
               </ProtectedRoute>
             }
           />
