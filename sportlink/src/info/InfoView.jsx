@@ -301,7 +301,7 @@ const InfoView = ({ usuario }) => {
                   ))}
                 </ul>
                 {!usuario && (
-                  <button className="lp-btn lp-hero-info-cta" onClick={() => navigate('/registro')}>
+                  <button className="lp-btn lp-hero-info-cta" onClick={() => navigate('/registro', { state: { rol: heroRol.id } })}>
                     Registrarse como {heroRol.nombre.toLowerCase()} <Flecha />
                   </button>
                 )}

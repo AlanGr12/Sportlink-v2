@@ -1,0 +1,238 @@
+/* ============================================================
+   Ingreso y registro — sistema SportLink (reutiliza PruebasView.css)
+   Pantalla partida como el hero de la landing: el contenido arranca
+   en el borde izquierdo de la página y la foto va del 50% al borde
+   derecho, todo el alto. Prefijo au-.
+   ============================================================ */
+
+.au {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: var(--slk-header-h);
+}
+
+.au-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: calc(100dvh - var(--slk-header-h));
+}
+
+/* Columna de contenido: mismo borde izquierdo que .pr-wrap */
+.au-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(32px, 6vh, 72px) clamp(32px, 5vw, 80px) clamp(32px, 6vh, 72px)
+    max(var(--slk-gutter), calc((100vw - var(--slk-max)) / 2 + var(--slk-gutter)));
+}
+.au-col--arriba { justify-content: flex-start; }
+.au-col-inner { width: 100%; max-width: 520px; }
+.au-col--ancha .au-col-inner { max-width: 640px; }
+
+.au-titulo { font-size: clamp(48px, 5.4vw, 88px); margin-bottom: 16px; }
+.au-lead { margin: 0 0 32px; max-width: 40ch; font-size: clamp(18px, 1.4vw, 20px); color: var(--slk-text-2); }
+
+/* ── Formulario ── */
+.au-form { display: grid; gap: 18px; }
+.au-campo { display: grid; gap: 6px; min-width: 0; }
+.au-campo > span,
+.au-legend { font-size: 14px; font-weight: 600; color: var(--slk-text-2); }
+.au-campo :is(input, select, textarea) {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 16px;
+  border: 0 !important;
+  border-radius: 0;
+  background: var(--slk-step) !important;
+  color: var(--slk-text) !important;
+  box-shadow: none !important;
+  font: inherit;
+  font-size: 17px;
+  color-scheme: light;
+}
+:root[data-tema='oscuro'] .au-campo :is(input, select, textarea) { color-scheme: dark; }
+.au-campo select { appearance: auto; }
+.au-campo textarea { min-height: 110px; resize: vertical; }
+.au-campo :is(input, select, textarea)::placeholder { color: var(--slk-text-2); }
+.au-campo :is(input, select, textarea):focus-visible { outline: 3px solid var(--slk-text); outline-offset: 2px; }
+.au-campo :is(input, select, textarea):disabled { opacity: 0.6; }
+.au-campo [aria-invalid='true'] { box-shadow: inset 0 -3px 0 #c62828 !important; }
+.au-campo small { font-size: 13px; color: var(--slk-text-2); }
+.au-campo small.au-error,
+.au-error { color: #c62828; font-size: 14px; }
+:root[data-tema='oscuro'] :is(.au-campo small.au-error, .au-error) { color: #ff8a8a; }
+
+.au-doble { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.au-triple { display: grid; grid-template-columns: 0.8fr 1.4fr 1fr; gap: 8px; }
+.au-tel { display: grid; grid-template-columns: auto minmax(0, 1fr); }
+.au-tel > b {
+  display: grid;
+  place-items: center;
+  padding: 0 14px;
+  background: var(--slk-step-hover);
+  font-weight: 700;
+}
+
+.au-fila-link { display: flex; justify-content: flex-end; margin-top: -6px; }
+.au-fila-link .pr-link { font-size: 15px; }
+
+.au-enviar { margin-top: 8px; }
+.au-pie { margin: 28px 0 0; font-size: 16px; color: var(--slk-text-2); }
+.au-pie .pr-link { font-size: 16px; }
+
+.au-aviso { margin: 0 0 20px; padding: 14px 16px; background: var(--slk-step); font-size: 15px; box-shadow: inset 4px 0 0 var(--slk-accent); }
+.au-aviso strong { display: block; margin-bottom: 2px; color: var(--slk-text); font-size: 16px; }
+.au-aviso--error { box-shadow: inset 4px 0 0 #c62828; }
+
+/* Chips (deporte, género) */
+.au-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.au-chips .pr-chip { padding: 8px 14px; font-size: 15px; }
+.au-chips .pr-chip:disabled { opacity: 0.55; cursor: default; }
+
+/* Foto de perfil */
+.au-foto { display: flex; align-items: center; gap: 16px; }
+.au-foto-prev {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  background: var(--slk-step);
+  color: var(--slk-text-2);
+}
+.au-foto-prev img { width: 100%; height: 100%; object-fit: cover; }
+.au-foto > div { display: grid; gap: 4px; }
+.au-foto span { font-size: 14px; color: var(--slk-text-2); }
+
+.au-mapa { margin-top: 8px; }
+.au-campo .input-direccion-osm-input { min-height: 52px; border: 0 !important; border-radius: 0 !important; background: var(--slk-step) !important; color: var(--slk-text) !important; box-shadow: none !important; font-size: 17px !important; }
+.au-campo .input-direccion-osm-dropdown { border: 0 !important; border-radius: 0 !important; background: var(--slk-ground) !important; box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.35); }
+.au-campo :is(.input-direccion-osm-item) { color: var(--slk-text) !important; }
+.au-campo .input-direccion-osm-item:hover { background: var(--slk-step) !important; }
+
+.au-seccion { margin: 12px 0 0; padding-top: 18px; font-size: 22px; font-weight: 800; font-variation-settings: 'wdth' 106; letter-spacing: -0.02em; box-shadow: inset 0 2px 0 var(--slk-step); }
+
+/* ── Pasos del registro ── */
+.au-pasos { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+.au-pasos ol { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.au-pasos li { width: 40px; height: 6px; background: var(--slk-step-hover); }
+.au-pasos li.is-hecho { background: var(--slk-text); }
+.au-pasos li.is-actual { background: var(--slk-accent); }
+.au-pasos p { margin: 0; font-size: 15px; color: var(--slk-text-2); }
+.au-pasos p strong { color: var(--slk-text); }
+
+.au-volver { margin-bottom: 18px; }
+.au-volver .pr-link { font-size: 15px; }
+
+/* Elegir rol: filas grandes como en la landing */
+.au-roles { display: grid; gap: 2px; margin-bottom: 28px; }
+.au-rol {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 22px;
+  border: 0;
+  background: var(--slk-step);
+  color: var(--slk-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+.au-rol:hover { background: var(--slk-step-hover); }
+.au-rol.is-on { background: var(--slk-ink); color: var(--slk-on-ink); box-shadow: inset 6px 0 0 var(--slk-accent); }
+:root[data-tema='oscuro'] .au-rol.is-on { background: var(--slk-on-ink); color: #0e1011; }
+.au-rol strong { display: block; font-size: 26px; font-weight: 800; font-variation-settings: 'wdth' 110; letter-spacing: -0.02em; line-height: 1.1; }
+.au-rol-desc { display: block; margin-top: 4px; font-size: 16px; opacity: 0.75; }
+.au-rol svg { transition: transform 0.3s var(--slk-ease); }
+.au-rol:hover svg,
+.au-rol.is-on svg { transform: translateX(4px); }
+.au-rol:focus-visible { outline: 3px solid var(--slk-text); outline-offset: 2px; }
+
+/* ── Paso 3: sin foto, el formulario ocupa el ancho de la página en dos columnas ── */
+.au-grid--paso3 { grid-template-columns: 1fr; }
+.au-paso3 { padding-right: max(var(--slk-gutter), calc((100vw - var(--slk-max)) / 2 + var(--slk-gutter))); }
+.au-paso3 .au-col-inner { max-width: none; }
+.au-paso3 .au-lead { max-width: 60ch; }
+.au-paso3 .au-form { grid-template-columns: 1fr 1fr; gap: 20px 32px; }
+.au-paso3 .au-doble { display: contents; }
+/* A todo el ancho: elegir deportes, textos largos, avisos y el botón */
+.au-paso3 .au-form > :is(fieldset:has(.au-chips:not(.au-genero)), label:has(textarea), .au-aviso, .pr-error, button[type='submit']) { grid-column: 1 / -1; }
+.au-paso3 .au-form > button[type='submit'] { justify-self: start; width: auto; min-width: 280px; }
+
+/* ── Foto ── */
+.au-media { position: relative; margin: 0; background: var(--slk-step); }
+.au-media-frame { position: sticky; top: var(--slk-header-h); height: calc(100dvh - var(--slk-header-h)); overflow: hidden; }
+.au-media img { width: 100%; height: 100%; object-fit: cover; }
+.au-media figcaption {
+  position: absolute;
+  left: 24px;
+  bottom: 20px;
+  padding: 6px 10px;
+  background: rgba(14, 16, 17, 0.62);
+  color: #f1f2ef;
+  font-size: 13px;
+}
+
+/* Pantallas bajas: el paso entero entra sin scroll */
+@media (max-height: 820px) and (min-width: 901px) {
+  .au-col { padding-top: 28px; padding-bottom: 28px; }
+  .au-titulo { font-size: clamp(40px, 4.2vw, 64px); margin-bottom: 10px; }
+  .au-lead { margin-bottom: 20px; }
+  .au-pasos { margin-bottom: 18px; }
+  .au-rol { padding: 14px 20px; }
+  .au-rol strong { font-size: 22px; }
+  .au-roles { margin-bottom: 18px; }
+  .au-form { gap: 14px; }
+  .au-campo :is(input, select) { min-height: 46px; }
+  .au-pie { margin-top: 18px; }
+}
+
+
+/* ── Transiciones entre pasos ── */
+/* Entra el paso nuevo: cada bloque sube y aparece, uno detrás de otro */
+.au-paso > * { animation: au-entra 0.5s var(--slk-ease) both; }
+.au-paso > :nth-child(2) { animation-delay: 0.05s; }
+.au-paso > :nth-child(3) { animation-delay: 0.1s; }
+.au-paso > :nth-child(4) { animation-delay: 0.15s; }
+.au-paso > :nth-child(n + 5) { animation-delay: 0.2s; }
+.au-paso--atras > * { animation-name: au-entra-atras; }
+@keyframes au-entra { from { opacity: 0; transform: translateX(28px); } }
+@keyframes au-entra-atras { from { opacity: 0; transform: translateX(-28px); } }
+
+/* Sale el paso actual (2 → 3) mientras la foto se cierra */
+.au-col.is-saliendo .au-paso { opacity: 0; transform: translateX(-28px); transition: opacity 0.3s ease, transform 0.4s var(--slk-ease); }
+
+/* La barra de pasos se rellena con transición */
+.au-pasos li { transition: background-color 0.4s var(--slk-ease); }
+
+/* Foto: cortina hacia la derecha al irse, y desde la derecha al volver */
+.au-media-frame { clip-path: inset(0 0 0 0); transition: clip-path 0.48s cubic-bezier(0.7, 0, 0.2, 1); }
+.au-media.is-saliendo .au-media-frame { clip-path: inset(0 0 0 100%); }
+.au-media.is-volviendo .au-media-frame { animation: au-cortina 0.6s cubic-bezier(0.2, 0.7, 0.1, 1) both; }
+@keyframes au-cortina { from { clip-path: inset(0 0 0 100%); } }
+
+/* Al cambiar de rol la foto nueva entra como en el hero de la landing (sin escalar) */
+.au-media-frame img { animation: au-foto 0.6s cubic-bezier(0.2, 0.7, 0.1, 1) both; }
+@keyframes au-foto { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .au-paso > *, .au-media-frame img, .au-media.is-volviendo .au-media-frame { animation: none; }
+  .au-media-frame, .au-col.is-saliendo .au-paso, .au-pasos li { transition: none; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .au-grid { grid-template-columns: 1fr; min-height: 0; }
+  .au-media { display: none; }
+  .au-col { padding: 40px var(--slk-gutter) 64px; }
+  .au-col-inner,
+  .au-col--ancha .au-col-inner { max-width: 640px; }
+  .au-paso3 .au-form { grid-template-columns: 1fr; }
+  .au-paso3 .au-form > button[type='submit'] { width: 100%; }
+}
+
+@media (max-width: 560px) {
+  .au-doble { grid-template-columns: 1fr; }
+  .au-rol strong { font-size: 22px; }
+}

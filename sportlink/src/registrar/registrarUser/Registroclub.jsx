@@ -1,89 +1,48 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../axiosConfig.js'
 import InputDireccionOSM from '../../components/maps/InputDireccionOSM.jsx'
 import MapaUbicacionDark from '../../components/maps/MapaUbicacionDark.jsx'
-import './Registroclub.css'
-import Header from "../../header/header.jsx"
-import Footer from "../../footer/footer.jsx"
-import logoSportlink from "../../assets/logoSportlink.png"
+import { DEPORTES } from '../datosRegistro.js'
+import { CampoFoto, AvisoError } from '../CamposRegistro.jsx'
 
-const deportesDisponibles = [
-  { id: 1, nombre: 'Fútbol' },
-  { id: 2, nombre: 'Basket' },
-  { id: 3, nombre: 'Tenis' },
-  { id: 4, nombre: 'Voley' },
-  { id: 5, nombre: 'Pádel' },
-  { id: 6, nombre: 'Rugby' },
-  { id: 7, nombre: 'Hockey' },
-  { id: 8, nombre: 'Natación' },
-  { id: 9, nombre: 'Atletismo' },
-  { id: 10, nombre: 'Ciclismo' },
-  { id: 11, nombre: 'Boxeo' },
-  { id: 12, nombre: 'Artes Marciales' },
-  { id: 13, nombre: 'Handball' },
-  { id: 14, nombre: 'Béisbol' },
-  { id: 15, nombre: 'Golf' }
-]
-
-// email y contraseña vienen de datosBase (Paso 1), no se piden acá
+// Paso 3 del registro: datos del club. Email y contraseña vienen del paso 2 (datosBase).
+// El club queda pendiente de aprobación: no se inicia sesión hasta que el backoffice lo apruebe.
 function RegistroClub({ datosBase = {} }) {
   const navigate = useNavigate()
-  const [form, setForm] = useState({
-    nombre: '',
-    ubicacion: '',
-    direccion: '',
-    latitud: null,
-    longitud: null,
-    deportes: [],
-    descripcion: ''
-  })
+  const [form, setForm] = useState({ nombre: '', ubicacion: '', direccion: '', latitud: null, longitud: null, deportes: [], descripcion: '' })
   const [fotoperfil, setFotoperfil] = useState(null)
-  // URL del preview circular (se revoca al cambiar la foto para no filtrar memoria)
-  const fotoPreviewUrl = useMemo(() => (fotoperfil ? URL.createObjectURL(fotoperfil) : null), [fotoperfil])
   const [errors, setErrors] = useState({})
   const [cargando, setCargando] = useState(false)
   const [errorGlobal, setErrorGlobal] = useState('')
 
-  function cambiarForm(e) {
-    const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
-    setErrors((prev) => ({ ...prev, [name]: '' }))
-  }
-
-  function cambiarDeporte(idDeporte) {
+  const cambiarDeporte = (id) => {
     if (cargando) return
-    if (form.deportes.includes(idDeporte)) {
-      setForm({ ...form, deportes: form.deportes.filter(id => id !== idDeporte) })
-    } else {
-      setForm({ ...form, deportes: [...form.deportes, idDeporte] })
-    }
+    setForm((prev) => ({ ...prev, deportes: prev.deportes.includes(id) ? prev.deportes.filter((d) => d !== id) : [...prev.deportes, id] }))
     setErrors((prev) => ({ ...prev, deportes: '' }))
   }
 
-  async function registro() {
+  async function registro(e) {
+    e?.preventDefault()
     if (cargando) return
 
-    const newErrors = {}
     if (!datosBase.email || !datosBase.contraseña) {
-      setErrorGlobal('Faltan el email y la contraseña del primer paso. Volvé a empezar el registro.')
+      setErrorGlobal('Faltan el email y la contraseña del paso anterior. Volvé un paso atrás.')
       return
     }
-    if (!form.nombre) newErrors.nombre = 'Este campo es obligatorio'
-    if (form.latitud == null || form.longitud == null) {
-      newErrors.ubicacion = 'Buscá y seleccioná la dirección exacta de la sede de la lista'
-    }
-    if (form.deportes.length === 0) newErrors.deportes = 'Seleccioná al menos un deporte'
+    const nuevos = {}
+    if (!form.nombre) nuevos.nombre = 'Completá el nombre del club'
+    if (form.latitud == null || form.longitud == null) nuevos.ubicacion = 'Buscá la dirección de la sede y elegila de la lista'
+    if (form.deportes.length === 0) nuevos.deportes = 'Elegí al menos un deporte'
 
-    setErrors(newErrors)
-    if (Object.keys(newErrors).length > 0) {
-      setErrorGlobal('Por favor completá los campos requeridos correctamente.')
+    setErrors(nuevos)
+    if (Object.keys(nuevos).length > 0) {
+      setErrorGlobal('Revisá los campos marcados.')
       return
     }
 
     setCargando(true)
     setErrorGlobal('')
-
     try {
       const formData = new FormData()
       formData.append('email', datosBase.email)
@@ -95,263 +54,82 @@ function RegistroClub({ datosBase = {} }) {
       formData.append('longitud', form.longitud)
       formData.append('deportes', JSON.stringify(form.deportes))
       formData.append('descripcion', form.descripcion)
-      if (fotoperfil) {
-        formData.append('fotoperfil', fotoperfil)
-      }
+      if (fotoperfil) formData.append('fotoperfil', fotoperfil)
 
       await api.post('/api/clubes/registro', formData)
-      // El club queda PENDIENTE: no hay sesión hasta que el backoffice lo apruebe
       navigate('/login', { state: { clubRegistrado: true } })
     } catch (error) {
       console.error(error)
-      setErrorGlobal(error.response?.data?.error || 'Ocurrió un error al registrar el club. Intentá de nuevo.')
+      setErrorGlobal(error.response?.data?.error || 'No pudimos registrar el club. Probá de nuevo.')
     } finally {
       setCargando(false)
     }
   }
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      if (e.target.tagName.toLowerCase() === 'textarea') {
-        return
-      }
-      e.preventDefault()
-      if (!cargando) {
-        registro()
-      }
-    }
-  }
-
   return (
-    <>
-     <Header />
-  <div className="registro-bg">
-    <div className="registro-container">
+    <form className="au-form" onSubmit={registro} noValidate>
+      <label className="au-campo">
+        <span>Nombre del club</span>
+        <input type="text" autoComplete="organization" value={form.nombre}
+          onChange={(e) => { setForm((p) => ({ ...p, nombre: e.target.value })); setErrors((p) => ({ ...p, nombre: '' })) }}
+          disabled={cargando} aria-invalid={!!errors.nombre} autoFocus />
+        {errors.nombre && <small className="au-error">{errors.nombre}</small>}
+      </label>
 
-      <div className="registro-header">
-
-         <img src={logoSportlink} alt="Sportlink Logo" className="rj-logo" />
-
-        <h1 className="registro-titulo">
-          REGISTRATE COMO <span className="registro-titulo-color">CLUB</span>
-        </h1>
-
-        <p className="registro-subtitulo">
-          Unite al ecosistema deportivo de rendimiento más avanzado del mundo.
-        </p>
-
-      </div>
-
-      <div className="registro-card" onKeyDown={handleKeyDown}>
-        {errorGlobal && (
-          <div className="sl-error-banner">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <span>{errorGlobal}</span>
+      <div className="au-campo">
+        <span>Dirección de la sede</span>
+        <InputDireccionOSM
+          value={form.direccion}
+          onChangeText={(txt) => setForm((prev) => (
+            // Si edita el texto a mano, la ubicación elegida deja de valer
+            txt === prev.direccion ? prev : { ...prev, direccion: txt, latitud: null, longitud: null }
+          ))}
+          onSelectUbicacion={(loc) => {
+            setErrors((prev) => ({ ...prev, ubicacion: '' }))
+            setForm((prev) => ({ ...prev, direccion: loc.direccion, ubicacion: loc.zona || loc.direccion, latitud: loc.latitud, longitud: loc.longitud }))
+          }}
+          placeholder="Buscá la dirección o el nombre del club"
+          disabled={cargando}
+        />
+        {errors.ubicacion && <small className="au-error">{errors.ubicacion}</small>}
+        {form.latitud != null && form.longitud != null && (
+          <div className="au-mapa">
+            <MapaUbicacionDark latitud={form.latitud} longitud={form.longitud} direccion={form.direccion} zona={form.ubicacion} nombre={form.nombre} tipo="club" height="180px" mostrarFooter={false} />
           </div>
         )}
-
-        {/* COLUMNA IZQUIERDA */}
-        <div className="registro-seccion">
-
-          <p className="registro-seccion-titulo">
-            INFORMACIÓN DEL CLUB
-          </p>
-
-          <div className="registro-divider"></div>
-
-          <label className="registro-label">NOMBRE DEL CLUB</label>
-          <input
-            className="registro-input"
-            name="nombre"
-            type="text"
-            placeholder="Tu club"
-            value={form.nombre}
-            onChange={cambiarForm}
-            disabled={cargando}
-          />
-          {errors.nombre && (
-            <span className="registro-error">{errors.nombre}</span>
-          )}
-
-          <label className="registro-label">
-            UBICACIÓN EXACTA DE LA SEDE
-          </label>
-
-          <InputDireccionOSM
-            value={form.direccion}
-            onChangeText={(txt) => setForm((prev) => (
-              // Si edita el texto a mano, la ubicación seleccionada deja de ser válida
-              txt === prev.direccion ? prev : { ...prev, direccion: txt, latitud: null, longitud: null }
-            ))}
-            onSelectUbicacion={(loc) => {
-              setErrors((prev) => ({ ...prev, ubicacion: '' }))
-              setForm((prev) => ({
-              ...prev,
-              direccion: loc.direccion,
-              // La zona (barrio/ciudad) se deriva de la dirección elegida
-              ubicacion: loc.zona || loc.direccion,
-              latitud: loc.latitud,
-              longitud: loc.longitud,
-              }))
-            }}
-            placeholder="Buscá la dirección o el nombre del club"
-            disabled={cargando}
-          />
-
-          {errors.ubicacion && (
-            <span className="registro-error">
-              {errors.ubicacion}
-            </span>
-          )}
-
-          {form.latitud != null && form.longitud != null && (
-            <div style={{ marginTop: '10px' }}>
-              <MapaUbicacionDark
-                latitud={form.latitud}
-                longitud={form.longitud}
-                direccion={form.direccion}
-                zona={form.ubicacion}
-                nombre={form.nombre}
-                tipo="club"
-                height="160px"
-                mostrarFooter={false}
-              />
-            </div>
-          )}
-
-          <label className="registro-label">
-            DEPORTES QUE OFRECE
-          </label>
-
-          <div className="registro-deportes-grid">
-            {deportesDisponibles.map(deporte => (
-              <button
-                key={deporte.id}
-                type="button"
-                className={`registro-deporte-btn ${
-                  form.deportes.includes(deporte.id)
-                    ? 'activo'
-                    : ''
-                }`}
-                onClick={() => cambiarDeporte(deporte.id)}
-                disabled={cargando}
-              >
-                {deporte.nombre}
-              </button>
-            ))}
-          </div>
-
-          {errors.deportes && (
-            <span className="registro-error">
-              {errors.deportes}
-            </span>
-          )}
-
-          <label className="registro-label">
-            DESCRIPCIÓN
-          </label>
-
-          <textarea
-            className="registro-textarea"
-            name="descripcion"
-            placeholder="Contanos sobre las instalaciones y propuesta del club..."
-            value={form.descripcion}
-            onChange={cambiarForm}
-            maxLength={500}
-            disabled={cargando}
-          />
-
-          <span className="registro-char-count">
-            {form.descripcion.length} / 500
-          </span>
-
-        </div>
-
-        {/* COLUMNA DERECHA */}
-        <div className="registro-seccion">
-
-          <p className="registro-seccion-titulo">
-            CREDENCIALES Y PERFIL
-          </p>
-
-          <div className="registro-divider"></div>
-
-          <label className="registro-label">
-            FOTO DE PERFIL
-          </label>
-
-          <label
-            className={`registro-upload-area${fotoperfil ? ' con-foto' : ''}`}
-            htmlFor="rc-file-upload"
-            style={{ pointerEvents: cargando ? 'none' : 'auto' }}
-          >
-            {fotoperfil ? (
-              <img
-                src={fotoPreviewUrl}
-                alt="Preview"
-                className="registro-upload-preview"
-              />
-            ) : (
-              <>
-                <span className="registro-upload-icon">
-                  <svg
-                    width="28"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                    <circle cx="12" cy="13" r="4"></circle>
-                  </svg>
-                </span>
-
-                <span className="registro-upload-text">
-                  SUBIR IMAGEN (JPG, PNG)
-                </span>
-              </>
-            )}
-          </label>
-
-          <input
-            id="rc-file-upload"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={(e) =>
-              setFotoperfil(e.target.files[0])
-            }
-            style={{ display: 'none' }}
-            disabled={cargando}
-          />
-
-        </div>
-
       </div>
 
-      <div className="registro-footer">
+      <fieldset className="au-campo" style={{ border: 0, margin: 0, padding: 0 }}>
+        <legend className="au-legend">Deportes que ofrece</legend>
+        <div className="au-chips" style={{ marginTop: 6 }}>
+          {DEPORTES.map((d) => (
+            <button key={d.id} type="button" className={`pr-chip${form.deportes.includes(d.id) ? ' is-on' : ''}`} aria-pressed={form.deportes.includes(d.id)} onClick={() => cambiarDeporte(d.id)} disabled={cargando}>
+              {d.nombre}
+            </button>
+          ))}
+        </div>
+        {errors.deportes && <small className="au-error">{errors.deportes}</small>}
+      </fieldset>
 
-        <button
-          className="registro-btn-siguiente"
-          onClick={registro}
-          disabled={cargando}
-        >
-          {cargando ? 'REGISTRANDO...' : 'REGISTRAR CLUB'}
-        </button>
+      <label className="au-campo">
+        <span>Sobre el club (opcional)</span>
+        <textarea placeholder="Instalaciones, categorías, propuesta." value={form.descripcion} onChange={(e) => setForm((p) => ({ ...p, descripcion: e.target.value }))} maxLength={500} disabled={cargando} />
+        <small style={{ justifySelf: 'end' }}>{form.descripcion.length}/500</small>
+      </label>
 
+      <CampoFoto id="rg-foto-club" archivo={fotoperfil} onElegir={setFotoperfil} disabled={cargando} />
+
+      <div className="au-aviso">
+        <strong>Antes de entrar, revisamos el club</strong>
+        Cuando lo registres, el equipo de SportLink lo valida y te avisamos para que puedas ingresar.
       </div>
 
-    </div>
-  </div>
-  <Footer />
-  </>
-)
+      <AvisoError texto={errorGlobal} />
+      <button type="submit" className="pr-btn pr-btn--block au-enviar" disabled={cargando}>
+        {cargando ? 'Registrando el club…' : 'Registrar club'}
+      </button>
+    </form>
+  )
 }
 
 export default RegistroClub

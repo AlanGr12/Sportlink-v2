@@ -1,22 +1,24 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import './registrar.css'
-import logoSportlink from '../assets/logoSportlink.png'
-import Footer from '../footer/footer.jsx'
+import { AvisoError } from './CamposRegistro.jsx'
 
-function Registrar({ onSiguiente }) {
-  const navigate = useNavigate()
-  const [contraseña, setContraseña] = useState('')
-  const [confirmarContraseña, setConfirmarContraseña] = useState('')
-  const [email, setEmail] = useState('')
+// Paso 2 del registro: email y contraseña de la cuenta
+function Registrar({ datosIniciales = {}, onSiguiente }) {
+  const [email, setEmail] = useState(datosIniciales.email || '')
+  const [contraseña, setContraseña] = useState(datosIniciales.contraseña || '')
+  const [confirmar, setConfirmar] = useState(datosIniciales.contraseña || '')
   const [error, setError] = useState('')
 
-  function handleSiguiente() {
-    if (!email || !contraseña || !confirmarContraseña) {
-      setError('Por favor completá todos los campos.')
+  function handleSiguiente(e) {
+    e.preventDefault()
+    if (!email || !contraseña || !confirmar) {
+      setError('Completá los tres campos.')
       return
     }
-    if (contraseña !== confirmarContraseña) {
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setError('Revisá el email: parece que le falta algo.')
+      return
+    }
+    if (contraseña !== confirmar) {
       setError('Las contraseñas no coinciden.')
       return
     }
@@ -24,123 +26,29 @@ function Registrar({ onSiguiente }) {
     onSiguiente({ email, contraseña })
   }
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      handleSiguiente()
-    }
-  }
+  const limpiar = (fn) => (e) => { fn(e.target.value); setError('') }
 
   return (
-    <>
-      <div className="pagina">
-        <img
-          src={logoSportlink}
-          alt="Sportlink"
-          className="logo"
-        />
+    <form className="au-form" onSubmit={handleSiguiente} noValidate>
+      <label className="au-campo">
+        <span>Email</span>
+        <input type="email" autoComplete="email" placeholder="nombre@correo.com" value={email} onChange={limpiar(setEmail)} autoFocus />
+      </label>
+      <label className="au-campo">
+        <span>Contraseña</span>
+        <input type="password" autoComplete="new-password" placeholder="Elegí una contraseña" value={contraseña} onChange={limpiar(setContraseña)} />
+      </label>
+      <label className="au-campo">
+        <span>Repetí la contraseña</span>
+        <input type="password" autoComplete="new-password" placeholder="La misma de arriba" value={confirmar} onChange={limpiar(setConfirmar)} aria-invalid={error === 'Las contraseñas no coinciden.'} />
+      </label>
 
-        <div className="tarjeta">
-
-          <div className="sr-step-container">
-            <span className="sr-step-text">PASO 1 / 3</span>
-            <div className="sr-step-track">
-              <div className="sr-step-bar sr-step-bar--active"></div>
-              <div className="sr-step-bar"></div>
-              <div className="sr-step-bar"></div>
-            </div>
-          </div>
-
-          <h1 className="titulo">
-            Creá tu cuenta
-          </h1>
-
-          <p className="subtitulo">
-            Registro de usuario.
-          </p>
-
-          {/* Banner de error profesional */}
-          {error && (
-            <div className="registrar-error-banner">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
-              <span>{error}</span>
-            </div>
-          )}
-
-          <label className="etiqueta">
-            EMAIL
-          </label>
-
-          <input
-            className="campo"
-            type="email"
-            placeholder="user@gmail.com"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value)
-              setError('')
-            }}
-            onKeyDown={handleKeyDown}
-          />
-
-          <label className="etiqueta">
-            CONTRASEÑA
-          </label>
-
-          <input
-            className="campo"
-            type="password"
-            placeholder="••••••••"
-            value={contraseña}
-            onChange={(e) => {
-              setContraseña(e.target.value)
-              setError('')
-            }}
-            onKeyDown={handleKeyDown}
-          />
-
-          <label className="etiqueta">
-            CONFIRMAR CONTRASEÑA
-          </label>
-
-          <input
-            className="campo"
-            type="password"
-            placeholder="••••••••"
-            value={confirmarContraseña}
-            onChange={(e) => {
-              setConfirmarContraseña(e.target.value)
-              setError('')
-            }}
-            onKeyDown={handleKeyDown}
-          />
-
-          <button
-            className="boton"
-            onClick={handleSiguiente}
-          >
-            SIGUIENTE
-          </button>
-
-          <p className="pie">
-            ¿Ya tenés cuenta?{' '}
-            <a
-              className="enlace"
-              onClick={() => navigate('/login')}
-              style={{ cursor: 'pointer' }}
-            >
-              Iniciá sesión
-            </a>
-          </p>
-
-        </div>
-      </div>
-      <Footer />
-    </>
+      <AvisoError texto={error} />
+      <button type="submit" className="pr-btn pr-btn--block au-enviar">
+        Seguir
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
+      </button>
+    </form>
   )
 }
 

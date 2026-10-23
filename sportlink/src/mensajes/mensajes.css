@@ -276,7 +276,7 @@
 .ms-burbuja :is(.evento-tarjeta-titulo) { color: var(--slk-text); }
 .ms-burbuja :is(.evento-tarjeta-sub) { color: var(--slk-text-2); }
 .ms-burbuja .evento-tarjeta-chip { border: 0; background: rgba(45, 239, 242, 0.22); color: #046c6e; text-transform: none; letter-spacing: 0; font-size: 12px; }
-.ms-burbuja .evento-tarjeta-ver { border: 0; border-radius: 0; background: var(--slk-text); color: var(--slk-ground); font-weight: 700; }
+.ms-burbuja .evento-tarjeta-ver { text-transform: none !important; letter-spacing: 0 !important; border: 0; border-radius: 0; background: var(--slk-text); color: var(--slk-ground); font-weight: 700; }
 :root[data-tema='oscuro'] .ms-burbuja .evento-tarjeta { background: var(--slk-ink-step); }
 :root[data-tema='oscuro'] .ms-burbuja .evento-tarjeta-imagen { background: var(--slk-on-ink); color: #0e1011; }
 :root[data-tema='oscuro'] .ms-burbuja .evento-tarjeta-chip { background: rgba(45, 239, 242, 0.16); color: var(--slk-accent); }
@@ -429,6 +429,22 @@
   .ms-input { padding: 10px 84px 12px 10px; }
 }
 
+/* ── Entradas ──
+   La lista entra en cascada; cada mensaje aparece desde su lado (el propio
+   desde la derecha), así se nota el que acaba de llegar o de mandarse. */
+@keyframes ms-entra { from { opacity: 0; transform: translateY(14px); } }
+@keyframes ms-izq { from { opacity: 0; transform: translateX(-16px); } }
+@keyframes ms-der { from { opacity: 0; transform: translateX(16px); } }
+.ms-lista-head > * { animation: ms-entra 0.6s var(--slk-ease) backwards; }
+.ms-convs > li { animation: ms-entra 0.45s var(--slk-ease) backwards; }
+.ms-convs > li:nth-child(1) { animation-delay: 0.1s; }
+.ms-convs > li:nth-child(2) { animation-delay: 0.15s; }
+.ms-convs > li:nth-child(3) { animation-delay: 0.2s; }
+.ms-convs > li:nth-child(n + 4) { animation-delay: 0.25s; }
+.ms-msg.is-ajeno { animation: ms-izq 0.35s var(--slk-ease) backwards; }
+.ms-msg.is-propio { animation: ms-der 0.35s var(--slk-ease) backwards; }
+.ms-vacio { animation: ms-entra 0.6s var(--slk-ease) backwards; }
+
 @media (prefers-reduced-motion: reduce) {
-  .ms-conv-skeleton, .ms-historial-carga i, .ms-puntos i, .ms-pop { animation: none; }
+  .ms-conv-skeleton, .ms-historial-carga i, .ms-puntos i, .ms-pop, .ms-lista-head > *, .ms-convs > li, .ms-msg, .ms-vacio { animation: none; }
 }

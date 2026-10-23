@@ -620,7 +620,30 @@ main:has(> .pr) { animation: none; }
   .pr-modal { max-height: 94vh; }
 }
 
+/* ── Entradas ──
+   El encabezado sube al cargar y las tarjetas aparecen en cascada (solo las
+   primeras: las que llegan con el scroll o un filtro ya están en su lugar).
+   fill-mode "backwards" para no pisar el transform del hover. */
+@keyframes pr-entra { from { opacity: 0; transform: translateY(22px); } }
+.pr-head-grid > * { animation: pr-entra 0.7s var(--slk-ease) backwards; }
+.pr-head-grid > :nth-child(2) { animation-delay: 0.08s; }
+.pr-filters .pr-wrap > * { animation: pr-entra 0.6s var(--slk-ease) 0.12s backwards; }
+.pr-grid > :not(.pr-card--skeleton) { animation: pr-entra 0.55s var(--slk-ease) backwards; }
+.pr-grid > :nth-child(1) { animation-delay: 0.15s; }
+.pr-grid > :nth-child(2) { animation-delay: 0.21s; }
+.pr-grid > :nth-child(3) { animation-delay: 0.27s; }
+.pr-grid > :nth-child(4) { animation-delay: 0.33s; }
+.pr-grid > :nth-child(5) { animation-delay: 0.39s; }
+.pr-grid > :nth-child(6) { animation-delay: 0.45s; }
+.pr-grid > :nth-child(n + 7) { animation-delay: 0.5s; }
+.pr-empty { animation: pr-entra 0.5s var(--slk-ease) backwards; }
+
+/* La barra de cupos se llena al aparecer */
+@keyframes pr-llena { from { transform: scaleX(0); } }
+.pr-cupos-barra i { transform-origin: left; animation: pr-llena 0.9s var(--slk-ease) 0.35s backwards; }
+
 @media (prefers-reduced-motion: reduce) {
+  .pr-head-grid > *, .pr-filters .pr-wrap > *, .pr-grid > *, .pr-empty, .pr-cupos-barra i { animation: none; }
   .pr-card, .pr-card:hover, .pr-overlay, .pr-modal, .pr-toast, .pr-card--skeleton { animation: none; transition: none; transform: none; }
   .pr-toast { transform: translateX(-50%); }
 }

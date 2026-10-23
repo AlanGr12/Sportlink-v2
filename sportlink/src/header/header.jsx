@@ -137,6 +137,8 @@ const Header = ({ usuario, onLogout }) => {
   const location = useLocation();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  // Menú desplegable de pantallas angostas (reemplaza a la nav central)
+  const [menuMovil, setMenuMovil] = useState(false);
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
   const [notificacionesOpen, setNotificacionesOpen] = useState(false);
   const [mostrarOpcionesNotif, setMostrarOpcionesNotif] = useState(false);
@@ -156,7 +158,7 @@ const Header = ({ usuario, onLogout }) => {
   // Vistas ya migradas al nuevo diseño: admiten modo claro y oscuro.
   // El resto sigue con el diseño oscuro anterior hasta que se migre.
   const vistaMigrada =
-    ['/info', '/landing', '/pruebas', '/entrenamientos', '/clubes', '/entrenadores', '/entrenador/panel', '/feed', '/mensajes', '/calendario', '/notificaciones', '/perfil', '/ajustes'].includes(location.pathname) ||
+    ['/info', '/landing', '/pruebas', '/entrenamientos', '/clubes', '/entrenadores', '/entrenador/panel', '/feed', '/mensajes', '/calendario', '/notificaciones', '/perfil', '/ajustes', '/login', '/registro'].includes(location.pathname) ||
     location.pathname.startsWith('/perfil/') ||
     location.pathname.startsWith('/pruebas/') ||
     location.pathname.startsWith('/entrenamientos/') ||
@@ -188,6 +190,7 @@ const Header = ({ usuario, onLogout }) => {
   // Helper: ir a una ruta y cerrar todos los dropdowns
   const ir = (ruta) => {
     navigate(ruta);
+    setMenuMovil(false);
     setDropdownOpen(false);
     setAvatarDropdownOpen(false);
     setNotificacionesOpen(false);
@@ -380,7 +383,7 @@ const IcoInfo = () => (
         ruta="/info"
         icono={<IcoInfo />}
         titulo="Sobre nosotros"
-        desc="Conocé la plataforma, nuestra visión y el ecosistema deportivo."
+        desc="Qué es SportLink y cómo funciona."
       />
     );
 
@@ -388,8 +391,8 @@ const IcoInfo = () => (
       return (
         <>
           {itemSobreNosotros}
-          <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Los jugadores pueden acceder a las pruebas publicadas por los clubes asociados." />
-          <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Los jugadores pueden acceder a entrenamientos publicados por entrenadores." />
+          <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Pruebas abiertas de los clubes." />
+          <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Entrenamientos de entrenadores de tu zona." />
         </>
       );
     }
@@ -399,8 +402,8 @@ const IcoInfo = () => (
         return (
           <>
             {itemSobreNosotros}
-            <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Postúlate a las convocatorias activas de los clubes oficiales." />
-            <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Encuentra rutinas enfocadas en el alto rendimiento profesional." />
+            <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Inscribite a las pruebas abiertas de los clubes." />
+            <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Entrená con entrenadores de tu deporte y tu zona." />
           </>
         );
       case 'entrenador':
@@ -417,9 +420,9 @@ const IcoInfo = () => (
               titulo="Tu panel"
               desc="Estadísticas de tus entrenamientos y alumnos; recomendá jugadores a tu club."
             />
-            <ItemDropdown ruta="/empleos" icono={<IconoEmpleos size={22} color="currentColor" />} titulo="Empleos" desc="Postúlate a vacantes técnicas de clubes y academias." />
-            <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Gestiona u observa las convocatorias del mercado de pases." />
-            <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Diseña y planifica sesiones tácticas avanzadas." />
+            <ItemDropdown ruta="/empleos" icono={<IconoEmpleos size={22} color="currentColor" />} titulo="Empleos" desc="Postulate a puestos en clubes y academias." />
+            <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Mirá las pruebas abiertas y a quiénes convocan." />
+            <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Publicá tus entrenamientos y llená tus grupos." />
           </>
         );
       case 'club':
@@ -434,11 +437,11 @@ const IcoInfo = () => (
                 </svg>
               }
               titulo="Panel del club"
-              desc="Consulta métricas de ocupación, postulantes y rendimiento de tu staff."
+              desc="Ocupación, postulantes y tu staff técnico."
             />
-            <ItemDropdown ruta="/empleos" icono={<IconoEmpleos size={22} color="currentColor" />} titulo="Empleos" desc="Publica ofertas para reclutar staff técnico calificado." />
-            <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Organiza pruebas para captar jóvenes promesas." />
-            <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Supervisa los planes físicos y técnicos de tus planteles." />
+            <ItemDropdown ruta="/empleos" icono={<IconoEmpleos size={22} color="currentColor" />} titulo="Empleos" desc="Publicá búsquedas para sumar staff técnico." />
+            <ItemDropdown ruta="/pruebas" icono={<IconoMedalla size={22} color="currentColor" />} titulo="Pruebas deportivas" desc="Organizá pruebas para encontrar talento." />
+            <ItemDropdown ruta="/entrenamientos" icono={<IconoEntrenamientos size={22} color="currentColor" />} titulo="Entrenamientos" desc="Mirá los entrenamientos de tu zona y tu staff." />
           </>
         );
       default:
@@ -488,11 +491,6 @@ const IcoInfo = () => (
             </li>
 
             <li>
-              <button className={navLinkClass('/feed')} onClick={() => ir('/feed')}>
-                Feed
-              </button>
-            </li>
-            <li>
               <button className={navLinkClass('/entrenadores')} onClick={() => ir('/entrenadores')}>
                 Entrenadores
               </button>
@@ -512,6 +510,16 @@ const IcoInfo = () => (
 
         {/* Acciones derecha */}
         <div className="header-actions">
+          <button
+            type="button"
+            className={`header-menu-btn${menuMovil ? ' is-on' : ''}`}
+            onClick={() => { setMenuMovil((v) => !v); setDropdownOpen(false); setAvatarDropdownOpen(false); setNotificacionesOpen(false); }}
+            aria-expanded={menuMovil}
+            aria-controls="header-movil"
+            aria-label={menuMovil ? 'Cerrar menú' : 'Abrir menú'}
+          >
+            <span aria-hidden="true" />
+          </button>
           {vistaMigrada && (
             <button
               type="button"
@@ -783,7 +791,7 @@ const IcoInfo = () => (
           ) : (
             <div className="header-auth-buttons">
               <button className="header-auth-btn" onClick={() => ir('/login')}>
-                Iniciar Sesión
+                Ingresar
               </button>
               <button className="header-auth-btn header-auth-btn-register" onClick={() => ir('/registro')}>
                 Registrarse
@@ -792,6 +800,24 @@ const IcoInfo = () => (
           )}
         </div>
       </div>
+
+      {/* Menú de pantallas angostas: la nav y lo de Explorar en una sola lista */}
+      {menuMovil && (
+        <div id="header-movil" className="header-movil">
+          <nav aria-label="Menú principal">
+            {[['/entrenadores', 'Entrenadores'], ['/clubes', 'Clubes'], ['/calendario', 'Calendario']].map(([ruta, texto]) => (
+              <button key={ruta} type="button" className={navLinkClass(ruta)} onClick={() => ir(ruta)}>{texto}</button>
+            ))}
+          </nav>
+          <p className="header-movil-titulo">Explorar</p>
+          <div className="header-movil-explorar">{renderDropdownItems()}</div>
+          {!estaLogueado && (
+            <div className="header-movil-auth">
+              <button type="button" className="header-auth-btn" onClick={() => ir('/login')}>Ingresar</button>
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 };

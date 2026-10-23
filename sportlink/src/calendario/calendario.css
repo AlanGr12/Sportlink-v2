@@ -253,6 +253,23 @@
   .pr .cal-select select { width: 100%; }
 }
 
+/* ── Movimiento ──
+   Al cambiar de mes el título y la grilla entran desde el lado hacia el que se
+   avanzó; al elegir un día, su contenido se renueva; la vista entra al cargar. */
+@keyframes cal-desde-der { from { opacity: 0; transform: translateX(32px); } }
+@keyframes cal-desde-izq { from { opacity: 0; transform: translateX(-32px); } }
+@keyframes cal-entra { from { opacity: 0; transform: translateY(16px); } }
+.cal-grid--adelante, .cal-mes--adelante { animation: cal-desde-der 0.45s var(--slk-ease) backwards; }
+.cal-grid--atras, .cal-mes--atras { animation: cal-desde-izq 0.45s var(--slk-ease) backwards; }
+.cal-dia-contenido { animation: cal-entra 0.4s var(--slk-ease) backwards; }
+.cal-dia-contenido .cal-lista > * { animation: cal-entra 0.4s var(--slk-ease) backwards; }
+.cal-dia-contenido .cal-lista > :nth-child(2) { animation-delay: 0.06s; }
+.cal-dia-contenido .cal-lista > :nth-child(n + 3) { animation-delay: 0.12s; }
+.cal-toolbar-ctrl, .cal-leyenda, .cal-agregar { animation: cal-entra 0.6s var(--slk-ease) backwards; }
+.cal-lado-scroll { animation: cal-entra 0.6s var(--slk-ease) 0.1s backwards; }
+.cal-celda.is-sel { transition: background-color 0.2s, box-shadow 0.25s var(--slk-ease); }
+
 @media (prefers-reduced-motion: reduce) {
+  .cal-grid--adelante, .cal-grid--atras, .cal-mes--adelante, .cal-mes--atras, .cal-dia-contenido, .cal-dia-contenido .cal-lista > *, .cal-toolbar-ctrl, .cal-leyenda, .cal-agregar, .cal-lado-scroll { animation: none; }
   .cal-chip--skeleton, .cal-evento--skeleton { animation: none; }
 }

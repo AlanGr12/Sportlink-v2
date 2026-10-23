@@ -454,6 +454,8 @@
 .fd .evento-tarjeta-titulo { color: var(--slk-text); font-size: 16px; font-weight: 700; }
 .fd .evento-tarjeta-sub { color: var(--slk-text-2); font-size: 14px; }
 .fd :is(.evento-tarjeta-ver, .evento-tarjeta-quitar) {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
   padding: 10px 16px;
   border: 0;
   border-radius: 0;
@@ -504,7 +506,20 @@
   .fd-tipo { order: 3; flex: none; }
 }
 
+/* ── Entradas ── columnas laterales, compositor y publicaciones en cascada.
+   Una publicación nueva (propia o "Ver nuevas") entra igual al montarse arriba. */
+@keyframes fd-entra { from { opacity: 0; transform: translateY(18px); } }
+.fd-lado .fd-sticky > * { animation: fd-entra 0.6s var(--slk-ease) backwards; }
+.fd-lado--der .fd-sticky > * { animation-delay: 0.12s; }
+.fd-compositor { animation: fd-entra 0.55s var(--slk-ease) 0.05s backwards; }
+.fd-lista > .fd-post { animation: fd-entra 0.5s var(--slk-ease) backwards; }
+.fd-lista > .fd-post:nth-child(1) { animation-delay: 0.1s; }
+.fd-lista > .fd-post:nth-child(2) { animation-delay: 0.16s; }
+.fd-lista > .fd-post:nth-child(3) { animation-delay: 0.22s; }
+.fd-lista > .fd-post:nth-child(4) { animation-delay: 0.28s; }
+.fd-lista > .fd-post:nth-child(n + 5) { animation-delay: 0.32s; }
+
 @media (prefers-reduced-motion: reduce) {
-  .fd-post--skeleton, .fd-accion.is-on svg, .fd-nuevas .pr-btn { animation: none; }
+  .fd-post--skeleton, .fd-accion.is-on svg, .fd-nuevas .pr-btn, .fd-lado .fd-sticky > *, .fd-compositor, .fd-lista > .fd-post { animation: none; }
   .fd-atajos a, .fd-reco svg { transition: none; }
 }

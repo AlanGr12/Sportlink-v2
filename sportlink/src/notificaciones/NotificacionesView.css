@@ -99,6 +99,18 @@
   .ntf-item-acciones { flex-direction: row; justify-content: flex-start; gap: 20px; padding: 0 16px 16px 72px; }
 }
 
+/* ── Entradas ── */
+@keyframes ntf-entra { from { opacity: 0; transform: translateY(18px); } }
+.ntf-lado > * { animation: ntf-entra 0.6s var(--slk-ease) backwards; }
+.ntf-lado > :nth-child(2) { animation-delay: 0.06s; }
+.ntf-lado > :nth-child(n + 3) { animation-delay: 0.12s; }
+.ntf-lista li { animation: ntf-entra 0.5s var(--slk-ease) backwards; }
+.ntf-lista li:nth-child(1) { animation-delay: 0.12s; }
+.ntf-lista li:nth-child(2) { animation-delay: 0.18s; }
+.ntf-lista li:nth-child(3) { animation-delay: 0.24s; }
+.ntf-lista li:nth-child(4) { animation-delay: 0.3s; }
+.ntf-lista li:nth-child(n + 5) { animation-delay: 0.34s; }
+
 @media (prefers-reduced-motion: reduce) {
-  .ntf-item--skeleton { animation: none; }
+  .ntf-item--skeleton, .ntf-lado > *, .ntf-lista li { animation: none; }
 }

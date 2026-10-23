@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import api from '../axiosConfig.js'
-import './login.css'
-import logoSportlink from '../assets/logoSportlink.png'
-import Footer from '../footer/footer.jsx'
+import fotoIngreso from '../assets/jugador-10.jpg'
+import '../pruebas/PruebasView.css'
+import './Auth.css'
 
 function Login({ onLogin }) {
   const navigate = useNavigate()
@@ -14,9 +14,11 @@ function Login({ onLogin }) {
   const [error, setError] = useState('')
   const [codigoBloqueo, setCodigoBloqueo] = useState(location.state?.clubRegistrado ? 'CLUB_PENDIENTE' : '')
 
-  async function handleLogin() {
+  async function handleLogin(e) {
+    e?.preventDefault()
+    if (cargando) return
     if (!email || !contraseña) {
-      setError('Por favor, completá todos los campos.')
+      setError('Completá el email y la contraseña.')
       return
     }
 
@@ -27,144 +29,97 @@ function Login({ onLogin }) {
     try {
       // El backend devuelve { token, perfil } — lo pasamos completo a App.jsx
       const response = await api.post('/api/login', { email, contraseña })
-      const data = response.data
-
-      onLogin(data)  // App.actualizarUsuario desempaqueta token y perfil
+      onLogin(response.data)  // App.actualizarUsuario desempaqueta token y perfil
       navigate('/')
-
-    } catch (error) {
-      const codigo = error.response?.data?.codigo
+    } catch (err) {
+      const codigo = err.response?.data?.codigo
       if (codigo === 'CLUB_PENDIENTE' || codigo === 'CLUB_RECHAZADO') {
         setCodigoBloqueo(codigo)
         return
       }
-      console.error(error)
-      setError('Email o contraseña incorrectos. Por favor, verifica tus datos.')
+      console.error(err)
+      setError('El email o la contraseña no coinciden. Revisalos y probá de nuevo.')
     } finally {
       setCargando(false)
     }
   }
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      if (!cargando) {
-        handleLogin()
-      }
-    }
-  }
-
   return (
-    <>
-      {/* SE QUITÓ EL <Header /> DE ACÁ PORQUE AHORA VIENE DESDE APP.JSX */}
-      <div className="pagina">
-        <img
-          src={logoSportlink}
-          alt="Sportlink"
-          className="logo"
-        />
+    <div className="pr au">
+      <div className="au-grid">
+        <div className="au-col">
+          <div className="au-col-inner">
+            <h1 className="pr-display au-titulo">Volviste a la cancha.</h1>
+            <p className="au-lead">Ingresá para seguir con tus pruebas, entrenamientos y mensajes.</p>
 
-        <div className="tarjeta">
-          <h1 className="titulo">
-            ¡Bienvenido de vuelta!
-          </h1>
-
-          <p className="subtitulo">
-            Inicio de sesión.
-          </p>
-
-          {/* Banner de error profesional */}
-          {error && (
-            <div className="login-error-banner">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
-              <span>{error}</span>
-            </div>
-          )}
-
-          {codigoBloqueo === 'CLUB_PENDIENTE' && (
-            <div className="login-pendiente-banner" role="status">
-              <span className="login-pendiente-icono">⏳</span>
-              <div>
-                <strong>Cuenta en proceso de revisión</strong>
-                <p>
-                  Tu cuenta de club fue registrada con éxito y actualmente está siendo revisada por el equipo de
-                  SportLink para ser aprobada. Te notificaremos en cuanto tu acceso sea habilitado.
-                </p>
+            {codigoBloqueo === 'CLUB_PENDIENTE' && (
+              <div className="au-aviso" role="status">
+                <strong>Tu club está en revisión</strong>
+                Lo registraste bien. El equipo de SportLink lo está revisando y te avisamos apenas quede habilitado.
               </div>
-            </div>
-          )}
+            )}
+            {codigoBloqueo === 'CLUB_RECHAZADO' && (
+              <div className="au-aviso au-aviso--error" role="alert">
+                <strong>No pudimos aprobar tu club</strong>
+                Si creés que es un error, escribinos a soporte.
+              </div>
+            )}
 
-          {codigoBloqueo === 'CLUB_RECHAZADO' && (
-            <div className="login-error-banner" role="alert">
-              <span>
-                La solicitud de tu club no fue admitida por el equipo de SportLink. Si creés que se trata de un
-                error, contactá a soporte.
-              </span>
-            </div>
-          )}
+            <form className="au-form" onSubmit={handleLogin} noValidate>
+              <label className="au-campo">
+                <span>Email</span>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  placeholder="nombre@correo.com"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setError('') }}
+                  disabled={cargando}
+                  aria-invalid={!!error}
+                  autoFocus
+                />
+              </label>
 
-          <label className="etiqueta">
-            EMAIL
-          </label>
+              <label className="au-campo">
+                <span>Contraseña</span>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="Tu contraseña"
+                  value={contraseña}
+                  onChange={(e) => { setContraseña(e.target.value); setError('') }}
+                  disabled={cargando}
+                  aria-invalid={!!error}
+                />
+              </label>
 
-          <input
-            className="campo"
-            type="email"
-            placeholder="user@gmail.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={cargando}
-          />
+              <div className="au-fila-link">
+                <a className="pr-link" href="/recuperar">¿Olvidaste tu contraseña?</a>
+              </div>
 
-          <label className="etiqueta">
-            CONTRASEÑA
-          </label>
+              {error && <p className="pr-error" role="alert">{error}</p>}
 
-          <input
-            className="campo"
-            type="password"
-            placeholder="••••••••"
-            value={contraseña}
-            onChange={(e) => setContraseña(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={cargando}
-          />
+              <button type="submit" className="pr-btn pr-btn--block au-enviar" disabled={cargando}>
+                {cargando ? 'Ingresando…' : 'Ingresar'}
+                {!cargando && (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
+                )}
+              </button>
+            </form>
 
-          <button
-            className="boton"
-            onClick={handleLogin}
-            disabled={cargando}
-          >
-            {cargando ? 'INICIANDO...' : 'INICIAR SESIÓN'}
-          </button>
-
-          <p className="pie">
-            No tenés cuenta?{' '}
-            <a
-              className="enlace"
-              onClick={cargando ? undefined : () => navigate('/registro')}
-              style={{ cursor: cargando ? 'not-allowed' : 'pointer' }}
-            >
-              Registrate
-            </a>
-          </p>
-
-          <a
-            className="enlace-secundario"
-            href="/recuperar"
-            style={{ pointerEvents: cargando ? 'none' : 'auto', opacity: cargando ? 0.5 : 0.8 }}
-          >
-            ¿Olvidaste tu contraseña?
-          </a>
+            <p className="au-pie">
+              ¿Todavía no tenés cuenta? <Link className="pr-link" to="/registro">Registrate</Link>
+            </p>
+          </div>
         </div>
+
+        <figure className="au-media">
+          <div className="au-media-frame">
+            <img src={fotoIngreso} alt="Un jugador con la camiseta número 10 de espaldas en la cancha" style={{ objectPosition: '50% 40%' }} />
+          </div>
+        </figure>
       </div>
-      <Footer />
-    </>
+    </div>
   )
 }
 

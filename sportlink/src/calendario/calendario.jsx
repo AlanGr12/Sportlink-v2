@@ -207,6 +207,8 @@ export default function Calendario({ usuario }) {
   const [cargandoEventos, setCargandoEventos] = useState(true);
   const [proximosVisibles, setProximosVisibles] = useState(8);
   const [infoVisibles, setInfoVisibles] = useState(3);
+  // Hacia dónde se movió el mes (para que la grilla entre desde ese lado)
+  const [mesDir, setMesDir] = useState('adelante');
 
   // La grilla ocupa el alto de la pantalla: en pantallas bajas entra un solo evento por celda
   const [chipsPorCelda, setChipsPorCelda] = useState(() => (window.innerHeight < 820 ? 1 : 2));
@@ -506,22 +508,26 @@ export default function Calendario({ usuario }) {
     anioActual === hoy.getFullYear();
 
   const cambiarMes = (nuevoMes) => {
+    setMesDir(nuevoMes < mesActual ? 'atras' : 'adelante');
     setMesActual(nuevoMes);
     setDiaSeleccionado(null);
   };
 
   const cambiarAnio = (nuevoAnio) => {
+    setMesDir(nuevoAnio < anioActual ? 'atras' : 'adelante');
     setAnioActual(nuevoAnio);
     setDiaSeleccionado(null);
   };
 
   const irMesAnterior = () => {
+    setMesDir('atras');
     setDiaSeleccionado(null);
     if (mesActual === 0) { setMesActual(11); setAnioActual(a => a - 1); }
     else setMesActual(m => m - 1);
   };
 
   const irMesSiguiente = () => {
+    setMesDir('adelante');
     setDiaSeleccionado(null);
     if (mesActual === 11) { setMesActual(0); setAnioActual(a => a + 1); }
     else setMesActual(m => m + 1);
@@ -534,6 +540,7 @@ export default function Calendario({ usuario }) {
 
   const irAHoy = () => {
     const today = new Date();
+    setMesDir(today.getFullYear() * 12 + today.getMonth() < anioActual * 12 + mesActual ? 'atras' : 'adelante');
     setMesActual(today.getMonth());
     setAnioActual(today.getFullYear());
     setDiaSeleccionado(today.getDate());
@@ -600,7 +607,7 @@ export default function Calendario({ usuario }) {
       <section className="pr-wrap cal-layout">
         <div className="cal-main">
           <div className="cal-toolbar">
-            <h2 className="pr-display cal-mes">{MESES[mesActual]} <span>{anioActual}</span></h2>
+            <h2 key={`t-${anioActual}-${mesActual}`} className={`pr-display cal-mes cal-mes--${mesDir}`}>{MESES[mesActual]} <span>{anioActual}</span></h2>
 
             <div className="cal-toolbar-ctrl">
               <label className="pr-field cal-select">
@@ -629,7 +636,7 @@ export default function Calendario({ usuario }) {
             {CATEGORIAS.map((cat) => <li key={cat.id} className={`cal-tipo--${cat.tipo}`}>{cat.label}</li>)}
           </ul>
 
-          <div className="cal-grid" role="grid" aria-label={`${MESES[mesActual]} ${anioActual}`} aria-busy={cargandoEventos}>
+          <div key={`g-${anioActual}-${mesActual}`} className={`cal-grid cal-grid--${mesDir}`} role="grid" aria-label={`${MESES[mesActual]} ${anioActual}`} aria-busy={cargandoEventos}>
             {DIAS_SEMANA.map((d) => <div key={d} className="cal-dia-semana" role="columnheader">{d}</div>)}
             {celdas.map((dia, i) => {
               if (!dia) return <div key={i} className="cal-celda cal-celda--vacia" aria-hidden="true" />;
@@ -690,6 +697,7 @@ export default function Calendario({ usuario }) {
                 <button type="button" className="pr-link" onClick={abrirModalDia}>Agregar a este día</button>
               )}
             </div>
+            <div key={diaSeleccionado ?? 'ninguno'} className="cal-dia-contenido">
             {!diaSeleccionado ? (
               <p className="pr-muted">Tocá un día del calendario para ver lo que tenés.</p>
             ) : cargandoEventos ? (
@@ -697,6 +705,7 @@ export default function Calendario({ usuario }) {
             ) : eventosDelDia.length === 0 ? (
               <p className="pr-muted">No tenés nada agendado este día.</p>
             ) : listaPaginada(eventosDelDia, infoVisibles, setInfoVisibles)}
+            </div>
           </section>
 
           <section className="cal-bloque">
