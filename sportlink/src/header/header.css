@@ -1487,3 +1487,22 @@
 :is(.header--light, .header--dark) :is(.header-dropdown-toggle, .header-auth-btn, .header-avatar-toggle, .header-action-btn, .header-notifications-gear-btn, .header-noti-action-btn, .header-dropdown-link, .header-notifications-ver-todas, .header-notifications-option-item)::after,
 :is(.header--light, .header--dark) .header-nav-link:not(.header-nav-link--active)::after,
 .header-movil button::after { content: none !important; }
+
+/* "Marcar todas como leídas": texto chico bajo el subtítulo, sin menú escondido */
+.header-notifications-markall {
+  margin: 8px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--slk-text, #d1d5db);
+  font-family: var(--slk-font, inherit) !important;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: none;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.header-notifications-markall:hover { text-underline-offset: 6px; text-decoration-color: var(--slk-accent, #2deff2); }
+.header-notifications-markall:focus-visible { outline: 3px solid var(--slk-text); outline-offset: 2px; }

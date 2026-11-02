@@ -68,13 +68,6 @@ const IcoBellNotif = () => (
   </svg>
 );
 
-const IcoGear = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3"/>
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-  </svg>
-);
-
 const IcoTrash = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="3 6 5 6 21 6"/>
@@ -141,7 +134,6 @@ const Header = ({ usuario, onLogout }) => {
   const [menuMovil, setMenuMovil] = useState(false);
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
   const [notificacionesOpen, setNotificacionesOpen] = useState(false);
-  const [mostrarOpcionesNotif, setMostrarOpcionesNotif] = useState(false);
   const [unreadMensajes, setUnreadMensajes] = useState(0);
   const [notificaciones, setNotificaciones] = useState([]);
   const [unreadNotificaciones, setUnreadNotificaciones] = useState(0);
@@ -196,14 +188,12 @@ const Header = ({ usuario, onLogout }) => {
     setDropdownOpen(false);
     setAvatarDropdownOpen(false);
     setNotificacionesOpen(false);
-    setMostrarOpcionesNotif(false);
   };
 
   const toggleDropdown = () => {
     setDropdownOpen((v) => !v);
     setAvatarDropdownOpen(false);
     setNotificacionesOpen(false);
-    setMostrarOpcionesNotif(false);
   };
 
   const toggleAvatarDropdown = (e) => {
@@ -211,7 +201,6 @@ const Header = ({ usuario, onLogout }) => {
     setAvatarDropdownOpen((v) => !v);
     setDropdownOpen(false);
     setNotificacionesOpen(false);
-    setMostrarOpcionesNotif(false);
   };
 
   const fetchContadorNotificaciones = async () => {
@@ -245,7 +234,6 @@ const Header = ({ usuario, onLogout }) => {
     setNotificacionesOpen(abrir);
     setDropdownOpen(false);
     setAvatarDropdownOpen(false);
-    setMostrarOpcionesNotif(false);
     if (abrir) fetchNotificaciones();
   };
 
@@ -578,31 +566,16 @@ const IcoInfo = () => (
                           <div className="header-notifications-header-titles">
                             <h4 className="header-notifications-title">Notificaciones</h4>
                             <p className="header-notifications-subtitle">Lo nuevo de tus pruebas, mensajes y seguidores.</p>
-                          </div>
-                        </div>
-
-                        <div className="header-notifications-header-actions">
-                          <button
-                            type="button"
-                            className="header-notifications-gear-btn"
-                            onClick={() => setMostrarOpcionesNotif((v) => !v)}
-                            title="Opciones de notificaciones"
-                          >
-                            <IcoGear />
-                          </button>
-
-                          {mostrarOpcionesNotif && (
-                            <div className="header-notifications-options-menu">
+                            {unreadNotificaciones > 0 && (
                               <button
                                 type="button"
-                                className="header-notifications-option-item"
-                                onClick={() => { handleMarcarTodasLeidas(); setMostrarOpcionesNotif(false); }}
+                                className="header-notifications-markall"
+                                onClick={() => { handleMarcarTodasLeidas(); }}
                               >
-                                <IcoCheck />
                                 Marcar todas como leídas
                               </button>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
 
