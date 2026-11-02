@@ -1,210 +1,178 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../axiosConfig.js'
-import Avatar from '../components/Avatar.jsx'
-import { ModalImagen, ReferenciaBloque } from './PostCard.jsx'
-import Footer from '../footer/footer.jsx'
-import BotonSeguir from '../components/BotonSeguir.jsx'
-import { tiempoRelativo, fechaCompleta } from '../utils/dateUtils.js'
+import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx'
+import { TarjetaEvento } from '../components/EventoAdjunto.jsx'
 import UserHoverCard from '../components/UserHoverCard.jsx'
-import './FeedView.css'
+import { tiempoRelativo, fechaCompleta } from '../utils/dateUtils.js'
+import { FdAvatar, VisorImagen, IcoResponder, IcoRepublicar, IcoLike, IcoEnlace, IcoPuntos } from './Publicacion.jsx'
+import { ColumnaYo, ColumnaSeguir } from './Laterales.jsx'
+import { ROLES, fechaDePost } from './feedUtils.js'
+import '../pruebas/PruebasView.css'
+import './Feed.css'
 
-// ─── helpers ────────────────────────────────────────────────
-function RolBadge({ rol }) {
-  if (!rol) return null
-  return <span className={`post-rol-badge ${rol.toLowerCase()}`}>{rol}</span>
-}
+// Detalle de una publicación con el diseño nuevo (clases fd-*, ver Feed.css).
 
-function TipoChip({ tipo }) {
-  if (!tipo || tipo === 'NORMAL') return null
-  const labels = { PRUEBA: 'Prueba', ENTRENAMIENTO: 'Entrenamiento', EMPLEO: 'Empleo' }
-  return <span className={`post-tipo-chip ${tipo}`}>{labels[tipo] || tipo}</span>
-}
+const TIPOS = { PRUEBA: 'Prueba', ENTRENAMIENTO: 'Entrenamiento', EMPLEO: 'Empleo' }
+const MAX_RESPUESTA = 500
 
-// ─── Íconos ────────────────────────────────────────────────
-const IcoThumbsUp = ({ filled }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? '#2DEFF2' : 'none'} stroke={filled ? '#2DEFF2' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-  </svg>
-)
-const IcoComment = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-  </svg>
-)
-const IcoRepost = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" />
-    <polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
-  </svg>
-)
-const IcoSend = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-  </svg>
-)
-const IcoDots = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
-  </svg>
-)
-const IcoArrowLeft = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+const esVideo = (url) => /\.(mp4|webm|ogg)$/i.test(url || '')
+const IcoVolver = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M19 12H5M12 5l-7 7 7 7" />
   </svg>
 )
 
-// ─── Mini card del post padre (contexto) ───────────────────
-function PostPadreCard({ post, onClick }) {
+// ─── Seguir / dejar de seguir al autor (clubes y entrenadores) ───
+function SeguirAutor({ autor, usuario }) {
+  const [siguiendo, setSiguiendo] = useState(false)
+  const [cargando, setCargando] = useState(false)
+  const [error, setError] = useState('')
+
+  const puedeSeguir = !!usuario?.idusuario && !!autor?.idusuario &&
+    Number(autor.idusuario) !== Number(usuario.idusuario) &&
+    ['club', 'entrenador'].includes(String(autor.tipousuario || '').toLowerCase())
+
+  useEffect(() => {
+    if (!puedeSeguir) return
+    let vivo = true
+    api.get(`/api/seguidores/${autor.idusuario}`)
+      .then((res) => { if (vivo) setSiguiendo(res.data?.siguiendo === true) })
+      .catch(() => {})
+    return () => { vivo = false }
+  }, [autor?.idusuario, puedeSeguir])
+
+  if (!puedeSeguir) return null
+
+  const alternar = async () => {
+    setCargando(true)
+    setError('')
+    try {
+      const { data } = siguiendo
+        ? await api.delete(`/api/seguidores/${autor.idusuario}`)
+        : await api.post(`/api/seguidores/${autor.idusuario}`)
+      setSiguiendo(data.siguiendo === true)
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudo completar la acción.')
+    } finally {
+      setCargando(false)
+    }
+  }
+
   return (
-    <div className="post-detalle-padre-wrapper" onClick={onClick}>
-      <div className="post-detalle-padre-avatar-col">
-        <Avatar src={post.autor?.fotoperfil} nombre={post.autor?.nombre || '?'} size={40} />
-        {/* Línea que conecta padre con el post actual */}
-        <div className="post-thread-line post-thread-line--padre" />
-      </div>
-      <div className="post-detalle-padre-body">
-        <div className="post-detalle-padre-header">
-          <span className="post-detalle-padre-nombre">{post.autor?.nombre || 'Usuario'}</span>
-          <span className="post-detalle-padre-tiempo">· {tiempoRelativo(post.createdat)}</span>
+    <span className="fd-seguir-wrap">
+      <button type="button" className={`pr-btn pr-btn--ghost pr-btn--sm fd-seguir${siguiendo ? ' is-on' : ''}`} onClick={alternar} disabled={cargando} aria-pressed={siguiendo}>
+        {siguiendo ? 'Siguiendo' : 'Seguir'}
+      </button>
+      {error && <small className="fd-seguir-error">{error}</small>}
+    </span>
+  )
+}
+
+// ─── Menú de opciones (eliminar) ───
+function MenuOpciones({ etiqueta, onEliminar }) {
+  const [abierto, setAbierto] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!abierto) return
+    const fn = (e) => { if (ref.current && !ref.current.contains(e.target)) setAbierto(false) }
+    document.addEventListener('mousedown', fn)
+    return () => document.removeEventListener('mousedown', fn)
+  }, [abierto])
+
+  return (
+    <div className="fd-menu" ref={ref}>
+      <button type="button" className="fd-icono" onClick={() => setAbierto((v) => !v)} aria-label="Opciones" aria-expanded={abierto}>
+        <IcoPuntos />
+      </button>
+      {abierto && (
+        <div className="fd-menu-lista" role="menu">
+          <button type="button" role="menuitem" className="fd-menu-item fd-menu-item--peligro" onClick={() => { setAbierto(false); onEliminar() }}>
+            {etiqueta}
+          </button>
         </div>
-        <p className="post-detalle-padre-contenido">{post.contenido}</p>
-        {post.imagen && !post.imagen.match(/\.(mp4|webm|ogg)$/i) && (
-          <img src={post.imagen} alt="Imagen del post original" className="post-detalle-padre-imagen" />
-        )}
-      </div>
+      )}
     </div>
   )
 }
 
-// ─── Card de respuesta en la vista de detalle ─────────────
-function RespuestaCard({ comentario, usuario, autorPost, onEliminar, esUltimo }) {
+// ─── Post del que viene la respuesta (contexto del hilo) ───
+function PostPadre({ post, onClick }) {
+  return (
+    <article className="fd-post fd-padre" onClick={onClick}>
+      <div className="fd-hilo-col">
+        <FdAvatar persona={post.autor} size={44} />
+        <i className="fd-hilo-linea" />
+      </div>
+      <div className="fd-post-body">
+        <p className="fd-meta">
+          <strong>{post.autor?.nombre || 'Usuario'}</strong>
+          <span>· {tiempoRelativo(fechaDePost(post))}</span>
+        </p>
+        {post.contenido && <p className="fd-texto fd-padre-texto">{post.contenido}</p>}
+        {post.imagen && !esVideo(post.imagen) && (
+          <div className="fd-media"><img src={post.imagen} alt="" loading="lazy" /></div>
+        )}
+      </div>
+    </article>
+  )
+}
+
+// ─── Una respuesta ───
+function Respuesta({ comentario, usuario, autorPost, onEliminar, onAviso }) {
   const navigate = useNavigate()
-  const [menuAbierto, setMenuAbierto] = useState(false)
-  const [likeAnimando, setLikeAnimando] = useState(false)
+  // Los "me gusta" de las respuestas son locales (el backend no los guarda)
   const [liked, setLiked] = useState(false)
-  const [likesCount, setLikesCount] = useState(0)
-  const menuRef = useRef(null)
+  const miId = usuario?.idusuario || usuario?.id
+  const puedeEliminar = usuario && (comentario.autor?.idusuario === miId || usuario?.es_admin === true)
+  const irAlPerfil = (id) => { if (id) navigate(`/perfil/${id}`) }
 
-  const esMio = usuario && comentario.autor?.idusuario === (usuario.idusuario || usuario.id)
-
-  useEffect(() => {
-    if (!menuAbierto) return
-    const fn = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuAbierto(false) }
-    document.addEventListener('mousedown', fn)
-    return () => document.removeEventListener('mousedown', fn)
-  }, [menuAbierto])
+  const copiarEnlace = () => {
+    const url = `${window.location.origin}/publicacion/${comentario.idpublicacion || comentario.idcomentario}`
+    navigator.clipboard?.writeText(url).then(() => onAviso('Enlace copiado'))
+  }
 
   return (
-    <article className="post-card post-detalle-respuesta-card">
-      {/* Columna avatar */}
-      <div className="post-card-avatar-col">
-        <UserHoverCard autor={comentario.autor} usuario={usuario}>
-          <Avatar
-            src={comentario.autor?.fotoperfil}
-            nombre={comentario.autor?.nombre || '?'}
-            size={44}
-            onClick={() => comentario.autor?.idusuario && navigate(`/perfil/${comentario.autor.idusuario}`)}
-            style={{ cursor: 'pointer', flexShrink: 0 }}
-          />
-        </UserHoverCard>
-        {!esUltimo && <div className="post-thread-line" />}
-      </div>
+    <article className="fd-post fd-resp">
+      <UserHoverCard autor={comentario.autor} usuario={usuario}>
+        <button type="button" className="fd-post-avatar" onClick={() => irAlPerfil(comentario.autor?.idusuario)} aria-label={`Ver perfil de ${comentario.autor?.nombre || 'usuario'}`}>
+          <FdAvatar persona={comentario.autor} />
+        </button>
+      </UserHoverCard>
 
-      {/* Columna contenido */}
-      <div className="post-card-body">
-        <div className="post-card-header">
-          <UserHoverCard autor={comentario.autor} usuario={usuario}>
-            <div
-              className="post-card-autor"
-              onClick={() => comentario.autor?.idusuario && navigate(`/perfil/${comentario.autor.idusuario}`)}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="post-card-autor-info">
-                <span className="post-card-nombre">{comentario.autor?.nombre || 'Usuario'}</span>
-                <span className="post-card-tiempo">· {tiempoRelativo(comentario.createdat || comentario.created_at || comentario.createdAt || comentario.fechacreacion)}</span>
-              </div>
-            </div>
-          </UserHoverCard>
+      <div className="fd-post-body">
+        <header className="fd-post-head">
+          <p className="fd-meta">
+            <UserHoverCard autor={comentario.autor} usuario={usuario}>
+              <button type="button" className="fd-nombre" onClick={() => irAlPerfil(comentario.autor?.idusuario)}>{comentario.autor?.nombre || 'Usuario'}</button>
+            </UserHoverCard>
+            {ROLES[comentario.autor?.tipousuario] && <span>{ROLES[comentario.autor.tipousuario]}</span>}
+            <span>· {tiempoRelativo(comentario.createdat || comentario.created_at || comentario.createdAt || comentario.fechacreacion)}</span>
+          </p>
+          {puedeEliminar && <MenuOpciones etiqueta="Eliminar respuesta" onEliminar={() => onEliminar(comentario.idcomentario)} />}
+        </header>
 
-          {esMio && (
-            <div className="post-menu-wrapper" ref={menuRef}>
-              <button
-                className="post-menu-btn"
-                onClick={() => setMenuAbierto(v => !v)}
-                aria-label="Opciones"
-              >
-                <IcoDots />
-              </button>
-              {menuAbierto && (
-                <div className="post-menu-dropdown">
-                  <button className="post-menu-item danger" onClick={() => { setMenuAbierto(false); onEliminar(comentario.idcomentario) }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
-                    </svg>
-                    Eliminar
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* "En respuesta a @autor" */}
-        <p className="post-detalle-en-respuesta-a">
+        <p className="fd-resp-a">
           En respuesta a{' '}
-          <span
-            className="post-detalle-en-respuesta-link"
-            onClick={() => autorPost?.idusuario && navigate(`/perfil/${autorPost.idusuario}`)}
-          >
-            @{autorPost?.nombre || 'usuario'}
-          </span>
+          <button type="button" className="fd-resp-link" onClick={() => irAlPerfil(autorPost?.idusuario)}>{autorPost?.nombre || 'usuario'}</button>
         </p>
 
-        <div className="post-card-contenido">{comentario.contenido}</div>
+        <p className="fd-texto">{comentario.contenido}</p>
 
-        {/* Acciones simples de la respuesta */}
-        <div className="post-acciones-wrapper">
-          <div className="post-acciones-botones">
-            <button
-              className={`post-accion-btn${liked ? ' liked' : ''}`}
-              onClick={() => { setLiked(v => !v); setLikesCount(c => liked ? Math.max(0, c - 1) : c + 1) }}
-              aria-label="Me gusta"
-            >
-              <span className={likeAnimando ? 'like-anim' : ''} style={{ display: 'inline-flex' }}>
-                <IcoThumbsUp filled={liked} />
-              </span>
-              {likesCount > 0 && <span className="post-accion-numero">{likesCount}</span>}
-              <span className="post-accion-tooltip">Me gusta</span>
-            </button>
-            <button className="post-accion-btn" aria-label="Comentar">
-              <IcoComment />
-              <span className="post-accion-tooltip">Responder</span>
-            </button>
-            <button className="post-accion-btn" aria-label="Republicar">
-              <IcoRepost />
-              <span className="post-accion-tooltip">Republicar</span>
-            </button>
-            <button
-              className="post-accion-btn"
-              onClick={() => {
-                const url = `${window.location.origin}/publicacion/${comentario.idpublicacion || comentario.idcomentario}`
-                navigator.clipboard?.writeText(url).then(() => alert('Enlace copiado'))
-              }}
-              aria-label="Compartir"
-            >
-              <IcoSend />
-              <span className="post-accion-tooltip">Copiar enlace</span>
-            </button>
-          </div>
+        <div className="fd-acciones">
+          <button type="button" className={`fd-accion${liked ? ' is-on' : ''}`} onClick={() => setLiked((v) => !v)} aria-label="Me gusta" aria-pressed={liked} title="Me gusta">
+            <IcoLike lleno={liked} />{liked && <span>1</span>}
+          </button>
+          <button type="button" className="fd-accion" onClick={copiarEnlace} aria-label="Copiar enlace" title="Copiar enlace">
+            <IcoEnlace />
+          </button>
         </div>
       </div>
     </article>
   )
 }
 
-// ═══════════════════════════════════════════════════════════
-// COMPONENTE PRINCIPAL: PublicacionDetalle
 // ═══════════════════════════════════════════════════════════
 export default function PublicacionDetalle({ usuario }) {
   const { id } = useParams()
@@ -216,53 +184,28 @@ export default function PublicacionDetalle({ usuario }) {
   const [loading, setLoading] = useState(true)
   const [loadingComentarios, setLoadingComentarios] = useState(false)
   const [error, setError] = useState(null)
-  const [imagenModal, setImagenModal] = useState(null)
+  const [visor, setVisor] = useState(null)
 
-  // Acciones del post
-  const [likeAnimando, setLikeAnimando] = useState(false)
-  const [liked, setLiked] = useState(false)
-  const [likesCount, setLikesCount] = useState(0)
   const [reposts, setReposts] = useState(0)
-  const [menuAbierto, setMenuAbierto] = useState(false)
-  const menuRef = useRef(null)
-
-  // Input de respuesta
   const [respuesta, setRespuesta] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [errorRespuesta, setErrorRespuesta] = useState(null)
 
-  // Sidebars
-  const [seguidos, setSeguidos] = useState(usuario?.seguidos || [])
-  const [recomendaciones, setRecomendaciones] = useState([])
+  // Eliminar: { tipo: 'post' } | { tipo: 'respuesta', id }
+  const [porEliminar, setPorEliminar] = useState(null)
+  const [eliminando, setEliminando] = useState(false)
+  const [errorEliminar, setErrorEliminar] = useState(null)
 
-  useEffect(() => {
-    const cargarRecomendaciones = async () => {
-      try {
-        const res = await api.get('/api/recomendaciones', { params: { limite: 3 } })
-        setRecomendaciones(Array.isArray(res.data) ? res.data : [])
-      } catch {
-        setRecomendaciones([])
-      }
-    }
-    cargarRecomendaciones()
-  }, [usuario])
+  const [aviso, setAviso] = useState(null)
+  const avisoTimer = useRef(null)
+  const mostrarAviso = useCallback((texto) => {
+    setAviso(texto)
+    clearTimeout(avisoTimer.current)
+    avisoTimer.current = setTimeout(() => setAviso(null), 2400)
+  }, [])
+  useEffect(() => () => clearTimeout(avisoTimer.current), [])
 
-  const rolUsuario = usuario?.tipousuario === 'jugador'
-    ? 'Atleta Profesional'
-    : usuario?.tipousuario === 'entrenador'
-      ? 'Entrenador Elite'
-      : usuario?.tipousuario === 'club'
-        ? 'Club Deportivo'
-        : usuario?.tipousuario || 'Miembro de SportLink'
-
-  // Cerrar menú al click afuera
-  useEffect(() => {
-    if (!menuAbierto) return
-    const fn = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuAbierto(false) }
-    document.addEventListener('mousedown', fn)
-    return () => document.removeEventListener('mousedown', fn)
-  }, [menuAbierto])
-
-  // ── Cargar post ──────────────────────────────────────
+  // ── Cargar post, post padre y respuestas ──
   useEffect(() => {
     let cancelado = false
     const cargar = async () => {
@@ -276,36 +219,27 @@ export default function PublicacionDetalle({ usuario }) {
         const { data } = await api.get(`/api/publicaciones/compartir/${id}`)
         if (cancelado) return
         setPost(data)
-        setLiked(data.usuarioDioLike || false)
-        setLikesCount(data.totalLikes || 0)
         setReposts(data.republicaciones || 0)
 
-        // Si es una respuesta, cargar el post padre
         if (data.idpublicacionpadre) {
           try {
             const { data: padre } = await api.get(`/api/publicaciones/compartir/${data.idpublicacionpadre}`)
             if (!cancelado) setPostPadre(padre)
-          } catch {
-            // No es crítico si no se puede cargar el padre
-          }
+          } catch { /* el contexto no es crítico */ }
         }
 
-        // Cargar comentarios/respuestas
         setLoadingComentarios(true)
         try {
           const { data: coms } = await api.get(`/api/publicaciones/${id}/comentarios`)
           if (!cancelado) setComentarios(coms)
-        } catch {
-          // sin comentarios
-        } finally {
+        } catch { /* sin respuestas */ } finally {
           if (!cancelado) setLoadingComentarios(false)
         }
       } catch (err) {
         if (!cancelado) {
           setError(err.response?.status === 404
             ? 'Esta publicación no existe o fue eliminada.'
-            : 'No se pudo cargar la publicación.'
-          )
+            : 'No se pudo cargar la publicación.')
         }
       } finally {
         if (!cancelado) setLoading(false)
@@ -315,411 +249,258 @@ export default function PublicacionDetalle({ usuario }) {
     return () => { cancelado = true }
   }, [id])
 
-  // ── Like ──────────────────────────────────────────────
-  const handleLike = async () => {
-    if (!usuario) { navigate('/login'); return }
-    const yaLiked = liked
-    setLiked(!yaLiked)
-    setLikesCount(c => yaLiked ? Math.max(0, c - 1) : c + 1)
-    setLikeAnimando(true)
-    setTimeout(() => setLikeAnimando(false), 400)
+  const irALogin = () => navigate('/login')
+
+  // ── Me gusta (optimista) ──
+  const darLike = async () => {
+    if (!usuario) { irALogin(); return }
+    const ya = !!post.usuarioDioLike
+    setPost((p) => ({ ...p, usuarioDioLike: !ya, totalLikes: ya ? Math.max(0, (p.totalLikes || 0) - 1) : (p.totalLikes || 0) + 1 }))
     try {
-      if (yaLiked) {
-        const { data } = await api.delete(`/api/publicaciones/${post.idpublicacion}/like`)
-        setLiked(data.liked); setLikesCount(data.totalLikes)
-      } else {
-        const { data } = await api.post(`/api/publicaciones/${post.idpublicacion}/like`)
-        setLiked(data.liked); setLikesCount(data.totalLikes)
-      }
+      const { data } = ya
+        ? await api.delete(`/api/publicaciones/${post.idpublicacion}/like`)
+        : await api.post(`/api/publicaciones/${post.idpublicacion}/like`)
+      setPost((p) => ({ ...p, totalLikes: data.totalLikes, usuarioDioLike: data.liked }))
     } catch {
-      setLiked(yaLiked)
-      setLikesCount(c => yaLiked ? c + 1 : Math.max(0, c - 1))
+      setPost((p) => ({ ...p, usuarioDioLike: ya, totalLikes: ya ? (p.totalLikes || 0) + 1 : Math.max(0, (p.totalLikes || 0) - 1) }))
     }
   }
 
-  // ── Enviar respuesta ──────────────────────────────────
-  const handleEnviarRespuesta = async () => {
-    if (!usuario) { navigate('/login'); return }
+  const republicar = () => {
+    if (!usuario) { irALogin(); return }
+    setReposts((r) => r + 1)
+  }
+
+  const copiarEnlace = () => {
+    const url = `${window.location.origin}/publicacion/${id}`
+    navigator.clipboard?.writeText(url).then(() => mostrarAviso('Enlace copiado'))
+  }
+
+  // ── Responder ──
+  const enviarRespuesta = async () => {
+    if (!usuario) { irALogin(); return }
     if (!respuesta.trim() || enviando) return
     setEnviando(true)
+    setErrorRespuesta(null)
     try {
-      const { data } = await api.post(`/api/publicaciones/${post.idpublicacion}/comentarios`, {
-        contenido: respuesta.trim()
-      })
-      setComentarios(prev => [data, ...prev])
-      setPost(p => ({ ...p, totalComentarios: (p.totalComentarios || 0) + 1 }))
+      const { data } = await api.post(`/api/publicaciones/${post.idpublicacion}/comentarios`, { contenido: respuesta.trim() })
+      setComentarios((prev) => [data, ...prev])
+      setPost((p) => ({ ...p, totalComentarios: (p.totalComentarios || 0) + 1 }))
       setRespuesta('')
     } catch {
-      alert('No se pudo enviar la respuesta.')
+      setErrorRespuesta('No se pudo enviar la respuesta. Probá de nuevo.')
     } finally {
       setEnviando(false)
     }
   }
 
-  // ── Eliminar post ─────────────────────────────────────
-  const handleEliminarPost = async () => {
-    setMenuAbierto(false)
-    if (!window.confirm('¿Eliminar esta publicación?')) return
+  // ── Eliminar post o respuesta ──
+  const confirmarEliminar = async () => {
+    if (!porEliminar) return
+    setEliminando(true)
+    setErrorEliminar(null)
     try {
-      await api.delete(`/api/publicaciones/${post.idpublicacion}`)
-      navigate('/feed')
+      if (porEliminar.tipo === 'post') {
+        await api.delete(`/api/publicaciones/${post.idpublicacion}`)
+        navigate('/feed')
+        return
+      }
+      await api.delete(`/api/comentarios/${porEliminar.id}`)
+      setComentarios((prev) => prev.filter((c) => c.idcomentario !== porEliminar.id))
+      setPost((p) => ({ ...p, totalComentarios: Math.max(0, (p.totalComentarios || 1) - 1) }))
+      setPorEliminar(null)
     } catch {
-      alert('No se pudo eliminar la publicación.')
+      setErrorEliminar(porEliminar.tipo === 'post' ? 'No se pudo eliminar la publicación.' : 'No se pudo eliminar la respuesta.')
+    } finally {
+      setEliminando(false)
     }
   }
 
-  // ── Eliminar comentario ───────────────────────────────
-  const handleEliminarComentario = async (idcomentario) => {
-    if (!window.confirm('¿Eliminar esta respuesta?')) return
-    try {
-      await api.delete(`/api/comentarios/${idcomentario}`)
-      setComentarios(prev => prev.filter(c => c.idcomentario !== idcomentario))
-      setPost(p => ({ ...p, totalComentarios: Math.max(0, (p.totalComentarios || 1) - 1) }))
-    } catch {
-      alert('No se pudo eliminar la respuesta.')
-    }
-  }
-
-  // ── Copiar enlace ─────────────────────────────────────
-  const handleCompartir = () => {
-    const url = `${window.location.origin}/publicacion/${id}`
-    navigator.clipboard?.writeText(url).then(() => alert('Enlace copiado al portapapeles'))
-  }
-
-  const esMio = usuario && post?.autor?.idusuario === (usuario?.idusuario || usuario?.id)
-
-  const rolTraducido = post?.autor?.tipousuario === 'jugador'
-    ? 'Atleta Profesional'
-    : post?.autor?.tipousuario === 'entrenador'
-      ? 'Entrenador Elite'
-      : post?.autor?.tipousuario === 'club'
-        ? 'Club Deportivo'
-        : post?.autor?.tipousuario
+  const miId = usuario?.idusuario || usuario?.id
+  const esMio = !!usuario && post?.autor?.idusuario === miId
+  const puedeEliminar = esMio || (!!usuario && usuario?.es_admin === true)
+  const rol = ROLES[post?.autor?.tipousuario]
+  const tipo = post && post.tipopublicacion !== 'NORMAL' && !post.referencia ? TIPOS[post.tipopublicacion] : null
+  const totalRespuestas = post?.totalComentarios || comentarios.length
+  const autorId = post?.autor?.idusuario
+  const irAlPerfil = () => { if (autorId) navigate(`/perfil/${autorId}`) }
 
   return (
-    <>
-      <div className="feed-pagina post-detalle-pagina">
-        <div className="feed-layout">
-          {/* ════ Columna Izquierda: Perfil + Seguidos ════ */}
-          <aside className="feed-sidebar-izquierda">
-            {/* Card Resumen Perfil */}
-            <div className="feed-profile-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/perfil')}>
-              <div className="feed-profile-banner" />
-              <div className="feed-profile-avatar-container">
-                <Avatar src={usuario?.fotoperfil} nombre={usuario?.nombre || 'Usuario'} size={72} />
-              </div>
-              <div className="feed-profile-info">
-                <h3 className="feed-profile-name">{usuario?.nombre || usuario?.email || 'Usuario'}</h3>
-                <p className="feed-profile-role">{rolUsuario}</p>
-              </div>
-              <div className="feed-profile-stats">
-                <div className="feed-profile-stat-row">
-                  <span className="feed-stat-label">Vistas del perfil</span>
-                  <span className="feed-stat-value">{usuario?.vistasPerfil ?? 0}</span>
-                </div>
-                <div className="feed-profile-stat-row">
-                  <span className="feed-stat-label">Conexiones</span>
-                  <span className="feed-stat-value">{usuario?.conexiones ?? 0}</span>
-                </div>
-              </div>
-            </div>
+    <div className="pr fd">
+      <div className="pr-wrap fd-layout">
+        <ColumnaYo usuario={usuario} />
 
-            {/* Card SEGUIDOS */}
-            <div className="feed-sidebar-card">
-              <h4 className="feed-sidebar-header-title">SEGUIDOS</h4>
-              {seguidos && seguidos.length > 0 ? (
-                <div className="feed-seguidos-lista">
-                  {seguidos.map((item, idx) => (
-                    <div key={item.id || idx} className="feed-seguido-item">
-                      <Avatar src={item.logo || item.fotoperfil} nombre={item.nombre} size={36} />
-                      <div className="feed-seguido-info">
-                        <span className="feed-seguido-nombre">{item.nombre}</span>
-                        <span className="feed-seguido-sub">{item.categoria || item.tipousuario || 'Club'}</span>
-                      </div>
-                    </div>
-                  ))}
-                  <button className="feed-ver-todo-btn">Ver todo →</button>
-                </div>
-              ) : (
-                <div className="feed-vacio-box">Sin seguidos por el momento</div>
+        <main className="fd-centro">
+          <div className="fd-det-nav">
+            <button type="button" className="fd-icono" onClick={() => navigate(-1)} aria-label="Volver">
+              <IcoVolver />
+            </button>
+            <h1 className="fd-det-titulo">Publicación</h1>
+          </div>
+
+          {loading ? (
+            <div aria-busy="true" aria-label="Cargando publicación">
+              <div className="fd-post fd-post--skeleton" style={{ minHeight: 320 }} />
+              <div className="fd-post fd-post--skeleton" />
+            </div>
+          ) : error ? (
+            <div className="pr-empty fd-vacio">
+              <h2 className="pr-display pr-empty-title">{error}</h2>
+              <p>Puede que el enlace esté mal o que la hayan borrado.</p>
+              <button type="button" className="pr-btn pr-btn--ink" onClick={() => navigate('/')}>Ir al inicio</button>
+            </div>
+          ) : post && (
+            <>
+              {postPadre && (
+                <PostPadre post={postPadre} onClick={() => navigate(`/publicacion/${postPadre.idpublicacion}`)} />
               )}
-            </div>
-          </aside>
 
-          {/* ════ Columna Central: Contenedor del Post ════ */}
-          <main className="post-detalle-contenedor">
-            {/* ── Header: Volver ── */}
-            <div className="post-detalle-header-nav">
-              <button className="post-detalle-volver-btn" onClick={() => navigate(-1)} aria-label="Volver">
-                <IcoArrowLeft />
-              </button>
-              <span className="post-detalle-titulo">Post</span>
-            </div>
+              {/* ── La publicación, expandida ── */}
+              <article className="fd-det">
+                <header className="fd-det-autor">
+                  <UserHoverCard autor={post.autor} usuario={usuario}>
+                    <button type="button" className="fd-det-quien" onClick={irAlPerfil} aria-label={`Ver perfil de ${post.autor?.nombre || 'usuario'}`}>
+                      <FdAvatar persona={post.autor} size={56} />
+                      <span className="fd-det-nombres">
+                        <strong>{post.autor?.nombre || 'Usuario'}</strong>
+                        {rol && <span>{rol}</span>}
+                      </span>
+                    </button>
+                  </UserHoverCard>
 
-            {loading ? (
-              <div className="feed-spinner-wrapper" style={{ paddingTop: 60 }}>
-                <div className="feed-spinner" />
-              </div>
-            ) : error ? (
-              <div className="feed-vacio" style={{ paddingTop: 60 }}>
-                <h3>{error}</h3>
-                <button
-                  onClick={() => navigate('/')}
-                  style={{
-                    marginTop: '16px', background: '#2DEFF2', color: '#000', border: 'none',
-                    borderRadius: '8px', padding: '10px 24px', fontWeight: 700, cursor: 'pointer'
-                  }}
-                >
-                  Volver al inicio
-                </button>
-              </div>
-            ) : post && (
-              <>
-                {/* ── Post padre (si es una respuesta) ── */}
-                {postPadre && (
-                  <PostPadreCard
-                    post={postPadre}
-                    onClick={() => navigate(`/publicacion/${postPadre.idpublicacion}`)}
-                  />
+                  {tipo && <span className="pr-pill pr-pill--open fd-tipo">{tipo}</span>}
+                  {!esMio && <SeguirAutor autor={post.autor} usuario={usuario} />}
+                  {puedeEliminar && (
+                    <MenuOpciones
+                      etiqueta="Eliminar publicación"
+                      onEliminar={() => { setErrorEliminar(null); setPorEliminar({ tipo: 'post' }) }}
+                    />
+                  )}
+                </header>
+
+                {post.contenido && <p className="fd-det-texto">{post.contenido}</p>}
+
+                {post.tipopublicacion !== 'NORMAL' && post.referencia && (
+                  <div className="fd-evento"><TarjetaEvento evento={post.referencia} /></div>
                 )}
 
-                {/* ── Post principal expandido ── */}
-                <div className={`post-detalle-principal${postPadre ? ' post-detalle-principal--es-respuesta' : ''}`}>
-                  {/* Avatar + Nombre + 3 puntos */}
-                  <div className="post-detalle-autor-row">
-                    <UserHoverCard autor={post.autor} usuario={usuario}>
-                      <div className="post-detalle-autor-info" onClick={() => post.autor?.idusuario && navigate(`/perfil/${post.autor.idusuario}`)}>
-                        <Avatar
-                          src={post.autor?.fotoperfil}
-                          nombre={post.autor?.nombre || '?'}
-                          size={48}
-                          style={{ cursor: 'pointer', flexShrink: 0 }}
-                        />
-                        <div className="post-detalle-autor-texto">
-                          <span className="post-detalle-autor-nombre">{post.autor?.nombre || 'Usuario'}</span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                            {rolTraducido && <span className="post-card-subtitulo">{rolTraducido}</span>}
-                            <RolBadge rol={post.autor?.tipousuario} />
-                          </div>
-                        </div>
-                      </div>
-                    </UserHoverCard>
-                    {!esMio && (
-                      <BotonSeguir
-                        idusuario={post.autor?.idusuario}
-                        tipousuario={post.autor?.tipousuario}
-                        usuario={usuario}
-                      />
-                    )}
-                    {esMio && (
-                      <div className="post-menu-wrapper" ref={menuRef}>
-                        <button className="post-menu-btn" onClick={() => setMenuAbierto(v => !v)} aria-label="Opciones">
-                          <IcoDots />
+                {post.imagen && (
+                  <div className="fd-media">
+                    {esVideo(post.imagen)
+                      ? <video src={post.imagen} controls preload="metadata" />
+                      : (
+                        <button type="button" className="fd-media-btn" onClick={() => setVisor(post.imagen)} aria-label="Ampliar imagen">
+                          <img src={post.imagen} alt="" />
                         </button>
-                        {menuAbierto && (
-                          <div className="post-menu-dropdown">
-                            <button className="post-menu-item danger" onClick={handleEliminarPost}>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
-                              </svg>
-                              Eliminar
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      )}
                   </div>
+                )}
 
-                  {/* Tipo chip */}
-                  <TipoChip tipo={post.tipopublicacion} />
+                <p className="fd-det-fecha">{fechaCompleta(fechaDePost(post))}</p>
 
-                  {/* Contenido */}
-                  {post.contenido && (
-                    <p className="post-detalle-contenido">{post.contenido}</p>
-                  )}
+                {(totalRespuestas > 0 || reposts > 0 || post.totalLikes > 0) && (
+                  <dl className="fd-det-stats">
+                    {totalRespuestas > 0 && <div><dd>{totalRespuestas}</dd><dt>{totalRespuestas === 1 ? 'Respuesta' : 'Respuestas'}</dt></div>}
+                    {reposts > 0 && <div><dd>{reposts}</dd><dt>{reposts === 1 ? 'Republicación' : 'Republicaciones'}</dt></div>}
+                    {post.totalLikes > 0 && <div><dd>{post.totalLikes}</dd><dt>Me gusta</dt></div>}
+                  </dl>
+                )}
 
-                  {/* Referencia */}
-                  {post.tipopublicacion !== 'NORMAL' && post.referencia && (
-                    <div style={{ marginTop: '12px' }}>
-                      <ReferenciaBloque referencia={post.referencia} />
-                    </div>
-                  )}
+                <div className="fd-acciones fd-det-acciones">
+                  <button type="button" className="fd-accion" onClick={() => document.getElementById('fd-det-respuesta')?.focus()} aria-label="Responder" title="Responder">
+                    <IcoResponder />
+                  </button>
+                  <button type="button" className="fd-accion" onClick={republicar} aria-label="Republicar" title="Republicar">
+                    <IcoRepublicar />
+                  </button>
+                  <button type="button" className={`fd-accion${post.usuarioDioLike ? ' is-on' : ''}`} onClick={darLike} aria-label="Me gusta" aria-pressed={!!post.usuarioDioLike} title="Me gusta">
+                    <IcoLike lleno={post.usuarioDioLike} />
+                  </button>
+                  <button type="button" className="fd-accion" onClick={copiarEnlace} aria-label="Copiar enlace" title="Copiar enlace">
+                    <IcoEnlace />
+                  </button>
+                </div>
 
-                  {/* Imagen / Video */}
-                  {post.imagen && (
-                    <div className="post-card-imagen" style={{ marginTop: '16px' }}>
-                      {post.imagen.match(/\.(mp4|webm|ogg)$/i) ? (
-                        <video src={post.imagen} controls className="post-media-video" />
-                      ) : (
-                        <img
-                          src={post.imagen}
-                          alt="Publicación"
-                          onClick={() => setImagenModal(post.imagen)}
-                          style={{ cursor: 'zoom-in' }}
-                        />
-                      )}
-                    </div>
-                  )}
-
-                  {/* Fecha completa */}
-                  <div className="post-detalle-fecha">{fechaCompleta(post.createdat || post.created_at || post.createdAt || post.fecha_creacion)}</div>
-
-                  {/* Barra de stats */}
-                  {(likesCount > 0 || (post.totalComentarios || comentarios.length) > 0 || reposts > 0) && (
-                    <div className="post-detalle-stats">
-                      {(post.totalComentarios || comentarios.length) > 0 && (
-                        <span className="post-detalle-stat">
-                          <strong>{post.totalComentarios || comentarios.length}</strong> Respuestas
-                        </span>
-                      )}
-                      {reposts > 0 && (
-                        <span className="post-detalle-stat">
-                          <strong>{reposts}</strong> Reposts
-                        </span>
-                      )}
-                      {likesCount > 0 && (
-                        <span className="post-detalle-stat">
-                          <strong>{likesCount}</strong> Me gusta
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Separador + Acciones */}
-                  <div className="post-detalle-acciones-barra">
-                    <button
-                      className={`post-detalle-accion-btn${liked ? ' liked' : ''}`}
-                      onClick={handleLike}
-                      aria-label="Me gusta"
-                    >
-                      <span className={likeAnimando ? 'like-anim' : ''} style={{ display: 'inline-flex' }}>
-                        <IcoThumbsUp filled={liked} />
-                      </span>
-                      <span className="post-detalle-accion-label">Me gusta</span>
-                    </button>
-
-                    <button className="post-detalle-accion-btn" aria-label="Responder" onClick={() => document.getElementById('detalle-respuesta-input')?.focus()}>
-                      <IcoComment />
-                      <span className="post-detalle-accion-label">Responder</span>
-                    </button>
-
-                    <button className="post-detalle-accion-btn" aria-label="Republicar" onClick={() => setReposts(r => r + 1)}>
-                      <IcoRepost />
-                      <span className="post-detalle-accion-label">Republicar</span>
-                    </button>
-
-                    <button className="post-detalle-accion-btn" aria-label="Compartir" onClick={handleCompartir}>
-                      <IcoSend />
-                      <span className="post-detalle-accion-label">Compartir</span>
-                    </button>
-                  </div>
-
-                  {/* Input para responder */}
-                  <div className="post-detalle-responder-box">
-                    <Avatar src={usuario?.fotoperfil} nombre={usuario?.nombre || '?'} size={40} />
-                    <div className="post-detalle-responder-input-wrapper">
+                {/* Responder */}
+                <div className="fd-responder">
+                  <FdAvatar persona={usuario} size={44} />
+                  <div className="fd-responder-campo">
+                    <label className="fd-campo fd-campo--plano">
+                      <span className="pr-sr">Tu respuesta</span>
                       <textarea
-                        id="detalle-respuesta-input"
-                        className="post-detalle-responder-input"
-                        placeholder={usuario ? 'Publicá tu respuesta' : 'Iniciá sesión para responder'}
+                        id="fd-det-respuesta"
+                        rows={2}
+                        maxLength={MAX_RESPUESTA}
+                        placeholder={usuario ? 'Escribí tu respuesta' : 'Iniciá sesión para responder'}
                         value={respuesta}
                         onChange={(e) => setRespuesta(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && usuario) { e.preventDefault(); handleEnviarRespuesta() } }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && usuario) { e.preventDefault(); enviarRespuesta() } }}
                         disabled={!usuario}
-                        rows={1}
                       />
+                    </label>
+                    {errorRespuesta && <p className="pr-error">{errorRespuesta}</p>}
+                    <div className="fd-responder-barra">
+                      {usuario && respuesta.length > 0 && (
+                        <span className={`fd-contador${respuesta.length > MAX_RESPUESTA - 40 ? ' is-cerca' : ''}`}>{respuesta.length}/{MAX_RESPUESTA}</span>
+                      )}
+                      <button
+                        type="button"
+                        className="pr-btn pr-btn--sm"
+                        onClick={usuario ? enviarRespuesta : irALogin}
+                        disabled={!!usuario && (!respuesta.trim() || enviando)}
+                      >
+                        {usuario ? (enviando ? 'Respondiendo…' : 'Responder') : 'Iniciar sesión'}
+                      </button>
                     </div>
-                    <button
-                      className="post-detalle-responder-btn"
-                      onClick={usuario ? handleEnviarRespuesta : () => navigate('/login')}
-                      disabled={usuario && (!respuesta.trim() || enviando)}
-                    >
-                      {usuario ? 'Responder' : 'Iniciar sesión'}
-                    </button>
                   </div>
                 </div>
+              </article>
 
-                {/* ── Separador ── */}
-                <div className="post-detalle-separador" />
-
-                {/* ── Lista de respuestas ── */}
-                {loadingComentarios ? (
-                  <div className="feed-spinner-wrapper" style={{ padding: '32px 0' }}>
-                    <div className="feed-spinner" />
-                  </div>
-                ) : comentarios.length === 0 ? (
-                  <div style={{ padding: '40px 16px', textAlign: 'center', color: '#4a5060' }}>
-                    <p style={{ fontSize: '14px' }}>Nadie respondió todavía. ¡Sé el primero!</p>
-                  </div>
-                ) : (
-                  <div className="post-detalle-respuestas-lista">
-                    {comentarios.map((c, idx) => (
-                      <RespuestaCard
-                        key={c.idcomentario}
-                        comentario={c}
-                        usuario={usuario}
-                        autorPost={post.autor}
-                        onEliminar={handleEliminarComentario}
-                        esUltimo={idx === comentarios.length - 1}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </main>
-
-          {/* ════ Columna Derecha: Recomendados ════ */}
-          <aside className="feed-sidebar-derecha">
-            {/* Recomendado para ti */}
-            <div className="feed-sidebar-card">
-              <h4 className="feed-sidebar-header-title">RECOMENDADO PARA TI</h4>
-              {recomendaciones && recomendaciones.length > 0 ? (
-                <div className="feed-recomendados-lista">
-                  {recomendaciones.map((rec) => (
-                    <div
-                      key={rec.idusuario}
-                      className="feed-recomendado-item"
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => navigate(`/perfil/${rec.idusuario}`)}
-                    >
-                      <Avatar src={rec.fotoperfil} nombre={rec.nombre || 'Usuario'} size={40} />
-                      <div className="feed-recomendado-info">
-                        <span className="feed-recomendado-nombre">{rec.nombre}</span>
-                        <span className="feed-recomendado-sub">
-                          {rec.tipousuario === 'club' ? 'Club' : 'Entrenador'}{rec.deporte ? ` · ${rec.deporte}` : ''}
-                        </span>
-                      </div>
-                      <button className="feed-btn-conectar" onClick={(e) => { e.stopPropagation(); navigate(`/perfil/${rec.idusuario}`) }}>Perfil</button>
-                    </div>
+              {/* ── Respuestas ── */}
+              {loadingComentarios ? (
+                <div aria-busy="true" aria-label="Cargando respuestas">
+                  <div className="fd-post fd-post--skeleton" />
+                </div>
+              ) : comentarios.length === 0 ? (
+                <p className="fd-fin">Nadie respondió todavía. Sé el primero.</p>
+              ) : (
+                <div className="fd-lista">
+                  {comentarios.map((c) => (
+                    <Respuesta
+                      key={c.idcomentario}
+                      comentario={c}
+                      usuario={usuario}
+                      autorPost={post.autor}
+                      onEliminar={(idc) => { setErrorEliminar(null); setPorEliminar({ tipo: 'respuesta', id: idc }) }}
+                      onAviso={mostrarAviso}
+                    />
                   ))}
                 </div>
-              ) : (
-                <div className="feed-vacio-box">Sin recomendaciones por el momento</div>
               )}
-            </div>
+            </>
+          )}
+        </main>
 
-            {/* Footer links */}
-            <footer className="feed-footer-links">
-              <div className="feed-footer-row">
-                <span onClick={() => navigate('/landing')} style={{ cursor: 'pointer' }}>Landing</span>
-                <span>•</span>
-                <span>Acerca de</span>
-                <span>•</span>
-                <span>Accesibilidad</span>
-                <span>•</span>
-                <span>Centro de ayuda</span>
-              </div>
-              <div className="feed-footer-row">
-                <span>Privacidad y Términos</span>
-              </div>
-              <p className="feed-copyright">SportLink © 2026</p>
-            </footer>
-          </aside>
-        </div>
+        <ColumnaSeguir />
       </div>
 
-      {imagenModal && <ModalImagen src={imagenModal} onClose={() => setImagenModal(null)} />}
-    </>
+      {visor && <VisorImagen src={visor} onCerrar={() => setVisor(null)} />}
+
+      <ModalConfirmarEliminar
+        abierto={!!porEliminar}
+        titulo={porEliminar?.tipo === 'post' ? '¿Eliminar publicación?' : '¿Eliminar respuesta?'}
+        mensaje={porEliminar?.tipo === 'post' && !esMio ? 'Estás moderando como administrador. Esta acción no se puede deshacer.' : 'Esta acción no se puede deshacer.'}
+        eliminando={eliminando}
+        error={errorEliminar}
+        onConfirmar={confirmarEliminar}
+        onCerrar={() => setPorEliminar(null)}
+      />
+
+      {aviso && (
+        <div className="pr-toast fd-toast" role="status">
+          <p className="pr-toast-titulo">{aviso}</p>
+        </div>
+      )}
+    </div>
   )
 }

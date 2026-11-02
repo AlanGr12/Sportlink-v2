@@ -158,10 +158,12 @@ const Header = ({ usuario, onLogout }) => {
   // Vistas ya migradas al nuevo diseño: admiten modo claro y oscuro.
   // El resto sigue con el diseño oscuro anterior hasta que se migre.
   const vistaMigrada =
-    ['/info', '/landing', '/pruebas', '/entrenamientos', '/clubes', '/entrenadores', '/entrenador/panel', '/feed', '/mensajes', '/calendario', '/notificaciones', '/perfil', '/ajustes', '/login', '/registro'].includes(location.pathname) ||
+    ['/info', '/landing', '/pruebas', '/entrenamientos', '/clubes', '/entrenadores', '/empleos', '/entrenador/panel', '/feed', '/mensajes', '/calendario', '/notificaciones', '/perfil', '/ajustes', '/login', '/registro'].includes(location.pathname) ||
     location.pathname.startsWith('/perfil/') ||
     location.pathname.startsWith('/pruebas/') ||
     location.pathname.startsWith('/entrenamientos/') ||
+    location.pathname.startsWith('/empleos/') ||
+    location.pathname.startsWith('/publicacion/') ||
     location.pathname === '/';
 
   const [tema, setTema] = useState(() => {

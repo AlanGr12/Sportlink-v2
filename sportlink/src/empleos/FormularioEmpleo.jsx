@@ -223,7 +223,7 @@ function FormularioEmpleo({ idclub, empleo = null, onGuardado, onCancelar }) {
           {loading
             ? (editando ? "Guardando..." : "Publicando...")
             : idclubResuelto
-              ? (editando ? "Guardar cambios" : "Publicar Empleo")
+              ? (editando ? "Guardar cambios" : "Publicar vacante")
               : "Esperando club..."}
         </button>
       </div>

@@ -1,0 +1,63 @@
+/* ============================================================
+   Empleos — sistema SportLink. Reutiliza src/pruebas/PruebasView.css
+   (.pr-*); prefijo em- para lo propio de las vacantes.
+   ============================================================ */
+
+.em-skeleton { min-height: 360px; }
+
+/* Acciones del club debajo del botón de cada tarjeta */
+.em-owner { display: flex; justify-content: center; gap: 24px; }
+
+/* Habilidades requeridas (detalle) */
+.em-skills { display: flex; flex-wrap: wrap; gap: 6px; }
+.em-skills span {
+  padding: 5px 12px;
+  background: var(--slk-step);
+  font-size: 15px;
+  font-weight: 600;
+}
+:root[data-tema='oscuro'] .em-skills span { background: var(--slk-ink-step); }
+
+/* Postulantes: los acciones pasan debajo de los datos */
+.em-person { grid-template-columns: auto minmax(0, 1fr); }
+.em-person .pr-person-actions { grid-column: 1 / -1; flex-wrap: wrap; gap: 8px 22px; }
+.em-person.is-pre { box-shadow: inset 4px 0 0 var(--slk-accent); }
+.em-pre {
+  margin-left: 10px;
+  padding: 2px 10px;
+  background: rgba(45, 239, 242, 0.22);
+  color: #046c6e;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+:root[data-tema='oscuro'] .em-pre { background: rgba(45, 239, 242, 0.16); color: var(--slk-accent); }
+.em-cv { color: var(--slk-text); font-weight: 600; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.em-cv:hover { text-decoration-color: var(--slk-accent); }
+.em-error { margin-top: 12px; }
+
+/* Zona de carga del CV */
+.em-drop {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 32px 20px;
+  border: 2px dashed var(--slk-step-hover);
+  background: var(--slk-step);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.em-drop strong { font-weight: 700; overflow-wrap: anywhere; }
+.em-drop span { font-size: 15px; color: var(--slk-text-2); }
+.em-drop:hover,
+.em-drop.is-over { border-color: var(--slk-text); }
+.em-drop.is-filled { border-style: solid; border-color: var(--slk-accent); }
+.em-drop:focus-visible { outline: 3px solid var(--slk-text); outline-offset: 2px; }
+
+/* El detalle usa un <a> con aspecto de botón */
+.pr-modal-foot a.pr-btn { text-decoration: none; }
+
+@media (max-width: 560px) {
+  .em-owner { gap: 20px; }
+}
