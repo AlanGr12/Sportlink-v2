@@ -135,6 +135,21 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
 
   const idActivo = conversacionActiva?.idconversacion ?? null
 
+  // Quién es cada participante de un grupo (nombre y foto de quien escribió)
+  const [participantes, setParticipantes] = useState({})
+  const esGrupo = !!conversacionActiva && conversacionActiva.tipo !== 'PRIVADA'
+  useEffect(() => {
+    if (!idActivo || !esGrupo) return
+    let vivo = true
+    api.get(`/api/conversaciones/${idActivo}/participantes`)
+      .then(({ data }) => {
+        if (!vivo) return
+        setParticipantes(Object.fromEntries((Array.isArray(data) ? data : []).map((p) => [Number(p.idusuario), p])))
+      })
+      .catch(() => { if (vivo) setParticipantes({}) })
+    return () => { vivo = false }
+  }, [idActivo, esGrupo])
+
   // ── Efecto 1: Carga HTTP del historial ──
   useEffect(() => {
     setMensajes([])
@@ -490,7 +505,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
           <p className="ms-historial-vacio">Todavía no hay mensajes. Escribí el primero.</p>
         )}
 
-        {!loading && items.map((item) => {
+        {!loading && items.map((item, idx) => {
           if (item.type === 'separator') {
             return <div key={item.key} className="ms-fecha"><span>{item.label}</span></div>
           }
@@ -502,8 +517,24 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
           const eventoAdjunto = eventoDeMensaje(msg)
           const editando = editandoMsgId === msg.idmensaje
 
+          // En grupos, los mensajes ajenos muestran quién los escribió (foto y nombre
+          // una sola vez por racha de mensajes del mismo usuario)
+          const mostrarAutor = esGrupo && !esPropio
+          const anterior = items[idx - 1]
+          const primeroDeRacha = !anterior || anterior.type === 'separator' || Number(anterior.data.idusuarioemisor) !== Number(msg.idusuarioemisor)
+          const autor = participantes[Number(msg.idusuarioemisor)]
+
           return (
-            <div key={item.key} className={`ms-msg ${esPropio ? 'is-propio' : 'is-ajeno'}`}>
+            <div key={item.key} className={`ms-msg ${esPropio ? 'is-propio' : 'is-ajeno'}${mostrarAutor ? ' ms-msg--grupo' : ''}`}>
+              {mostrarAutor && (
+                <span className="ms-msg-foto">
+                  {primeroDeRacha && <AvatarCuadrado src={autor?.fotoperfil} nombre={autor?.nombre || '?'} size={36} />}
+                </span>
+              )}
+              <div className="ms-msg-col">
+              {mostrarAutor && primeroDeRacha && (
+                <p className="ms-msg-autor">{autor?.nombre || 'Participante'}</p>
+              )}
               <div className="ms-msg-fila">
                 {esPropio && !isEliminado && !editando && (
                   <div className="ms-msg-opciones mensaje-opciones-externas">
@@ -567,6 +598,7 @@ export default function PanelChat({ usuario, onlineUsers, conversacionActiva, ac
                 {isEditado && !isEliminado && <span>Editado ·</span>}
                 <time>{formatearHoraMensaje(msg.createdat)}</time>
                 {esPropio && <DoubleCheck leido={msg.leido} />}
+              </div>
               </div>
             </div>
           )

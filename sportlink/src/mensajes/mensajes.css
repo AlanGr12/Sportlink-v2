@@ -247,6 +247,25 @@
 .ms-msg.is-propio { align-self: flex-end; align-items: flex-end; }
 .ms-msg.is-ajeno { align-self: flex-start; align-items: flex-start; }
 
+.ms-msg-col { display: flex; flex-direction: column; min-width: 0; max-width: 100%; }
+.is-propio .ms-msg-col { align-items: flex-end; }
+.is-ajeno .ms-msg-col { align-items: flex-start; }
+
+/* Grupos: foto en miniatura y nombre de quien escribió */
+.ms-msg--grupo { flex-direction: row; align-items: flex-start; gap: 10px; }
+.ms-msg-foto { flex: none; width: 36px; height: 36px; }
+.ms-msg-autor {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 800;
+  font-variation-settings: 'wdth' 106;
+  color: var(--slk-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
 .ms-msg-fila { display: flex; align-items: center; gap: 6px; max-width: 100%; }
 
 .ms-burbuja {
