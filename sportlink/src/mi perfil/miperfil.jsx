@@ -12,10 +12,13 @@ import PerfilBiografia from './PerfilBiografia.jsx';
 import BotonSeguir from '../components/BotonSeguir.jsx';
 import BotonVinculacionClub from '../components/BotonVinculacionClub.jsx';
 import PerfilEntrenadoresClub from './PerfilEntrenadoresClub.jsx';
+import PerfilActividad from './PerfilActividad.jsx';
 import { ROLES } from '../feed/feedUtils.js';
 import '../pruebas/PruebasView.css';
 import '../feed/Feed.css';
 import './miperfil.css';
+
+const POSTS_VISIBLES = 3;
 
 const MiPerfil = (props) => {
   const navigate = useNavigate();
@@ -42,6 +45,7 @@ const MiPerfil = (props) => {
   const [publicaciones, setPublicaciones] = useState([]);
   const [cargandoPublicaciones, setCargandoPublicaciones] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
+  const [verTodas, setVerTodas] = useState(false);
 
   // Usuario viene del prop (App.jsx es la fuente de verdad de sesión)
   const usuarioEnSesion = props.usuario;
@@ -542,6 +546,13 @@ const MiPerfil = (props) => {
           {/* Gestión de entrenadores vinculados (solo el club dueño del perfil) */}
           {esClub && esPerfilPropio && <PerfilEntrenadoresClub />}
 
+          {/* Abierto ahora: pruebas, empleos o entrenamientos de la cuenta */}
+          <PerfilActividad
+            rol={rolNormalizado}
+            idclub={perfil?.idclub}
+            identrenador={perfil?.identrenador}
+          />
+
           <section className="fd pf-posts" aria-labelledby="pf-posts-titulo">
             <h2 id="pf-posts-titulo" className="pf-seccion-titulo">Publicaciones</h2>
             {esPerfilPropio && usuarioEnSesion && (
@@ -555,17 +566,24 @@ const MiPerfil = (props) => {
                 <p>{esPerfilPropio ? 'Contá en qué andás: entrenamientos, resultados, búsquedas.' : 'Cuando publique, lo vas a ver acá.'}</p>
               </div>
             ) : (
-              <div className="fd-lista">
-                {publicaciones.map(post => (
-                  <Publicacion
-                    key={post.idpublicacion || post.id}
-                    post={post}
-                    usuario={usuarioEnSesion}
-                    onEliminar={handleEliminarPost}
-                    onAviso={handleMostrarToast}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="fd-lista">
+                  {publicaciones.slice(0, verTodas ? undefined : POSTS_VISIBLES).map(post => (
+                    <Publicacion
+                      key={post.idpublicacion || post.id}
+                      post={post}
+                      usuario={usuarioEnSesion}
+                      onEliminar={handleEliminarPost}
+                      onAviso={handleMostrarToast}
+                    />
+                  ))}
+                </div>
+                {publicaciones.length > POSTS_VISIBLES && (
+                  <button type="button" className="pr-btn pr-btn--ghost pf-ver-mas" onClick={() => setVerTodas(v => !v)} aria-expanded={verTodas}>
+                    {verTodas ? 'Ver menos' : `Ver las ${publicaciones.length} publicaciones`}
+                  </button>
+                )}
+              </>
             )}
           </section>
         </main>

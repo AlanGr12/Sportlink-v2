@@ -307,3 +307,31 @@
 @media (prefers-reduced-motion: reduce) {
   .pf-skel, .pf-skel-lineas i, .pf-resena--skeleton, .pf-head-grid > *, .pf-main > *, .pf-lado > * { animation: none; }
 }
+
+/* ── Abierto ahora (pruebas / empleos / entrenamientos de la cuenta) ── */
+.pf-act { gap: 18px; }
+.pf-act-grupo { display: grid; gap: 8px; }
+.pf-act-titulo { margin: 0; font-size: 16px; font-weight: 700; color: var(--slk-text-2); }
+.pf-act-titulo span { margin-left: 6px; padding: 1px 8px; background: var(--slk-text); color: var(--slk-ground); font-size: 13px; font-weight: 800; border-radius: 999px; }
+.pf-act-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.pf-act-fila {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 16px;
+  padding: 14px 16px; background: var(--slk-surface); color: var(--slk-text); text-decoration: none;
+}
+:root[data-tema='oscuro'] .pf-act-fila { background: var(--slk-ink-step); }
+.pf-act-fila:hover { background: var(--slk-step-hover); }
+.pf-act-fila:focus-visible { outline: 3px solid var(--slk-text); outline-offset: -3px; }
+.pf-act-fila svg { transition: transform 0.2s var(--slk-ease); }
+.pf-act-fila:hover svg { transform: translateX(3px); }
+.pf-act-txt { display: grid; min-width: 0; }
+.pf-act-txt strong { font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
+.pf-act-txt span { font-size: 15px; color: var(--slk-text-2); }
+.pf-act-extra { font-size: 15px; font-weight: 700; }
+
+/* Publicaciones: lista corta con "ver más" */
+.pf-ver-mas { justify-self: start; }
+
+/* La columna lateral acompaña al scroll mientras es más baja que la pantalla */
+@media (min-width: 1001px) {
+  .pf-lado { position: sticky; top: calc(var(--slk-header-h) + 24px); align-self: start; }
+}

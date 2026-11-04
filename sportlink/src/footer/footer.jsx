@@ -32,6 +32,12 @@ const Footer = () => (
 
       <div className="footer-pie">
         <p className="footer-copy">© {new Date().getFullYear()} SportLink</p>
+        <ul className="footer-contacto" aria-label="Legales">
+          <li><Link to="/legal/privacidad">Privacidad</Link></li>
+          <li><Link to="/legal/terminos">Términos</Link></li>
+          <li><Link to="/legal/cookies">Cookies</Link></li>
+          <li><Link to="/legal/reembolsos">Pagos y reembolsos</Link></li>
+        </ul>
         <ul className="footer-contacto" aria-label="Contacto">
           <li><a href="mailto:sportlink.ar@gmail.com">sportlink.ar@gmail.com</a></li>
           <li><a href="https://instagram.com/sportlink.ar" target="_blank" rel="noopener noreferrer">Instagram</a></li>

@@ -1,0 +1,64 @@
+/* Páginas legales: texto largo, columna de lectura cómoda, mismo sistema que el resto */
+.lg { padding: calc(var(--slk-header-h) + 48px) 0 96px; }
+.lg-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px 72px; align-items: start; }
+
+.lg-lado { position: sticky; top: calc(var(--slk-header-h) + 24px); }
+.lg-lado ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.lg-lado a {
+  display: block; padding: 10px 14px; color: var(--slk-text-2); font-weight: 600; text-decoration: none;
+  box-shadow: inset 3px 0 0 transparent;
+}
+.lg-lado a:hover { background: var(--slk-step); color: var(--slk-text); }
+.lg-lado a[aria-current='page'] { color: var(--slk-text); background: var(--slk-step); box-shadow: inset 3px 0 0 var(--slk-accent); }
+.lg-lado a:focus-visible { outline: 3px solid var(--slk-text); outline-offset: 2px; }
+
+.lg-doc { max-width: 720px; color: var(--slk-text); font-size: 17px; line-height: 1.6; }
+.lg-titulo { font-size: clamp(40px, 5vw, 72px); }
+.lg-fecha { margin: 16px 0 40px; color: var(--slk-text-2); font-size: 15px; }
+.lg-doc h2 { margin: 44px 0 12px; font-size: 24px; font-weight: 800; font-variation-settings: 'wdth' 106; letter-spacing: -0.02em; line-height: 1.15; }
+.lg-doc p, .lg-doc li { margin: 0 0 12px; }
+.lg-doc ul { padding-left: 22px; margin: 0 0 16px; }
+.lg-doc a { color: var(--slk-text); text-decoration: underline; text-decoration-color: var(--slk-accent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.lg-doc a:focus-visible { outline: 3px solid var(--slk-text); outline-offset: 3px; }
+.lg-nota { padding: 14px 16px; background: var(--slk-step); box-shadow: inset 4px 0 0 var(--slk-accent); font-size: 15px; }
+.lg-tabla { width: 100%; border-collapse: collapse; margin: 0 0 20px; font-size: 15px; }
+.lg-tabla th, .lg-tabla td { padding: 10px 12px; text-align: left; vertical-align: top; box-shadow: inset 0 -2px 0 var(--slk-step); }
+.lg-tabla th { font-weight: 800; }
+
+@media (max-width: 860px) {
+  .lg-layout { grid-template-columns: 1fr; gap: 24px; }
+  .lg-lado { position: static; }
+  .lg-lado ul { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; }
+}
+
+/* ── Banner de cookies ── */
+.ck {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
+  background: var(--slk-ink); color: var(--slk-on-ink);
+  box-shadow: inset 0 3px 0 var(--slk-accent);
+  font-family: var(--slk-font);
+}
+.ck-in {
+  max-width: var(--slk-max); margin: 0 auto; padding: 20px calc(var(--slk-gutter) + 72px) 20px var(--slk-gutter);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px;
+}
+.ck-txt { margin: 0; flex: 1 1 420px; font-size: 15px; line-height: 1.5; color: var(--slk-on-ink); }
+.ck-txt a { color: var(--slk-on-ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--slk-accent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.ck-acc { display: flex; flex-wrap: wrap; gap: 12px; }
+.ck a:focus-visible, .ck button:focus-visible { outline: 3px solid var(--slk-accent); outline-offset: 3px; }
+@media (max-width: 640px) { .ck-acc, .ck-acc button { width: 100%; } }
+
+/* ── Consentimientos en formularios ── */
+.cs { display: grid; gap: 12px; margin: 4px 0 4px; }
+.cs-item { display: grid; grid-template-columns: 22px 1fr; gap: 12px; align-items: start; font-size: 15px; line-height: 1.45; color: var(--slk-text); cursor: pointer; }
+.cs-item input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--slk-text); cursor: pointer; }
+.cs-item input:focus-visible { outline: 3px solid var(--slk-text); outline-offset: 2px; }
+.cs-item a { color: var(--slk-text); font-weight: 700; text-decoration: underline; text-decoration-color: var(--slk-accent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+
+/* ── Saltar al contenido (teclado) ── */
+.slk-skip {
+  position: fixed; top: 8px; left: 8px; z-index: 1000; padding: 12px 18px;
+  background: var(--slk-accent); color: var(--slk-on-accent); font-weight: 700; text-decoration: none;
+  transform: translateY(-200%);
+}
+.slk-skip:focus { transform: none; outline: 3px solid var(--slk-text); outline-offset: 2px; }

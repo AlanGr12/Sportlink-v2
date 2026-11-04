@@ -31,6 +31,9 @@ import AdminEventos from './admin/AdminEventos.jsx'
 import AdminPublicaciones from './admin/AdminPublicaciones.jsx'
 import BackofficeClub from './backoffice/BackofficeClub.jsx'
 import PanelEntrenador from './panelEntrenador/PanelEntrenador.jsx'
+import PaginaLegal from './legal/PaginaLegal.jsx'
+import BannerCookies from './legal/BannerCookies.jsx'
+import './legal/legal.css'
 
 // ── Página 404 ───────────────────────────────────────────────────────────────
 function NotFound404() {
@@ -240,6 +243,7 @@ function App() {
 
   return (
     <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <a href="#contenido" className="slk-skip">Saltar al contenido</a>
       {!esRutaAdmin && <Header usuario={usuario} onLogout={() => actualizarUsuario(null)} />}
 
       {esClubPendiente && (
@@ -264,7 +268,7 @@ function App() {
         </div>
       )}
 
-      <main className={esRutaAdmin ? 'admin-root' : 'content-body'} style={{ flex: 1 }}>
+      <main id="contenido" tabIndex={-1} className={esRutaAdmin ? 'admin-root' : 'content-body'} style={{ flex: 1, outline: 'none' }}>
         <Routes>
           {/* ── Consola de Administración (Backoffice) ── */}
           <Route
@@ -404,6 +408,10 @@ function App() {
             }
           />
 
+          {/* ── Legales (públicas) ── */}
+          <Route path="/legal/:doc" element={<PaginaLegal />} />
+          <Route path="/legal" element={<Navigate to="/legal/privacidad" replace />} />
+
           {/* ── 404 ── */}
           <Route path="*" element={<NotFound404 />} />
         </Routes>
@@ -411,6 +419,7 @@ function App() {
 
       {/* ── Chatbot flotante: visible excepto en backoffice ── */}
       {!esRutaAdmin && <ChatbotButton />}
+      {!esRutaAdmin && <BannerCookies />}
     </div>
   )
 }

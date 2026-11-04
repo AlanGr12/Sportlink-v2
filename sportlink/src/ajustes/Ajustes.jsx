@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import api from '../axiosConfig.js';
 import '../pruebas/PruebasView.css';
 import './ajustes.css';
 
@@ -34,6 +35,68 @@ function Fila({ titulo, desc, children, peligro }) {
 
 const Pronto = () => <span className="aj-pronto">Próximamente</span>;
 
+function EliminarCuenta({ onEliminada }) {
+  const [abierto, setAbierto] = useState(false);
+  const [texto, setTexto] = useState('');
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState('');
+
+  const eliminar = async () => {
+    setCargando(true); setError('');
+    try {
+      await api.delete('/api/login/cuenta');
+      onEliminada();
+    } catch (e) {
+      setError(e.response?.data?.error || 'No pudimos eliminar la cuenta. Probá de nuevo o escribinos.');
+      setCargando(false);
+    }
+  };
+
+  return (
+    <Fila titulo="Eliminar cuenta" desc="Borra tu perfil, publicaciones e inscripciones. No se puede deshacer." peligro>
+      {!abierto ? (
+        <button type="button" className="pr-btn pr-btn--danger pr-btn--sm" onClick={() => setAbierto(true)}>Eliminar mi cuenta</button>
+      ) : (
+        <div role="group" aria-label="Confirmar eliminación de cuenta" style={{ display: 'grid', gap: 8, justifyItems: 'start' }}>
+          <label htmlFor="aj-confirmar-borrado" style={{ fontSize: 14 }}>Escribí <strong>ELIMINAR</strong> para confirmar</label>
+          <input id="aj-confirmar-borrado" value={texto} onChange={(e) => setTexto(e.target.value)} autoComplete="off" disabled={cargando}
+            style={{ minHeight: 44, padding: '0 12px', border: 0, background: 'var(--slk-step)', color: 'var(--slk-text)', font: 'inherit' }} />
+          {error && <small role="alert" style={{ color: '#c62828' }}>{error}</small>}
+          <span style={{ display: 'flex', gap: 8 }}>
+            <button type="button" className="pr-btn pr-btn--danger pr-btn--sm" disabled={texto.trim().toUpperCase() !== 'ELIMINAR' || cargando} onClick={eliminar}>
+              {cargando ? 'Eliminando…' : 'Eliminar definitivamente'}
+            </button>
+            <button type="button" className="pr-btn pr-btn--ghost pr-btn--sm" disabled={cargando} onClick={() => { setAbierto(false); setTexto(''); setError(''); }}>Cancelar</button>
+          </span>
+        </div>
+      )}
+    </Fila>
+  );
+}
+
+function SeccionLegal() {
+  return (
+    <div className="aj-grupo">
+      <h3 className="aj-grupo-titulo">Documentos</h3>
+      <Fila titulo="Términos y condiciones" desc="Las reglas de uso de SportLink."><Link className="pr-link" to="/legal/terminos">Leer</Link></Fila>
+      <Fila titulo="Política de privacidad" desc="Qué datos tenemos y qué derechos tenés."><Link className="pr-link" to="/legal/privacidad">Leer</Link></Fila>
+      <Fila titulo="Política de cookies" desc="Qué guardamos en tu navegador."><Link className="pr-link" to="/legal/cookies">Leer</Link></Fila>
+      <Fila titulo="Pagos y reembolsos" desc="Cómo funcionan los pagos."><Link className="pr-link" to="/legal/reembolsos">Leer</Link></Fila>
+    </div>
+  );
+}
+
+function SeccionPrivacidad() {
+  return (
+    <div className="aj-grupo">
+      <h3 className="aj-grupo-titulo">Tus datos</h3>
+      <Fila titulo="Qué datos guardamos" desc="Cuenta, perfil y actividad. No vendemos tus datos."><Link className="pr-link" to="/legal/privacidad">Ver política</Link></Fila>
+      <Fila titulo="Pedir una copia o corregir datos" desc="Escribinos y te respondemos con tus datos."><a className="pr-link" href="mailto:sportlink.ar@gmail.com?subject=Solicitud%20sobre%20mis%20datos">Escribir</a></Fila>
+      <Fila titulo="Eliminar mis datos" desc="Se hace eliminando la cuenta, en la pestaña Cuenta."><span className="aj-pronto">En Cuenta</span></Fila>
+    </div>
+  );
+}
+
 function SeccionCuenta({ usuario, onLogout }) {
   const navigate = useNavigate();
   const salir = () => {
@@ -63,9 +126,7 @@ function SeccionCuenta({ usuario, onLogout }) {
 
       <div className="aj-grupo">
         <h3 className="aj-grupo-titulo">Zona de riesgo</h3>
-        <Fila titulo="Eliminar cuenta" desc="Borra tu perfil, publicaciones e inscripciones. No se puede deshacer." peligro>
-          <Pronto />
-        </Fila>
+        <EliminarCuenta onEliminada={salir} />
       </div>
     </>
   );
@@ -131,6 +192,8 @@ export default function Ajustes({ usuario, onLogout }) {
     if (activa === 'cuenta') return <SeccionCuenta usuario={usuario} onLogout={onLogout} />;
     if (activa === 'apariencia') return <SeccionApariencia />;
     if (activa === 'notificaciones') return <SeccionNotificaciones />;
+    if (activa === 'legal') return <SeccionLegal />;
+    if (activa === 'privacidad') return <SeccionPrivacidad />;
     return (
       <div className="pr-empty aj-vacio">
         <h3 className="pr-display pr-empty-title">Próximamente</h3>

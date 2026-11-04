@@ -156,6 +156,7 @@ const Header = ({ usuario, onLogout }) => {
     location.pathname.startsWith('/entrenamientos/') ||
     location.pathname.startsWith('/empleos/') ||
     location.pathname.startsWith('/publicacion/') ||
+    location.pathname.startsWith('/legal/') ||
     location.pathname === '/';
 
   const [tema, setTema] = useState(() => {

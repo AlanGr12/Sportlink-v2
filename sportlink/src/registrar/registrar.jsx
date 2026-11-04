@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AvisoError } from './CamposRegistro.jsx'
+import Consentimientos from '../legal/Consentimientos.jsx'
 
 // Paso 2 del registro: email y contraseña de la cuenta
 function Registrar({ datosIniciales = {}, onSiguiente }) {
@@ -7,6 +8,8 @@ function Registrar({ datosIniciales = {}, onSiguiente }) {
   const [contraseña, setContraseña] = useState(datosIniciales.contraseña || '')
   const [confirmar, setConfirmar] = useState(datosIniciales.contraseña || '')
   const [error, setError] = useState('')
+  const [consent, setConsent] = useState({ terminos: !!datosIniciales.email, edad: !!datosIniciales.email })
+  const [errorConsent, setErrorConsent] = useState('')
 
   function handleSiguiente(e) {
     e.preventDefault()
@@ -20,6 +23,10 @@ function Registrar({ datosIniciales = {}, onSiguiente }) {
     }
     if (contraseña !== confirmar) {
       setError('Las contraseñas no coinciden.')
+      return
+    }
+    if (!consent.terminos || !consent.edad) {
+      setErrorConsent('Para crear tu cuenta tenés que aceptar los términos y confirmar tu edad.')
       return
     }
     setError('')
@@ -43,6 +50,7 @@ function Registrar({ datosIniciales = {}, onSiguiente }) {
         <input type="password" autoComplete="new-password" placeholder="La misma de arriba" value={confirmar} onChange={limpiar(setConfirmar)} aria-invalid={error === 'Las contraseñas no coinciden.'} />
       </label>
 
+      <Consentimientos valor={consent} onCambiar={(v) => { setConsent(v); setErrorConsent('') }} error={errorConsent} />
       <AvisoError texto={error} />
       <button type="submit" className="pr-btn pr-btn--block au-enviar">
         Seguir
