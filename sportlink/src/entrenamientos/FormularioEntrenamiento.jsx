@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import useVistaPrevia from '../components/useVistaPrevia.js';
+import RecortadorImagen from '../components/RecortadorImagen.jsx'
+import { ASPECTOS } from '../components/aspectosImagen.js';
 import './FormularioEntrenamiento.css';
 import CustomSelect from '../components/CustomSelect.jsx';
 import InputDireccionOSM from '../components/maps/InputDireccionOSM.jsx';
@@ -207,10 +210,14 @@ const FormularioEntrenamiento = ({
     return Object.keys(nuevosErrores).length === 0;
   };
 
+  // La imagen elegida se acomoda en el recortador antes de confirmarla
+  const [imagenPendiente, setImagenPendiente] = useState(null);
+  const vistaPrevia = useVistaPrevia(archivo);
+
   const handleArchivoChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setArchivo(e.target.files[0]);
-    }
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (f) setImagenPendiente(f);
   };
 
   const handleSubmit = async (e) => {
@@ -518,9 +525,21 @@ const FormularioEntrenamiento = ({
             />
             <div className="file-upload-icon">📤</div>
             <div className="file-upload-text">
-              {archivo ? `Archivo seleccionado: ${archivo.name}` : 'Haz clic para subir la imagen del entrenamiento'}
+              {archivo ? 'Imagen lista. Hacé clic para elegir otra' : 'Haz clic para subir la imagen del entrenamiento'}
             </div>
           </label>
+        )}
+        {vistaPrevia && (
+          <img src={vistaPrevia} alt="Así se va a ver la imagen" style={{ display: 'block', width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', marginTop: 10 }} />
+        )}
+        {imagenPendiente && (
+          <RecortadorImagen
+            archivo={imagenPendiente}
+            aspecto={ASPECTOS.tarjeta}
+            titulo="Imagen del entrenamiento"
+            onCancelar={() => setImagenPendiente(null)}
+            onConfirmar={(f) => { setArchivo(f); setImagenPendiente(null); }}
+          />
         )}
         {errores.archivo && <span className="error-feedback">{errores.archivo}</span>}
       </div>

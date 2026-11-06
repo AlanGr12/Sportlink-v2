@@ -36,6 +36,21 @@ function EscudoClub({ club }) {
   const [fallida, setFallida] = useState(null)
   const url = club.fotoperfil && !/placeholder/i.test(club.fotoperfil) ? club.fotoperfil : null
   const conLogo = url && fallida !== url
+  const portada = club.portada && fallida !== club.portada ? club.portada : null
+
+  // Con portada: la foto del lugar ocupa el marco y el logo queda como sello abajo a la izquierda
+  if (portada) {
+    return (
+      <div className="pr-card-media cl-escudo cl-escudo--portada">
+        <img src={portada} alt={`Portada de ${club.nombre}`} loading="lazy" onError={() => setFallida(portada)} />
+        <span className="cl-sello">
+          {conLogo
+            ? <img src={url} alt={`Escudo de ${club.nombre}`} loading="lazy" onError={() => setFallida(url)} />
+            : <b aria-hidden="true">{iniciales(club.nombre)}</b>}
+        </span>
+      </div>
+    )
+  }
   return (
     <div className={`pr-card-media cl-escudo${conLogo ? '' : ' cl-escudo--vacio'}`}>
       {conLogo ? (

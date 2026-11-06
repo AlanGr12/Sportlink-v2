@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../axiosConfig.js';
 import AvatarCuadrado from '../components/AvatarCuadrado.jsx';
+import RecortadorImagen from '../components/RecortadorImagen.jsx'
+import { ASPECTOS } from '../components/aspectosImagen.js';
 import Footer from '../footer/footer.jsx';
 import Compositor from '../feed/Compositor.jsx';
 import Publicacion from '../feed/Publicacion.jsx';
@@ -37,6 +39,11 @@ const MiPerfil = (props) => {
   const [fotoPreview, setFotoPreview] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const inputFotoRef = useRef(null);
+  // Portada del club + recortador (la foto elegida se acomoda antes de confirmarla)
+  const [portadaArchivo, setPortadaArchivo] = useState(null);
+  const [portadaPreview, setPortadaPreview] = useState(null);
+  const inputPortadaRef = useRef(null);
+  const [recorte, setRecorte] = useState(null); // { archivo, tipo: 'foto' | 'portada' }
 
   // Estados de Red Social
   const [seguidores, setSeguidores] = useState(0);
@@ -314,6 +321,10 @@ const MiPerfil = (props) => {
     setFotoArchivo(null);
     setFotoPreview(null);
     if (inputFotoRef.current) inputFotoRef.current.value = '';
+    if (portadaPreview) URL.revokeObjectURL(portadaPreview);
+    setPortadaArchivo(null);
+    setPortadaPreview(null);
+    if (inputPortadaRef.current) inputPortadaRef.current.value = '';
   };
 
   const cerrarModal = () => {
@@ -321,8 +332,9 @@ const MiPerfil = (props) => {
     setModalAbierto(false);
   };
 
-  const handleSeleccionFoto = (e) => {
+  const handleSeleccionFoto = (e, tipo = 'foto') => {
     const archivo = e.target.files?.[0];
+    e.target.value = '';
     if (!archivo) return;
 
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(archivo.type)) {
@@ -334,9 +346,21 @@ const MiPerfil = (props) => {
       return;
     }
 
-    if (fotoPreview) URL.revokeObjectURL(fotoPreview);
-    setFotoArchivo(archivo);
-    setFotoPreview(URL.createObjectURL(archivo));
+    setRecorte({ archivo, tipo });
+  };
+
+  // El usuario confirmó el recorte: queda lista para guardarse con el perfil
+  const aplicarRecorte = (archivo) => {
+    if (recorte?.tipo === 'portada') {
+      if (portadaPreview) URL.revokeObjectURL(portadaPreview);
+      setPortadaArchivo(archivo);
+      setPortadaPreview(URL.createObjectURL(archivo));
+    } else {
+      if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+      setFotoArchivo(archivo);
+      setFotoPreview(URL.createObjectURL(archivo));
+    }
+    setRecorte(null);
   };
 
   // Manejar apertura de modal de edición cargando datos actuales
@@ -378,6 +402,22 @@ const MiPerfil = (props) => {
       }
     }
 
+    // 1b. Subir la portada del club si eligió una nueva
+    let nuevaPortada = null;
+    if (portadaArchivo && esClub) {
+      try {
+        const fd = new FormData();
+        fd.append('portada', portadaArchivo);
+        const res = await api.put('/api/login/perfil/portada', fd);
+        nuevaPortada = res.data?.portada || null;
+      } catch (err) {
+        console.error('Error al subir la portada:', err);
+        handleMostrarToast(err.response?.data?.error || 'No se pudo subir la portada. Intentá de nuevo.');
+        setGuardando(false);
+        return;
+      }
+    }
+
     // 2. Guardar datos básicos y biografía en el backend
     const datos = {
       nombre: formEdicion.nombre,
@@ -399,6 +439,7 @@ const MiPerfil = (props) => {
       ...prev,
       ...formEdicion,
       ...(nuevaFoto ? { fotoperfil: nuevaFoto } : {}),
+      ...(nuevaPortada ? { portada: nuevaPortada } : {}),
     }));
 
     // 4. Si cambió la foto del usuario logueado, propagarla a la sesión
@@ -646,6 +687,16 @@ const MiPerfil = (props) => {
         document.body
       )}
 
+      {recorte && (
+        <RecortadorImagen
+          archivo={recorte.archivo}
+          aspecto={recorte.tipo === 'portada' ? ASPECTOS.portada : ASPECTOS.cuadrado}
+          titulo={recorte.tipo === 'portada' ? 'Portada del club' : 'Foto de perfil'}
+          onCancelar={() => setRecorte(null)}
+          onConfirmar={aplicarRecorte}
+        />
+      )}
+
       {/* ── Editar perfil ── */}
       {modalAbierto && createPortal(
         <div className="pr-overlay" onClick={cerrarModal}>
@@ -669,8 +720,27 @@ const MiPerfil = (props) => {
                       {fotoPreview && <button type="button" className="pr-link" onClick={limpiarFoto}>Descartar</button>}
                     </div>
                   </div>
-                  <input ref={inputFotoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleSeleccionFoto} hidden />
+                  <input ref={inputFotoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => handleSeleccionFoto(e, 'foto')} hidden />
                 </div>
+
+                {esClub && (
+                  <div className="pf-portada">
+                    <button type="button" className="pf-portada-btn" onClick={() => inputPortadaRef.current?.click()} aria-label="Cambiar portada del club">
+                      {(portadaPreview || perfil?.portada)
+                        ? <img src={portadaPreview || perfil.portada} alt="Portada del club" />
+                        : <span className="pf-portada-vacia">Sin portada</span>}
+                    </button>
+                    <div>
+                      <strong>Portada del club</strong>
+                      <span>Foto de la entrada o de las instalaciones. Se ve en la tarjeta del club.</span>
+                      <div className="pf-foto-links">
+                        <button type="button" className="pr-link" onClick={() => inputPortadaRef.current?.click()}>{perfil?.portada || portadaPreview ? 'Cambiar portada' : 'Subir portada'}</button>
+                        {portadaPreview && <button type="button" className="pr-link" onClick={() => { URL.revokeObjectURL(portadaPreview); setPortadaArchivo(null); setPortadaPreview(null); }}>Descartar</button>}
+                      </div>
+                    </div>
+                    <input ref={inputPortadaRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => handleSeleccionFoto(e, 'portada')} hidden />
+                  </div>
+                )}
 
                 <div className={esClub ? 'pf-campos' : 'pf-campos pf-campos--doble'}>
                   <label className="pf-campo">

@@ -1,0 +1,51 @@
+/* Editor de recorte de imágenes (sistema SportLink: plano, esquinas rectas) */
+.rc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(14, 16, 17, 0.72);
+  font-family: var(--slk-font);
+  color: var(--slk-text);
+}
+.rc-overlay * { box-sizing: border-box; }
+.rc-modal {
+  width: min(640px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  background: var(--slk-ground);
+}
+.rc-titulo { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: var(--slk-text); }
+.rc-ayuda { margin: 0; font-size: 15px; color: var(--slk-text-2); }
+.rc-area {
+  position: relative;
+  height: min(52vh, 380px);
+  background: #0e1011;
+}
+.rc-zoom { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 14px; font-size: 15px; font-weight: 600; }
+.rc-zoom input { width: 100%; accent-color: var(--slk-text); }
+.rc-error { margin: 0; color: #b3261e; font-size: 15px; }
+.rc-acciones { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+.rc-btn {
+  padding: 14px 22px;
+  border: 0;
+  border-radius: 0;
+  background: var(--slk-accent);
+  color: var(--slk-on-accent);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.rc-btn:disabled { opacity: 0.55; cursor: default; }
+.rc-btn--sec { background: transparent; color: var(--slk-text); box-shadow: inset 0 0 0 2px var(--slk-step-hover); }
+.rc-btn:focus-visible, .rc-zoom input:focus-visible { outline: 3px solid var(--slk-text); outline-offset: 2px; }
+@media (max-width: 480px) {
+  .rc-modal { padding: 18px; }
+  .rc-acciones .rc-btn { flex: 1 1 100%; }
+}

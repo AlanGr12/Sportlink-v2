@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import useVistaPrevia from "../components/useVistaPrevia.js";
+import RecortadorImagen from "../components/RecortadorImagen.jsx"
+import { ASPECTOS } from "../components/aspectosImagen.js";
 import api from "../axiosConfig.js";
 import CustomSelect from "../components/CustomSelect.jsx";
 import InputDireccionOSM from "../components/maps/InputDireccionOSM.jsx";
@@ -59,7 +62,9 @@ function FormularioPrueba({ idclub, prueba = null, onGuardado, onCancelar }) {
   // (una prueba con la inscripción ya cerrada tiene que poder editarse igual)
   const cambioFechaPrueba = !esEdicion || fechaprueba !== fechaInput(p.fechaprueba);
   const cambioFechaCierre = !esEdicion || fechacierre !== fechaInput(p.fechacierre);
-  const [imagenFile,   setImagenFile]   = useState(null);   // File object
+  const [imagenFile,   setImagenFile]   = useState(null);   // File object (ya recortado)
+  const [imagenPendiente, setImagenPendiente] = useState(null); // elegida, falta acomodarla
+  const vistaPrevia = useVistaPrevia(imagenFile);
 
   // ── UI state ──────────────────────────────────────────────────────────────
   const [errores,  setErrores]  = useState({});
@@ -392,15 +397,27 @@ function FormularioPrueba({ idclub, prueba = null, onGuardado, onCancelar }) {
             <input
               type="file"
               accept="image/*"
-              onChange={(e) => setImagenFile(e.target.files?.[0] || null)}
+              onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) setImagenPendiente(f); }}
             />
             <div className="file-upload-icon">🖼️</div>
             <div className="file-upload-text">
               {imagenFile
-                ? `Seleccionada: ${imagenFile.name}`
+                ? "Imagen lista. Clic para elegir otra"
                 : esEdicion ? "Si no subís otra, queda la actual" : "Clic para subir imagen"}
             </div>
           </label>
+          {vistaPrevia && (
+            <img src={vistaPrevia} alt="Así se va a ver la imagen" style={{ display: "block", width: "100%", aspectRatio: "16 / 9", objectFit: "cover", marginTop: 10 }} />
+          )}
+          {imagenPendiente && (
+            <RecortadorImagen
+              archivo={imagenPendiente}
+              aspecto={ASPECTOS.tarjeta}
+              titulo="Imagen de la prueba"
+              onCancelar={() => setImagenPendiente(null)}
+              onConfirmar={(f) => { setImagenFile(f); setImagenPendiente(null); }}
+            />
+          )}
         </div>
       </div>
 

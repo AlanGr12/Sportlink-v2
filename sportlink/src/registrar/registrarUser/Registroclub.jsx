@@ -5,6 +5,7 @@ import InputDireccionOSM from '../../components/maps/InputDireccionOSM.jsx'
 import MapaUbicacionDark from '../../components/maps/MapaUbicacionDark.jsx'
 import { DEPORTES } from '../datosRegistro.js'
 import { CampoFoto, AvisoError } from '../CamposRegistro.jsx'
+import { ASPECTOS } from '../../components/aspectosImagen.js'
 
 // Paso 3 del registro: datos del club. Email y contraseña vienen del paso 2 (datosBase).
 // El club queda pendiente de aprobación: no se inicia sesión hasta que el backoffice lo apruebe.
@@ -12,6 +13,7 @@ function RegistroClub({ datosBase = {} }) {
   const navigate = useNavigate()
   const [form, setForm] = useState({ nombre: '', ubicacion: '', direccion: '', latitud: null, longitud: null, deportes: [], descripcion: '' })
   const [fotoperfil, setFotoperfil] = useState(null)
+  const [portada, setPortada] = useState(null)
   const [errors, setErrors] = useState({})
   const [cargando, setCargando] = useState(false)
   const [errorGlobal, setErrorGlobal] = useState('')
@@ -33,6 +35,7 @@ function RegistroClub({ datosBase = {} }) {
     const nuevos = {}
     if (!form.nombre) nuevos.nombre = 'Completá el nombre del club'
     if (form.latitud == null || form.longitud == null) nuevos.ubicacion = 'Buscá la dirección de la sede y elegila de la lista'
+    if (!portada) nuevos.portada = 'Subí una foto de la entrada o de las instalaciones del club'
     if (form.deportes.length === 0) nuevos.deportes = 'Elegí al menos un deporte'
 
     setErrors(nuevos)
@@ -55,6 +58,7 @@ function RegistroClub({ datosBase = {} }) {
       formData.append('deportes', JSON.stringify(form.deportes))
       formData.append('descripcion', form.descripcion)
       if (fotoperfil) formData.append('fotoperfil', fotoperfil)
+      formData.append('portada', portada)
 
       await api.post('/api/clubes/registro', formData)
       navigate('/login', { state: { clubRegistrado: true } })
@@ -117,7 +121,18 @@ function RegistroClub({ datosBase = {} }) {
         <small style={{ justifySelf: 'end' }}>{form.descripcion.length}/500</small>
       </label>
 
-      <CampoFoto id="rg-foto-club" archivo={fotoperfil} onElegir={setFotoperfil} disabled={cargando} />
+      <CampoFoto id="rg-foto-club" archivo={fotoperfil} onElegir={setFotoperfil} disabled={cargando} etiqueta="Logo del club (opcional)" />
+
+      <CampoFoto
+        id="rg-portada-club"
+        archivo={portada}
+        onElegir={(f) => { setPortada(f); setErrors((prev) => ({ ...prev, portada: '' })) }}
+        disabled={cargando}
+        etiqueta="Portada del club"
+        ayuda="Foto de la entrada o de las instalaciones. JPG, PNG o WEBP"
+        aspecto={ASPECTOS.portada}
+        error={errors.portada}
+      />
 
       <div className="au-aviso">
         <strong>Antes de entrar, revisamos el club</strong>
