@@ -19,6 +19,9 @@ const InputDireccionOSM = ({
   const [cargando, setCargando] = useState(false);
   const [mostrarDropdown, setMostrarDropdown] = useState(false);
   const contenedorRef = useRef(null);
+  // Solo se busca cuando el usuario escribe: un valor precargado (al editar) o la
+  // dirección recién elegida no abren la lista de sugerencias sola
+  const escribioRef = useRef(false);
 
   // Sincronizar si cambia el valor externo
   useEffect(() => {
@@ -39,6 +42,7 @@ const InputDireccionOSM = ({
   // Debounce de 350ms para consultar Nominatim
   useEffect(() => {
     const texto = query.trim();
+    if (!escribioRef.current) return;
     if (texto.length < 3) {
       setSugerencias([]);
       setMostrarDropdown(false);
@@ -73,6 +77,7 @@ const InputDireccionOSM = ({
 
   const handleInputChange = (e) => {
     const nuevoTexto = e.target.value;
+    escribioRef.current = true;
     setQuery(nuevoTexto);
     if (onChangeText) {
       onChangeText(nuevoTexto);
@@ -91,6 +96,7 @@ const InputDireccionOSM = ({
       item.address?.state ||
       'CABA';
 
+    escribioRef.current = false;
     setQuery(display);
     setMostrarDropdown(false);
 

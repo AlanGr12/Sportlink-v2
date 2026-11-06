@@ -2,10 +2,12 @@
    Footer compartido — sección "tinta" del sistema SportLink.
    Va en tinta en las dos paletas, así encaja también debajo de las
    vistas viejas oscuras. Alineado al borde de la página (--slk-max).
+   Marca a la izquierda + columnas de links con título (no una barra
+   de navegación); abajo el copyright.
    ============================================================ */
 
 .footer {
-  padding: 36px 0 24px;
+  padding: 64px 0 28px;
   background: var(--slk-ink);
   color: var(--slk-on-ink);
   font-family: var(--slk-font);
@@ -14,7 +16,7 @@
 }
 
 /* Neutraliza reglas globales de landing.css (fuente, color de p, padding) */
-.footer :where(p, a, li, span) { font-family: inherit !important; letter-spacing: 0; text-transform: none; }
+.footer :where(p, a, li, span, ul) { font-family: inherit !important; letter-spacing: 0; text-transform: none; }
 
 .footer-wrap {
   max-width: var(--slk-max);
@@ -22,64 +24,63 @@
   padding: 0 var(--slk-gutter);
 }
 
-.footer-fila {
+.footer-grid {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 20px 48px;
-  padding-right: 72px; /* el botón flotante del chatbot queda sobre este borde */
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: 40px 48px;
+  align-items: start;
 }
 
-.footer-marca { display: flex; align-items: center; gap: 20px; }
-.footer-logo { display: block; height: 26px; width: auto; }
-.footer-marca p { margin: 0; color: var(--slk-on-ink-2); font-size: 15px; white-space: nowrap; }
+/* Marca */
+.footer-marca { display: grid; gap: 16px; justify-items: start; }
+.footer-logo { display: block; height: 32px; width: auto; }
+.footer-marca p {
+  margin: 0;
+  max-width: 16ch;
+  color: var(--slk-on-ink);
+  font-size: clamp(26px, 2.4vw, 34px);
+  font-weight: 800;
+  font-variation-settings: 'wdth' 112;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
 
-.footer-nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 28px; }
+/* Columnas de links */
+.footer-col { display: grid; gap: 14px; align-content: start; }
+.footer-titulo { margin: 0; color: var(--slk-on-ink-2); font-size: 14px; font-weight: 600; }
+.footer-col ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 
 .footer a {
   color: var(--slk-on-ink);
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   text-decoration: none;
   text-underline-offset: 5px;
   text-decoration-thickness: 2px;
+  overflow-wrap: anywhere;
   transition: color 0.2s;
 }
 .footer a:hover { text-decoration: underline; text-decoration-color: var(--slk-accent); }
 .footer a:focus-visible { outline: 3px solid var(--slk-accent); outline-offset: 3px; }
-.footer-logo-link:hover { text-decoration: none; }
+.footer .footer-logo-link:hover { text-decoration: none; }
 
-.footer-contacto { display: flex; gap: 6px 20px; margin: 0; padding: 0; list-style: none; }
-.footer-contacto a { color: var(--slk-on-ink-2); font-size: 14px; font-weight: 500; }
-.footer-contacto a:hover { color: var(--slk-on-ink); }
-
+/* Pie: copyright; deja libre a la derecha el botón flotante del chatbot */
 .footer-pie {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 24px;
-  margin-top: 24px;
-  padding: 16px 72px 0 0; /* deja libre el botón flotante del chatbot */
+  margin-top: 56px;
+  padding: 18px 72px 0 0;
   box-shadow: inset 0 2px 0 var(--slk-ink-step);
   font-size: 14px;
 }
 .footer-copy { margin: 0; color: var(--slk-on-ink-2); }
 
 /* ── Responsive ── */
-/* La bajada se esconde antes de que la navegación tenga que partirse en dos líneas */
-@media (max-width: 1360px) and (min-width: 1101px) {
-  .footer-marca p { display: none; }
-}
-
-@media (max-width: 1100px) {
-  .footer-fila { grid-template-columns: 1fr; }
-  .footer-nav { justify-content: flex-start; }
+@media (max-width: 1000px) {
+  .footer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .footer-marca { grid-column: 1 / -1; }
 }
 
 @media (max-width: 640px) {
-  .footer { padding: 32px 0 24px; }
-  .footer-fila { grid-template-columns: 1fr; }
-  .footer-marca { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .footer-pie { flex-direction: column-reverse; align-items: flex-start; }
-  .footer-contacto { flex-direction: column; }
+  .footer { padding: 48px 0 24px; }
+  .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 24px; }
+  .footer-pie { margin-top: 40px; }
 }

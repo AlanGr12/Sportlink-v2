@@ -50,6 +50,8 @@ function Pruebas({ idJugador, usuario }) {
 
   // ── Modal de creación (solo rol club) ─────────────────────
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
+  // Prueba que se está editando (mismo modal que crear; null = crear una nueva)
+  const [pruebaEditando, setPruebaEditando] = useState(null);
 
   // ── Usuario ───────────────────────────────────────────────
   // Usuario viene del prop (App.jsx es la fuente de verdad de sesión)
@@ -105,9 +107,21 @@ function Pruebas({ idJugador, usuario }) {
   const [eliminandoPrueba, setEliminandoPrueba] = useState(false);
   const [errorEliminarPrueba, setErrorEliminarPrueba] = useState(null);
 
-  const puedeEliminarPrueba = (prueba) =>
-    esAdmin ||
-    (esClub && idclubResuelto != null && Number(prueba.club?.idclub) === Number(idclubResuelto));
+  // Editar: solo el club dueño (el backend también lo verifica)
+  const puedeEditarPrueba = (prueba) =>
+    esClub && idclubResuelto != null && Number(prueba.club?.idclub) === Number(idclubResuelto);
+
+  const puedeEliminarPrueba = (prueba) => esAdmin || puedeEditarPrueba(prueba);
+
+  const abrirEdicion = (prueba) => {
+    setPruebaEditando(prueba);
+    setModalCrearAbierto(true);
+  };
+
+  const cerrarFormulario = () => {
+    setModalCrearAbierto(false);
+    setPruebaEditando(null);
+  };
 
   const confirmarEliminarPrueba = async () => {
     if (!pruebaPorEliminar) return;
@@ -858,7 +872,7 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
     if (!modalAbierto && !modalCrearAbierto) return;
     const alPresionar = (e) => {
       if (e.key !== 'Escape') return;
-      if (modalCrearAbierto) setModalCrearAbierto(false);
+      if (modalCrearAbierto) cerrarFormulario();
       else cerrarModal();
     };
     window.addEventListener('keydown', alPresionar);
@@ -1048,12 +1062,17 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
                         {textoBoton(prueba)}
                       </button>
                       {puedeEliminarPrueba(prueba) && (
-                        <button
-                          className="pr-link pr-link--danger"
-                          onClick={() => { setErrorEliminarPrueba(null); setPruebaPorEliminar(prueba); }}
-                        >
-                          Eliminar prueba
-                        </button>
+                        <div className="pr-card-owner">
+                          {puedeEditarPrueba(prueba) && (
+                            <button className="pr-link" onClick={() => abrirEdicion(prueba)}>Editar</button>
+                          )}
+                          <button
+                            className="pr-link pr-link--danger"
+                            onClick={() => { setErrorEliminarPrueba(null); setPruebaPorEliminar(prueba); }}
+                          >
+                            Eliminar
+                          </button>
+                        </div>
                       )}
                     </div>
                   </li>
@@ -1066,26 +1085,31 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
 
       <Footer />
 
-      {/* ── Crear prueba ── */}
+      {/* ── Crear / editar prueba ── */}
       {modalCrearAbierto && createPortal(
-        <div className="pr-overlay" onClick={() => setModalCrearAbierto(false)}>
+        <div className="pr-overlay" onClick={cerrarFormulario}>
           <div className="pr-modal pr-modal--form" role="dialog" aria-modal="true" aria-labelledby="pr-crear-titulo" onClick={(e) => e.stopPropagation()}>
             <header className="pr-modal-head">
-              <h2 id="pr-crear-titulo" className="pr-modal-title">Nueva prueba</h2>
-              <button className="pr-close" onClick={() => setModalCrearAbierto(false)} aria-label="Cerrar">×</button>
+              <h2 id="pr-crear-titulo" className="pr-modal-title">{pruebaEditando ? "Editar prueba" : "Nueva prueba"}</h2>
+              <button className="pr-close" onClick={cerrarFormulario} aria-label="Cerrar">×</button>
             </header>
             <div className="pr-modal-body">
               <FormularioPrueba
+                key={pruebaEditando?.idprueba ?? "nueva"}
                 idclub={idclubResuelto}
+                prueba={pruebaEditando}
                 onGuardado={() => {
-                  setModalCrearAbierto(false);
+                  const editada = !!pruebaEditando;
+                  cerrarFormulario();
                   mostrarToast(
-                    "Prueba publicada",
-                    "Tu prueba ya está disponible para que los jugadores la vean y se postulen."
+                    editada ? "Cambios guardados" : "Prueba publicada",
+                    editada
+                      ? "La prueba quedó actualizada."
+                      : "Tu prueba ya está disponible para que los jugadores la vean y se postulen."
                   );
                   obtenerPruebas(mostrarTodas);
                 }}
-                onCancelar={() => setModalCrearAbierto(false)}
+                onCancelar={cerrarFormulario}
               />
             </div>
           </div>

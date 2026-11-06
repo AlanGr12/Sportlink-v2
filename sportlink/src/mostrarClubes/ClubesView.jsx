@@ -22,6 +22,33 @@ const Flecha = () => (
   </svg>
 )
 
+// "Club de fútbol" · "Fútbol y basket" · "Fútbol, basket y 3 más" · "Club deportivo"
+const lineaDeportes = (deportes) => {
+  if (deportes.length === 0) return 'Club deportivo'
+  if (deportes.length === 1) return `Club de ${deportes[0].toLowerCase()}`
+  if (deportes.length === 2) return `${deportes[0]} y ${deportes[1].toLowerCase()}`
+  return `${deportes[0]}, ${deportes[1].toLowerCase()} y ${deportes.length - 2} más`
+}
+
+// Escudo arriba de la tarjeta: el logo sobre una placa blanca (a su tamaño, sin agrandarlo);
+// sin logo, las iniciales del club sobre tinta, como las pruebas sin foto
+function EscudoClub({ club }) {
+  const [fallida, setFallida] = useState(null)
+  const url = club.fotoperfil && !/placeholder/i.test(club.fotoperfil) ? club.fotoperfil : null
+  const conLogo = url && fallida !== url
+  return (
+    <div className={`pr-card-media cl-escudo${conLogo ? '' : ' cl-escudo--vacio'}`}>
+      {conLogo ? (
+        <span className="cl-escudo-placa">
+          <img src={url} alt={`Escudo de ${club.nombre}`} loading="lazy" onError={() => setFallida(url)} />
+        </span>
+      ) : (
+        <span className="cl-escudo-iniciales" aria-hidden="true">{iniciales(club.nombre)}</span>
+      )}
+    </div>
+  )
+}
+
 const tieneCoordenadas = (lat, lon) =>
   lat !== null && lat !== undefined && lat !== '' && !isNaN(Number(lat)) &&
   lon !== null && lon !== undefined && lon !== '' && !isNaN(Number(lon)) &&
@@ -292,7 +319,7 @@ function ClubesView({ usuario }) {
 
           {loading ? (
             <div className="pr-grid" aria-busy="true" aria-label="Cargando clubes">
-              {[0, 1, 2].map((i) => <div key={i} className="pr-card pr-card--skeleton cl-skeleton" />)}
+              {[0, 1, 2].map((i) => <div key={i} className="pr-card pr-card--skeleton cl-skeleton cl-skeleton--club" />)}
             </div>
           ) : error ? (
             <div className="pr-empty">
@@ -313,25 +340,35 @@ function ClubesView({ usuario }) {
                 const nPruebas = pruebasPorClub[club.idclub]?.length || 0
                 const sigue = seguidos.has(Number(club.idusuario))
                 return (
-                  <li key={club.idclub} className="pr-card">
-                    <div className="pr-card-head cl-card-head">
-                      {renderAvatar(club)}
+                  <li key={club.idclub} className="pr-card cl-card">
+                    <EscudoClub club={club} />
+
+                    <div className="pr-card-head">
                       <div className="pr-card-id">
                         <h3>{club.nombre}</h3>
-                        <p>{formatearUbicacionCorta(club.ubicacion || club.direccion) || 'Ubicación a confirmar'}</p>
+                        <p>{lineaDeportes(deportes)}</p>
                       </div>
+                      {nPruebas > 0 && <span className="pr-pill pr-pill--open">Con pruebas</span>}
                     </div>
 
-                    {(nPruebas > 0 || sigue) && (
+                    {sigue && (
                       <div className="pr-tags">
-                        {nPruebas > 0 && (
-                          <span className="cl-tag-live">
-                            {nPruebas} {nPruebas === 1 ? 'prueba abierta' : 'pruebas abiertas'}
-                          </span>
-                        )}
-                        {sigue && <span>Lo seguís</span>}
+                        <span>Lo seguís</span>
                       </div>
                     )}
+
+                    <dl className="pr-facts">
+                      <div>
+                        <dt>Zona</dt>
+                        <dd title={club.ubicacion || club.direccion || ''}>
+                          {formatearUbicacionCorta(club.ubicacion || club.direccion) || 'A confirmar'}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Pruebas abiertas</dt>
+                        <dd>{nPruebas > 0 ? nPruebas : 'Ninguna por ahora'}</dd>
+                      </div>
+                    </dl>
 
                     {deportes.length > 0 && (
                       <div className="cl-sports" aria-label="Deportes">
@@ -366,7 +403,12 @@ function ClubesView({ usuario }) {
               {renderAvatar(clubSeleccionado, true)}
               <div className="pr-card-id">
                 <h2 id="cl-detalle-titulo" className="pr-modal-title">{clubSeleccionado.nombre}</h2>
-                <p>{formatearUbicacionCorta(clubSeleccionado.ubicacion || clubSeleccionado.direccion) || 'Ubicación a confirmar'}</p>
+                <p>
+                  {[
+                    lineaDeportes((clubSeleccionado.deportes || []).map((d) => d.deporte).filter(Boolean)),
+                    formatearUbicacionCorta(clubSeleccionado.ubicacion || clubSeleccionado.direccion),
+                  ].filter(Boolean).join(' · ')}
+                </p>
               </div>
               <button className="pr-close" onClick={() => setClubSeleccionado(null)} aria-label="Cerrar">×</button>
             </header>

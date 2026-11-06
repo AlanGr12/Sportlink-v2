@@ -26,34 +26,47 @@ const deportesDisponibles = [
 const IMAGEN_DEFAULT =
   "https://via.placeholder.com/600x300?text=Sin+imagen";
 
+// "20:00:00" → "20:00" (formato de <input type="time">)
+const horaInput = (h) => (h ? String(h).substring(0, 5) : "");
+const fechaInput = (f) => (f ? String(f).substring(0, 10) : "");
+
 // ── Componente ────────────────────────────────────────────────────────────────
-function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
+// Con `prueba` el formulario edita esa prueba (PUT /api/pruebas/:id); sin ella, crea una nueva.
+function FormularioPrueba({ idclub, prueba = null, onGuardado, onCancelar }) {
   const idclubResuelto = Number(idclub);
+  const esEdicion = !!prueba?.idprueba;
+  const p = prueba || {};
 
   // ── Campos del formulario ─────────────────────────────────────────────────
-  const [iddeporte,    setIddeporte]    = useState("");
+  const [iddeporte,    setIddeporte]    = useState(p.deporte?.iddeporte ?? "");
   // Solo se pueden crear pruebas de los deportes que el club seleccionó en su perfil
   const [deportesClub, setDeportesClub] = useState([]);
   const [deportesCargados, setDeportesCargados] = useState(false);
-  const [cupo,         setCupo]         = useState("");
-  const [horainicio,   setHorainicio]   = useState("");
-  const [horafin,      setHorafin]      = useState("");
-  const [estado,       setEstado]       = useState("true");
-  const [descripcion,  setDescripcion]  = useState("");
-  const [categoria,    setCategoria]    = useState("");
-  const [zona,         setZona]         = useState("");
-  const [direccion,    setDireccion]    = useState("");
-  const [latitud,      setLatitud]      = useState(null);
-  const [longitud,     setLongitud]     = useState(null);
-  const [genero,       setGenero]       = useState("");
-  const [fechaprueba,  setFechaprueba]  = useState("");
-  const [fechacierre,  setFechacierre]  = useState("");
+  const [cupo,         setCupo]         = useState(p.cupo != null ? String(p.cupo) : "");
+  const [horainicio,   setHorainicio]   = useState(horaInput(p.horainicio));
+  const [horafin,      setHorafin]      = useState(horaInput(p.horafin));
+  const [estado,       setEstado]       = useState(p.estado === false ? "false" : "true");
+  const [descripcion,  setDescripcion]  = useState(p.descripcion || "");
+  const [categoria,    setCategoria]    = useState(p.categoria || "");
+  const [zona,         setZona]         = useState(p.zona || "");
+  const [direccion,    setDireccion]    = useState(p.direccion || "");
+  const [latitud,      setLatitud]      = useState(p.latitud ?? null);
+  const [longitud,     setLongitud]     = useState(p.longitud ?? null);
+  const [genero,       setGenero]       = useState(p.genero || "");
+  const [fechaprueba,  setFechaprueba]  = useState(fechaInput(p.fechaprueba));
+  const [fechacierre,  setFechacierre]  = useState(fechaInput(p.fechacierre));
+  // Al editar, las fechas que no se tocan no se validan ni se envían
+  // (una prueba con la inscripción ya cerrada tiene que poder editarse igual)
+  const cambioFechaPrueba = !esEdicion || fechaprueba !== fechaInput(p.fechaprueba);
+  const cambioFechaCierre = !esEdicion || fechacierre !== fechaInput(p.fechacierre);
   const [imagenFile,   setImagenFile]   = useState(null);   // File object
 
   // ── UI state ──────────────────────────────────────────────────────────────
   const [errores,  setErrores]  = useState({});
   const [loading,  setLoading]  = useState(false);
   const [errorApi, setErrorApi] = useState("");
+
+  const idDeporteOriginal = Number(p.deporte?.iddeporte) || null;
 
   useEffect(() => {
     if (!idclubResuelto) return;
@@ -62,14 +75,16 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
       .then((res) => {
         if (cancelado) return;
         const ids = (res.data?.deportes || []).map((d) => Number(d.iddeporte));
+        // Al editar se mantiene el deporte actual en la lista aunque el club lo haya sacado de su perfil
+        if (idDeporteOriginal && !ids.includes(idDeporteOriginal)) ids.push(idDeporteOriginal);
         const propios = deportesDisponibles.filter((d) => ids.includes(d.id));
         setDeportesClub(propios);
-        if (propios.length > 0) setIddeporte(propios[0].id);
+        if (!idDeporteOriginal && propios.length > 0) setIddeporte(propios[0].id);
         setDeportesCargados(true);
       })
       .catch((err) => console.error("FormularioPrueba: no se pudieron cargar los deportes del club:", err));
     return () => { cancelado = true; };
-  }, [idclubResuelto]);
+  }, [idclubResuelto, idDeporteOriginal]);
 
   // ── Validación ────────────────────────────────────────────────────────────
   const validar = () => {
@@ -93,6 +108,7 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
     if (!cupo || Number(cupo) <= 0)  e.cupo        = "El cupo debe ser mayor a 0.";
     if (!horainicio)                  e.horainicio  = "Ingresá la hora de inicio.";
     if (!horafin)                     e.horafin     = "Ingresá la hora de fin.";
+    else if (horainicio && horafin <= horainicio) e.horafin = "La hora de fin debe ser posterior a la de inicio.";
     if (!descripcion.trim())          e.descripcion = "La descripción es obligatoria.";
     if (!categoria.trim())            e.categoria   = "La categoría es obligatoria.";
     if (!zona.trim())                 e.zona        = "La zona es obligatoria.";
@@ -101,13 +117,13 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
     const hoyStr = obtenerFechaHoyLocal();
     if (!fechaprueba) {
       e.fechaprueba = "La fecha de prueba es obligatoria.";
-    } else if (fechaprueba < hoyStr) {
+    } else if (cambioFechaPrueba && fechaprueba < hoyStr) {
       e.fechaprueba = "La fecha de la prueba no puede ser anterior a la fecha actual.";
     }
 
     if (!fechacierre) {
       e.fechacierre = "La fecha de cierre es obligatoria.";
-    } else if (fechacierre < hoyStr) {
+    } else if (cambioFechaCierre && fechacierre < hoyStr) {
       e.fechacierre = "La fecha de cierre no puede ser anterior a la fecha actual.";
     } else if (fechaprueba && fechacierre > fechaprueba) {
       e.fechacierre = "La fecha de cierre no puede ser posterior a la fecha de la prueba.";
@@ -139,7 +155,8 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
       const formData = new FormData();
 
       // Campos exactos esperados por la API — solo n\u00fameros v\u00e1lidos llegan aqu\u00ed
-      formData.append("idclub",      String(idClubNum));
+      // Al editar no se manda el club: una prueba no cambia de club
+      if (!esEdicion) formData.append("idclub", String(idClubNum));
       formData.append("iddeporte",   String(idDeporteNum));
       formData.append("cupo",        String(cupoNum));
       formData.append("horainicio",  horainicio);
@@ -156,25 +173,26 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
         formData.append("longitud",  String(longitud));
       }
       formData.append("genero",      genero.trim());
-      formData.append("fechaprueba", fechaprueba);
-      formData.append("fechacierre", fechacierre);
+      if (cambioFechaPrueba) formData.append("fechaprueba", fechaprueba);
+      if (cambioFechaCierre) formData.append("fechacierre", fechacierre);
 
-      // Campo imagen: archivo seleccionado o URL por defecto
+      // Campo imagen: archivo seleccionado; al crear sin archivo, la URL por defecto;
+      // al editar sin archivo no se manda y queda la imagen actual
       if (imagenFile) {
         formData.append("imagen", imagenFile);
-      } else {
+      } else if (!esEdicion) {
         formData.append("imagen", IMAGEN_DEFAULT);
       }
 
       // NO establecer Content-Type manualmente; axios lo hace automáticamente
-      const res = await api.post("/api/pruebas/crearPrueba", formData);
+      const res = esEdicion
+        ? await api.put(`/api/pruebas/${prueba.idprueba}`, formData)
+        : await api.post("/api/pruebas/crearPrueba", formData);
 
-      // Si axios no tira catch, asumimos que res.status es 2xx
-
-      onGuardado(); // Notifica al padre para cerrar modal y recargar lista
+      onGuardado(res.data); // Notifica al padre para cerrar modal y recargar lista
     } catch (err) {
-      console.error("FormularioPrueba: error al crear prueba:", err);
-      setErrorApi(err.response?.data?.error || err.message || "Ocurrió un error al crear la prueba.");
+      console.error(`FormularioPrueba: error al ${esEdicion ? "editar" : "crear"} prueba:`, err);
+      setErrorApi(err.response?.data?.error || err.message || `Ocurrió un error al ${esEdicion ? "guardar" : "crear"} la prueba.`);
     } finally {
       setLoading(false);
     }
@@ -261,7 +279,7 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
           <input
             type="date"
             className="form-input"
-            min={obtenerFechaHoyLocal()}
+            min={cambioFechaPrueba ? obtenerFechaHoyLocal() : undefined}
             value={fechaprueba}
             onChange={(e) => setFechaprueba(e.target.value)}
           />
@@ -275,7 +293,7 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
           <input
             type="date"
             className="form-input"
-            min={obtenerFechaHoyLocal()}
+            min={cambioFechaCierre ? obtenerFechaHoyLocal() : undefined}
             max={fechaprueba || undefined}
             value={fechacierre}
             onChange={(e) => setFechacierre(e.target.value)}
@@ -369,7 +387,7 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
         </div>
 
         <div className="form-grupo">
-          <label className="form-label">Imagen (opcional)</label>
+          <label className="form-label">{esEdicion ? "Cambiar imagen (opcional)" : "Imagen (opcional)"}</label>
           <label className="file-upload-box" style={{ marginTop: 0 }}>
             <input
               type="file"
@@ -380,7 +398,7 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
             <div className="file-upload-text">
               {imagenFile
                 ? `Seleccionada: ${imagenFile.name}`
-                : "Clic para subir imagen"}
+                : esEdicion ? "Si no subís otra, queda la actual" : "Clic para subir imagen"}
             </div>
           </label>
         </div>
@@ -401,7 +419,9 @@ function FormularioPrueba({ idclub, onGuardado, onCancelar }) {
           className="btn-guardar"
           disabled={loading || !idclubResuelto}
         >
-          {loading ? "Creando prueba..." : idclubResuelto ? "Crear Prueba" : "Esperando club..."}
+          {esEdicion
+            ? (loading ? "Guardando cambios..." : "Guardar cambios")
+            : (loading ? "Creando prueba..." : idclubResuelto ? "Crear Prueba" : "Esperando club...")}
         </button>
       </div>
 

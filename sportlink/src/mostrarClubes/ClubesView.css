@@ -5,6 +5,51 @@
 
 .cl-card-head { grid-template-columns: auto minmax(0, 1fr); }
 
+/* ── Tarjeta de club: escudo arriba, como la foto de las pruebas ── */
+.cl-card .pr-card-head { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+.cl-card .pr-card-id h3 { overflow-wrap: anywhere; }
+.cl-card .pr-card-head .pr-pill { margin-top: 4px; }
+
+.pr-card-media.cl-escudo {
+  aspect-ratio: 16 / 8;
+  display: grid;
+  place-items: center;
+  background: var(--slk-step);
+}
+:root[data-tema='oscuro'] .pr-card-media.cl-escudo { background: var(--slk-ground); }
+
+/* Placa blanca cuadrada: los escudos suelen tener fondo blanco */
+.cl-escudo-placa {
+  display: grid;
+  place-items: center;
+  height: 74%;
+  aspect-ratio: 1;
+  padding: 14px;
+  background: #fff;
+  transition: transform 0.35s var(--slk-ease);
+}
+/* Sin agrandar el logo por encima de su tamaño real (se ve nítido) */
+.pr-card-media.cl-escudo .cl-escudo-placa img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.cl-card:hover .cl-escudo-placa { transform: scale(1.03); }
+
+/* Sin logo: iniciales del club en cian sobre tinta */
+.pr-card-media.cl-escudo--vacio { background: var(--slk-ink); }
+:root[data-tema='oscuro'] .pr-card-media.cl-escudo--vacio { background: var(--slk-ground); }
+.cl-escudo-iniciales {
+  color: var(--slk-accent);
+  font-size: clamp(56px, 6vw, 84px);
+  font-weight: 800;
+  font-variation-settings: 'wdth' 112;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
 /* Deportes del club: etiquetas en tono step (no chips interactivos) */
 .cl-sports { display: flex; flex-wrap: wrap; gap: 6px; }
 .cl-sports span {
@@ -41,6 +86,12 @@
 :root[data-tema='oscuro'] .pr-card .cl-follow.is-on:hover { background: var(--slk-step-hover); }
 
 .cl-skeleton { min-height: 280px; }
+.cl-skeleton--club { min-height: 480px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cl-escudo-placa { transition: none; }
+  .cl-card:hover .cl-escudo-placa { transform: none; }
+}
 
 /* Detalle */
 .cl-modal-head { grid-template-columns: auto minmax(0, 1fr) auto; }
