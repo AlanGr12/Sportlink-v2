@@ -5,3 +5,7 @@
 .recurrente-opciones{ margin-top:8px }
 .form-fila-doble{ display:flex; gap:12px }
 .form-fila-doble .form-grupo{ flex:1 }
+.form-ayuda-fila{ display:flex; justify-content:space-between; align-items:baseline; gap:12px }
+.form-contador{ flex:none; font-size:13px; color:var(--slk-text-2, #8a94a6); font-variant-numeric:tabular-nums }
+.form-contador.is-cerca{ color:var(--slk-text, #fff); font-weight:700 }
+.form-contador.is-excedido{ color:#c62828; font-weight:700 }

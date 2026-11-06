@@ -11,6 +11,7 @@ import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscrip
 import CarruselChips from '../components/CarruselChips.jsx';
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
 import useSeguidos from '../hooks/useSeguidos.js';
+import useDeporteJugador from '../hooks/useDeporteJugador.js';
 import { haPasadoFecha, obtenerFechaHoyLocal } from '../utils/dateUtils.js';
 import { formatearUbicacionCorta } from '../utils/mapUtils.js';
 import { fechaLarga, precio } from '../utils/formato.js';
@@ -47,9 +48,9 @@ const PaginaEntrenamientos = ({ usuario }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Paginación
+  // Paginación (en el cliente: el backend devuelve la lista completa, sin limit/offset)
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [, setTotal] = useState(0);
   const limit = 12;
 
   // Filtros de Sidebar
@@ -71,6 +72,9 @@ const PaginaEntrenamientos = ({ usuario }) => {
     usuario?.jugadorId ||
     usuario?.jugador?.id ||
     null;
+
+  // Deporte del jugador (del perfil): para la lista "de tu deporte" y la etiqueta "Tu deporte"
+  const deporteUsuario = useDeporteJugador(usuario?.tipousuario === 'jugador' ? idJugadorReal : null);
 
   // Modales
   const [modalAbierto, setModalAbierto] = useState(false); // crear / editar
@@ -140,15 +144,9 @@ const PaginaEntrenamientos = ({ usuario }) => {
     setLoading(true);
     setError(null);
 
-    // Parámetros de consulta
-    const offset = (page - 1) * limit;
+    // Deporte, modalidad, fechas, zona, búsqueda y página se aplican en el cliente
+    // (ver entrenamientosVisibles): el backend no recibía esos parámetros y devolvía todo.
     const params = {
-      limit,
-      offset,
-      from: filtroFechaDesde || undefined,
-      to: filtroFechaHasta || undefined,
-      tipo: filtroTipo || undefined,
-      modalidad: filtroModalidad || undefined,
       entrenadorId: usuario?.tipousuario === 'entrenador' ? usuario.id : undefined,
     };
 
@@ -275,7 +273,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
     } finally {
       setLoading(false);
     }
-  }, [page, filtroFechaDesde, filtroFechaHasta, filtroTipo, filtroModalidad, usuario, mostrarTodas, idJugadorReal]);
+  }, [usuario, mostrarTodas, idJugadorReal]);
 
   useEffect(() => {
     cargarEntrenamientos();
@@ -447,7 +445,10 @@ const PaginaEntrenamientos = ({ usuario }) => {
     return esJugador ? 'Inscribirme' : 'Ver entrenamiento';
   };
 
-  // Búsqueda y zona se filtran acá (el backend no recibe esos parámetros)
+  // Igual que en Pruebas: mientras la lista es "de tu deporte", el chip activo es el del jugador
+  const deporteActivo = filtroTipo || (listaDeSuDeporte && deporteUsuario) || '';
+
+  // Todos los filtros se aplican acá (el backend devuelve la lista completa)
   const texto = busqueda.trim().toLowerCase();
   const zonaTexto = filtroZona.trim().toLowerCase();
   const entrenamientosVisibles = entrenamientosOrdenados.filter((e) => {
@@ -455,10 +456,23 @@ const PaginaEntrenamientos = ({ usuario }) => {
       .some((v) => v && String(v).toLowerCase().includes(texto));
     const coincideZona = !zonaTexto || [e.ubicacion, e.direccion]
       .some((v) => v && String(v).toLowerCase().includes(zonaTexto));
-    return coincideTexto && coincideZona;
+    const coincideDeporte = !deporteActivo || (e.deportes?.deporte || e.tipo) === deporteActivo;
+    // Modalidad según el cupo: 1 lugar = individual, más de 1 = grupal
+    const cupo = getCupos(e).capacidad;
+    const coincideModalidad = !filtroModalidad || (filtroModalidad === 'individual' ? cupo === 1 : cupo > 1);
+    const fecha = String(e.fechaentr || '').substring(0, 10);
+    const coincideDesde = !filtroFechaDesde || (fecha && fecha >= filtroFechaDesde);
+    const coincideHasta = !filtroFechaHasta || (fecha && fecha <= filtroFechaHasta);
+    return coincideTexto && coincideZona && coincideDeporte && coincideModalidad && coincideDesde && coincideHasta;
   });
 
+  const totalPaginas = Math.ceil(entrenamientosVisibles.length / limit);
+  const paginaActual = Math.min(page, Math.max(totalPaginas, 1));
+  const entrenamientosPagina = entrenamientosVisibles.slice((paginaActual - 1) * limit, paginaActual * limit);
+
   const hayFiltros = !!(filtroTipo || filtroModalidad || filtroZona || filtroFechaDesde || filtroFechaHasta || busqueda);
+  // Sin resultados solo porque todavía no hay entrenamientos del deporte del jugador
+  const vacioDeSuDeporte = listaDeSuDeporte && !hayFiltros;
 
   const elegirDeporte = (d) => {
     setFiltroTipo(d);
@@ -482,8 +496,6 @@ const PaginaEntrenamientos = ({ usuario }) => {
     window.addEventListener('keydown', alPresionar);
     return () => window.removeEventListener('keydown', alPresionar);
   }, [modalAbierto, modalDetalleAbierto]);
-
-  const totalPaginas = Math.ceil(total / limit);
 
   return (
     <div className="pr">
@@ -513,7 +525,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
                 type="search"
                 placeholder="Buscar por título, entrenador o club"
                 value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
+                onChange={(e) => { setBusqueda(e.target.value); setPage(1); }}
               />
             </label>
             {puedeCrear && (
@@ -530,17 +542,17 @@ const PaginaEntrenamientos = ({ usuario }) => {
         <div className="pr-wrap">
           {listaDeSuDeporte && (
             <p className="pr-notice">
-              Te mostramos entrenamientos de tu deporte.{' '}
+              Te mostramos entrenamientos de {deporteUsuario ? <strong>{deporteUsuario}</strong> : 'tu deporte'}{deporteUsuario ? ', tu deporte' : ''}.{' '}
               <button className="pr-link" onClick={() => elegirDeporte('')}>Ver todos los deportes</button>
             </p>
           )}
 
           <CarruselChips ariaLabel="Deporte" deps={[entrenamientos.length]}>
-            <button className={`pr-chip${filtroTipo === '' ? ' is-on' : ''}`} aria-pressed={filtroTipo === ''} onClick={() => elegirDeporte('')}>
+            <button className={`pr-chip${deporteActivo === '' ? ' is-on' : ''}`} aria-pressed={deporteActivo === ''} onClick={() => elegirDeporte('')}>
               Todos
             </button>
             {deportesDisponibles.map((d) => (
-              <button key={d.id} className={`pr-chip${filtroTipo === d.nombre ? ' is-on' : ''}`} aria-pressed={filtroTipo === d.nombre} onClick={() => elegirDeporte(d.nombre)}>
+              <button key={d.id} className={`pr-chip${deporteActivo === d.nombre ? ' is-on' : ''}`} aria-pressed={deporteActivo === d.nombre} onClick={() => elegirDeporte(d.nombre)}>
                 {d.nombre}
               </button>
             ))}
@@ -557,7 +569,7 @@ const PaginaEntrenamientos = ({ usuario }) => {
             </label>
             <label className="pr-field">
               <span>Zona</span>
-              <input type="text" placeholder="Ej. Palermo" value={filtroZona} onChange={(e) => setFiltroZona(e.target.value)} />
+              <input type="text" placeholder="Ej. Palermo" value={filtroZona} onChange={(e) => { setFiltroZona(e.target.value); setPage(1); }} />
             </label>
             <label className="pr-field">
               <span>Desde</span>
@@ -594,6 +606,14 @@ const PaginaEntrenamientos = ({ usuario }) => {
               <p>{error}</p>
               <button className="pr-btn pr-btn--ink" onClick={() => cargarEntrenamientos()}>Reintentar</button>
             </div>
+          ) : entrenamientosVisibles.length === 0 && vacioDeSuDeporte ? (
+            <div className="pr-empty">
+              <h2 className="pr-display pr-empty-title">
+                {deporteUsuario ? `Todavía no hay entrenamientos de ${deporteUsuario.toLowerCase()}` : 'Todavía no hay entrenamientos de tu deporte'}
+              </h2>
+              <p>Cuando un entrenador publique uno lo vas a ver acá. Mientras tanto, mirá los de otros deportes.</p>
+              <button className="pr-btn pr-btn--ink" onClick={() => elegirDeporte('')}>Ver todos los deportes <Flecha /></button>
+            </div>
           ) : entrenamientosVisibles.length === 0 ? (
             <div className="pr-empty">
               <h2 className="pr-display pr-empty-title">
@@ -614,12 +634,13 @@ const PaginaEntrenamientos = ({ usuario }) => {
             </div>
           ) : (
             <ul className="pr-grid">
-              {entrenamientosVisibles.map((e) => {
+              {entrenamientosPagina.map((e) => {
                 const estado = estadoEntrenamiento(e);
                 const c = getCupos(e);
                 const coach = nombreEntrenador(e);
                 const esSeguido = seguidosIds.has(Number(e.entrenadores?.idusuario ?? e.entrenador?.idusuario));
                 const pct = c.capacidad ? Math.min(100, Math.round((c.inscritos / c.capacidad) * 100)) : 0;
+                const esTuDeporte = !!deporteUsuario && (e.deportes?.deporte || e.tipo) === deporteUsuario;
                 return (
                   <li className="pr-card" key={idDe(e)}>
                     <MediaEvento imagen={e.imagen} deporte={e.deportes?.deporte || e.tipo} alt={e.titulo || 'Entrenamiento'} />
@@ -632,8 +653,9 @@ const PaginaEntrenamientos = ({ usuario }) => {
                       <span className={`pr-pill pr-pill--${estado.clase}`}>{estado.texto}</span>
                     </div>
 
-                    {(esSeguido || e.clubes?.nombre) && (
+                    {(esTuDeporte || esSeguido || e.clubes?.nombre) && (
                       <div className="pr-tags">
+                        {esTuDeporte && <span>Tu deporte</span>}
                         {e.clubes?.nombre && <span>Respaldado por {e.clubes.nombre}</span>}
                         {esSeguido && <span>Entrenador que seguís</span>}
                       </div>
@@ -687,9 +709,9 @@ const PaginaEntrenamientos = ({ usuario }) => {
 
           {totalPaginas > 1 && (
             <nav className="pr-pager" aria-label="Páginas">
-              <button className="pr-btn pr-btn--ghost" onClick={() => setPage((p) => Math.max(p - 1, 1))} disabled={page === 1}>Anterior</button>
-              <span>Página {page} de {totalPaginas}</span>
-              <button className="pr-btn pr-btn--ghost" onClick={() => setPage((p) => Math.min(p + 1, totalPaginas))} disabled={page >= totalPaginas}>Siguiente</button>
+              <button className="pr-btn pr-btn--ghost" onClick={() => setPage(Math.max(paginaActual - 1, 1))} disabled={paginaActual === 1}>Anterior</button>
+              <span>Página {paginaActual} de {totalPaginas}</span>
+              <button className="pr-btn pr-btn--ghost" onClick={() => setPage((p) => Math.min(p + 1, totalPaginas))} disabled={paginaActual >= totalPaginas}>Siguiente</button>
             </nav>
           )}
         </div>

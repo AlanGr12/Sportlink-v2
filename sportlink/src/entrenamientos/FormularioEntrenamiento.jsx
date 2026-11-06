@@ -6,6 +6,9 @@ import { obtenerFechaHoyLocal } from '../utils/dateUtils.js';
 import api from '../axiosConfig.js';
 import '../components/vinculacion.css';
 
+// Mismo límite que valida el backend (entrenamientos-service.js)
+const MAX_TITULO = 45;
+
 const deportesDisponibles = [
   { id: 1, nombre: 'Fútbol' },
   { id: 2, nombre: 'Basket' },
@@ -152,6 +155,8 @@ const FormularioEntrenamiento = ({
 
     if (!titulo || titulo.trim().length < 3) {
       nuevosErrores.titulo = 'El título debe tener al menos 3 caracteres';
+    } else if (titulo.trim().length > MAX_TITULO) {
+      nuevosErrores.titulo = `El título no puede superar los ${MAX_TITULO} caracteres`;
     }
     if (!descripcion || descripcion.trim().length === 0) {
       nuevosErrores.descripcion = 'La descripción es obligatoria';
@@ -309,9 +314,19 @@ const FormularioEntrenamiento = ({
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
           placeholder="ej. Circuito de fuerza y potencia táctica"
+          maxLength={MAX_TITULO}
+          aria-describedby="form-titulo-contador"
           required
         />
-        {errores.titulo && <span className="error-feedback">{errores.titulo}</span>}
+        <div className="form-ayuda-fila">
+          {errores.titulo ? <span className="error-feedback">{errores.titulo}</span> : <span />}
+          <small
+            id="form-titulo-contador"
+            className={`form-contador${titulo.length > MAX_TITULO ? ' is-excedido' : titulo.length >= MAX_TITULO - 5 ? ' is-cerca' : ''}`}
+          >
+            {titulo.length}/{MAX_TITULO}
+          </small>
+        </div>
       </div>
 
       {/* Descripción */}

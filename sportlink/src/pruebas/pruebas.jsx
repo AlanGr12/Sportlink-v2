@@ -8,6 +8,7 @@ import ModalConfirmacionInscripcion from '../components/ModalConfirmacionInscrip
 import ModalConfirmacionEliminar from '../calendario/ModalConfirmacionEliminar.jsx';
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar.jsx';
 import useSeguidos from '../hooks/useSeguidos.js';
+import useDeporteJugador from '../hooks/useDeporteJugador.js';
 import CarruselChips from '../components/CarruselChips.jsx';
 import { fechaLarga } from '../utils/formato.js';
 import { AvatarSlk, MediaEvento } from '../components/ImagenesSlk.jsx';
@@ -41,7 +42,6 @@ function Pruebas({ idJugador, usuario }) {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [mostrarTodas, setMostrarTodas] = useState(false);
-  const [deporteUsuario, setDeporteUsuario] = useState(null);
 
   // ── Modal de detalle ──────────────────────────────────────
   const [pruebaSeleccionada, setPruebaSeleccionada] = useState(null);
@@ -85,6 +85,8 @@ function Pruebas({ idJugador, usuario }) {
 
   const tipoUsuario = usuarioEfectivo?.tipousuario?.toString()?.toLowerCase();
   const esJugador = tipoUsuario === "jugador" || tipoUsuario === "player";
+  // Deporte del jugador, leído de su perfil: se conoce aunque no haya pruebas de ese deporte
+  const deporteUsuario = useDeporteJugador(esJugador ? (idjugadorResuelto || idJugadorReal) : null);
   const esClub = tipoUsuario === "club";
   const esEntrenador = tipoUsuario === "entrenador";
 
@@ -692,18 +694,8 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
           return { ...p, inscritosCount: Number(p.inscritosCount ?? 0) };
         }
       }));
+      // El deporte del jugador viene de useDeporteJugador (su perfil), no del primer resultado
       setPruebas(Array.isArray(response.data) ? conInscritos : response.data);
-
-      // Capturar el deporte del usuario a partir de la primera respuesta filtrada
-      if (filtrarPorDeporte && Array.isArray(response.data) && response.data.length > 0) {
-        const primerDeporte = response.data[0]?.deporte?.deporte || null;
-        if (primerDeporte) {
-          setDeporteUsuario(primerDeporte);
-          if (!forceGeneral && !deporte) {
-            setDeporte(primerDeporte);
-          }
-        }
-      }
     } catch (error) {
       console.error("Pruebas: error al cargar pruebas", error);
     } finally {
@@ -994,6 +986,12 @@ const mostrarToast = (titulo, mensaje, tipo = "success") => {
           {cargandoPruebas ? (
             <div className="pr-grid" aria-busy="true" aria-label="Cargando pruebas">
               {[0, 1, 2].map((i) => <div key={i} className="pr-card pr-card--skeleton" />)}
+            </div>
+          ) : pruebasFiltradas.length === 0 && listaDeSuDeporte && !(categoria || zona || fechaDesde || fechaHasta || busqueda) ? (
+            <div className="pr-empty">
+              <h2 className="pr-display pr-empty-title">Todavía no hay pruebas de {deporteUsuario.toLowerCase()}</h2>
+              <p>Cuando un club publique una la vas a ver acá. Mientras tanto, mirá las de otros deportes.</p>
+              <button className="pr-btn pr-btn--ink" onClick={verTodosLosDeportes}>Ver todos los deportes <Flecha /></button>
             </div>
           ) : pruebasFiltradas.length === 0 ? (
             <div className="pr-empty">
