@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../axiosConfig.js'
 import { fechaLarga, iniciales } from '../utils/formato.js'
+import MascotaSportlink from './MascotaSportlink.jsx'
 import './ChatbotButton.css'
 
 /**
@@ -143,7 +144,9 @@ export default function ChatbotButton() {
       {isOpen && (
         <section className="cb-panel" role="dialog" aria-label="Asistente de SportLink">
           <header className="cb-head">
-            <span className="cb-head-ico" aria-hidden="true"><IcoGlobo /></span>
+            <span className="cb-head-ico" aria-hidden="true">
+              <MascotaSportlink expression={isLoading ? 'pensando' : 'normal'} size={34} />
+            </span>
             <div className="cb-head-txt">
               <h2>Asistente</h2>
               <p>Pruebas, entrenamientos y empleos</p>
@@ -176,8 +179,9 @@ export default function ChatbotButton() {
             )}
 
             {isLoading && (
-              <div className="cb-msg is-bot cb-escribiendo" aria-label="El asistente está escribiendo">
-                <span /><span /><span />
+              <div className="cb-msg is-bot cb-escribiendo-contenedor" aria-label="El asistente está escribiendo">
+                <MascotaSportlink animarPensando={true} size={42} />
+                <span className="cb-escribiendo-txt">Pensando...</span>
               </div>
             )}
 
@@ -213,7 +217,9 @@ export default function ChatbotButton() {
         aria-expanded={isOpen}
         title="Asistente de SportLink"
       >
-        <span className="cb-boton-ico cb-boton-ico--globo"><IcoGlobo /></span>
+        <span className="cb-boton-ico cb-boton-ico--globo">
+          <MascotaSportlink expression="normal" size={40} />
+        </span>
         <span className="cb-boton-ico cb-boton-ico--cerrar"><IcoCerrar /></span>
       </button>
     </>
